@@ -3,8 +3,10 @@ projektor = "4.+"
 
 parchment-plugin = "1.2.0"
 fabric-plugin = "1.12.1"
+quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"
 ornithe-plugin = "1.12.1"
+babric-plugin = "1.5.3"
 forge-plugin = "6.0.46"
 neoforge-plugin = "2.0.116"
 
@@ -13,6 +15,7 @@ kotlin-serialization-xml = "0.90.1"
 ktor = "3.0.0"
 kotlin-html = "0.12.0"
 
+kotlin-coroutines = "1.9.0"
 kotlin-utils = "0.8.4"
 gradle-utils = "0.8.11"
 kotlin-shell-dsl = "0.8.2"
@@ -29,6 +32,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [libraries]
+kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-utils = { group = "io.github.diskria", name = "kotlin-utils", version.ref = "kotlin-utils" }
 gradle-utils = { group = "io.github.diskria", name = "gradle-utils", version.ref = "gradle-utils" }
 kotlin-shell-dsl = { group = "io.github.diskria", name = "kotlin-shell-dsl", version.ref = "kotlin-shell-dsl" }
@@ -43,8 +47,10 @@ kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.
 
 parchment-plugin = { group = "org.parchmentmc.librarian.forgegradle", name = "org.parchmentmc.librarian.forgegradle.gradle.plugin", version.ref = "parchment-plugin" }
 fabric-plugin = { group = "fabric-loom", name = "fabric-loom.gradle.plugin", version.ref = "fabric-plugin" }
+quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
+babric-plugin = { group = "babric-loom", name = "babric-loom.gradle.plugin", version.ref = "babric-plugin" }
 forge-plugin = { group = "net.minecraftforge.gradle", name = "net.minecraftforge.gradle.gradle.plugin", version.ref = "forge-plugin" }
 neoforge-plugin = { group = "net.neoforged.moddev", name = "net.neoforged.moddev.gradle.plugin", version.ref = "neoforge-plugin" }
 
@@ -64,7 +70,7 @@ ktor-client = [
     "ktor-client-core",
     "ktor-client-cio",
 ]
-loader-plugins = [
+implementation-loader-plugins = [
     "parchment-plugin",
     "fabric-plugin",
     "legacy-fabric-plugin",

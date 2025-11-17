@@ -3,7 +3,7 @@ package io.github.recrafter.crafter.extensions.gradle
 import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.gradle.utils.extensions.gradle.GradleExtension
 import io.github.recrafter.bedrock.recipes.ModRecipe
-import io.github.recrafter.crafter.models.ModMetadata
+import io.github.recrafter.crafter.core.ModMetadata
 import org.gradle.api.model.ObjectFactory
 import javax.inject.Inject
 

@@ -5,13 +5,13 @@ import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFi
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeTomlToFile
 import io.github.recrafter.bedrock.loaders.ModLoaderType.*
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.crafter.CrafterGradlePlugin
-import io.github.recrafter.crafter.configs.fabric.FabricModConfig
-import io.github.recrafter.crafter.configs.forge.ForgeModConfig
-import io.github.recrafter.crafter.configs.neoforge.NeoForgeModConfig
-import io.github.recrafter.crafter.configs.ornithe.OrnitheModConfig
-import io.github.recrafter.crafter.configs.quilt.QuiltModConfig
-import io.github.recrafter.crafter.models.Mod
+import io.github.recrafter.crafter.fabric.config.FabricModConfig
+import io.github.recrafter.crafter.forge.config.ForgeModConfig
+import io.github.recrafter.crafter.ornithe.config.OrnitheModConfig
+import io.github.recrafter.crafter.quilt.config.QuiltModConfig
+import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.neoforge.config.NeoForgeModConfig
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -31,7 +31,7 @@ abstract class GenerateModConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterGradlePlugin.PLUGIN_NAME
+        group = CrafterConstants.TASK_GROUP
     }
 
     @TaskAction

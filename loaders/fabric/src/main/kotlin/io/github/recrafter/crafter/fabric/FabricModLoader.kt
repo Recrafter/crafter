@@ -1,6 +1,5 @@
 package io.github.recrafter.crafter.fabric
 
-class FabricModLoader {
+import io.github.recrafter.bedrock.loaders.ModLoaderType
 
-
-}
+object FabricModLoader : FabricFamilyModLoader(ModLoaderType.FABRIC)

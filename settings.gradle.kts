@@ -1,8 +1,11 @@
 import io.github.diskria.gradle.utils.extensions.common.buildGradleProjectPath
 import io.github.diskria.gradle.utils.extensions.rootDirectory
+import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.diskria.kotlin.utils.extensions.listDirectories
 import io.github.diskria.projektor.common.licenses.LicenseType.MIT
 import io.github.diskria.projektor.common.publishing.PublishingTargetType.GITHUB_PAGES
+import io.github.diskria.projektor.settings.extensions.configureMaven
+import io.ktor.http.*
 
 pluginManagement {
     repositories {
@@ -18,7 +21,7 @@ plugins {
 }
 
 projekt {
-    version = "0.1.0"
+    version = "0.1.1"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,
@@ -27,8 +30,26 @@ projekt {
     gradlePlugin()
 }
 
+dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
+    repositories {
+        configureMaven(
+            name = "Quilt",
+            url = buildUrl("maven.quiltmc.org") {
+                path("repository", "release")
+            }
+        )
+        configureMaven(
+            name = "Babric",
+            url = buildUrl("maven.glass-launcher.net") {
+                path("babric")
+            }
+        )
+    }
+}
+
+include(":core")
 val loadersDirectoryName = "loaders"
-include(loadersDirectoryName)
 rootDirectory.resolve(loadersDirectoryName).listDirectories().forEach {
     include(buildGradleProjectPath(loadersDirectoryName, it.name))
 }

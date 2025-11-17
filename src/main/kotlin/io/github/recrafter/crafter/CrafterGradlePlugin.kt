@@ -3,12 +3,16 @@ package io.github.recrafter.crafter
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.asFileOrNull
 import io.github.diskria.kotlin.utils.extensions.common.`Train-Case`
+import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
+import io.github.diskria.kotlin.utils.extensions.common.snake_case
 import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.generics.addIfNotNull
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
+import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
 import io.github.recrafter.bedrock.extensions.getModRecipe
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
@@ -16,120 +20,60 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
-import io.github.recrafter.crafter.extensions.*
+import io.github.recrafter.crafter.babric.sync.BabricLoaderSynchronizer
+import io.github.recrafter.crafter.babric.sync.BabricMappingsSynchronizer
+import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.ModMetadata
+import io.github.recrafter.crafter.core.VersionsMetadata
+import io.github.recrafter.crafter.core.extensions.getRunTaskName
+import io.github.recrafter.crafter.core.extensions.supportedVersionRange
+import io.github.recrafter.crafter.core.helpers.MixinsHelper
+import io.github.recrafter.crafter.core.helpers.server.EulaHelper
+import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
+import io.github.recrafter.crafter.core.helpers.server.ServerPropertiesHelper
+import io.github.recrafter.crafter.core.sync.parchment.ParchmentSynchronizer
+import io.github.recrafter.crafter.core.tasks.ZipSplitSidesModTask
+import io.github.recrafter.crafter.core.tasks.test.CraftClientTask
+import io.github.recrafter.crafter.core.tasks.test.CraftServerTask
+import io.github.recrafter.crafter.extensions.configure
+import io.github.recrafter.crafter.extensions.configureJvmTarget
 import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
+import io.github.recrafter.crafter.extensions.kotlin
+import io.github.recrafter.crafter.extensions.kotlinApply
 import io.github.recrafter.crafter.extensions.mappers.mapToModel
-import io.github.recrafter.crafter.helpers.MixinsHelper
-import io.github.recrafter.crafter.helpers.server.EulaHelper
-import io.github.recrafter.crafter.helpers.server.ServerOperatorsHelper
-import io.github.recrafter.crafter.helpers.server.ServerPropertiesHelper
-import io.github.recrafter.crafter.loaders.common.ModLoader
-import io.github.recrafter.crafter.models.Mod
-import io.github.recrafter.crafter.models.VersionsMetadata
-import io.github.recrafter.crafter.sync.loaders.babric.BabricLoaderSynchronizer
-import io.github.recrafter.crafter.sync.loaders.babric.BabricMappingsSynchronizer
-import io.github.recrafter.crafter.sync.loaders.fabric.FabricLoaderSynchronizer
-import io.github.recrafter.crafter.sync.loaders.fabric.FabricMappingsSynchronizer
-import io.github.recrafter.crafter.sync.loaders.forge.ForgeLoaderSynchronizer
-import io.github.recrafter.crafter.sync.loaders.legacy_fabric.LegacyFabricMappingsSynchronizer
-import io.github.recrafter.crafter.sync.loaders.neoforge.NeoForgeLoaderSynchronizer
-import io.github.recrafter.crafter.sync.loaders.ornithe.OrnitheMappingsSynchronizer
-import io.github.recrafter.crafter.sync.loaders.quilt.QuiltLoaderSynchronizer
-import io.github.recrafter.crafter.sync.loaders.quilt.QuiltMappingsSynchronizer
-import io.github.recrafter.crafter.sync.parchment.ParchmentSynchronizer
-import io.github.recrafter.crafter.tasks.ZipSplitSidesModTask
-import io.github.recrafter.crafter.tasks.test.CraftClientTask
-import io.github.recrafter.crafter.tasks.test.CraftServerTask
+import io.github.recrafter.crafter.extensions.mappers.toJvmTarget
+import io.github.recrafter.crafter.fabric.extensions.loomRemapJar
+import io.github.recrafter.crafter.fabric.sync.FabricLoaderSynchronizer
+import io.github.recrafter.crafter.fabric.sync.FabricMappingsSynchronizer
+import io.github.recrafter.crafter.forge.sync.ForgeLoaderSynchronizer
+import io.github.recrafter.crafter.legacy_fabric.sync.LegacyFabricMappingsSynchronizer
+import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSynchronizer
+import io.github.recrafter.crafter.ornithe.sync.OrnitheMappingsSynchronizer
+import io.github.recrafter.crafter.quilt.sync.QuiltLoaderSynchronizer
+import io.github.recrafter.crafter.quilt.sync.QuiltMappingsSynchronizer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JvmVendorSpec
-import org.gradle.kotlin.dsl.assign
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.provideDelegate
-import org.gradle.kotlin.dsl.withType
+import org.gradle.kotlin.dsl.*
+import java.io.File
 
+@Suppress("unused")
 class CrafterGradlePlugin : Plugin<Project> {
 
-    override fun apply(project: Project) = with(project) {
+    override fun apply(project: Project): Unit = with(project) {
         if (!project.isRootProject()) {
             gradleError("The Crafter must be applied only to the root project")
         }
+
         val extension = registerExtension<CrafterExtension>()
         extension.onConfigurationReady {
-            val modProject = project
             val modMetadata = extension.buildModMetadata(getModRecipe())
             children.forEach { loaderProject ->
-                val loaderType = loaderProject.name.toEnumOrNull<ModLoaderType>() ?: return@forEach
-                val loader = loaderType.mapToModel()
-                val versionProjects = loaderProject.children
-                val projectVersions = versionProjects.associateWith { MinecraftVersion.parse(it.name) }
-                projectVersions.forEach { (versionProject, minMinecraftVersion) ->
-                    val maxMinecraftVersion = projectVersions.values
-                        .filter { it > minMinecraftVersion }
-                        .minWithOrNull(MinecraftVersion.COMPARATOR)
-                        ?.previousOrNull()
-                        ?: loaderType.supportedVersionRange.max
-                    val versionsMetadata = when (loaderType) {
-                        ModLoaderType.FABRIC -> VersionsMetadata(
-                            loader = FabricLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = FabricMappingsSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                        )
-
-                        ModLoaderType.QUILT -> VersionsMetadata(
-                            loader = QuiltLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = QuiltMappingsSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                        )
-
-                        ModLoaderType.LEGACY_FABRIC -> VersionsMetadata(
-                            loader = FabricLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = LegacyFabricMappingsSynchronizer.getLatestVersion(
-                                modProject,
-                                minMinecraftVersion
-                            ),
-                            mappingsMinecraft = LegacyFabricMappingsSynchronizer.getLatestComponent(
-                                modProject,
-                                minMinecraftVersion
-                            ).minecraftVersion.asString(),
-                        )
-
-                        ModLoaderType.ORNITHE -> VersionsMetadata(
-                            loader = FabricLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = OrnitheMappingsSynchronizer(minMinecraftVersion.mappingsType).getLatestVersion(
-                                modProject,
-                                minMinecraftVersion
-                            ),
-                        )
-
-                        ModLoaderType.BABRIC -> VersionsMetadata(
-                            loader = BabricLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = BabricMappingsSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                        )
-
-                        ModLoaderType.FORGE -> VersionsMetadata(
-                            loader = ForgeLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = ParchmentSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappingsMinecraft = ParchmentSynchronizer.getLatestComponent(
-                                modProject,
-                                minMinecraftVersion
-                            ).minecraftVersion.asString(),
-                        )
-
-                        ModLoaderType.NEOFORGE -> VersionsMetadata(
-                            loader = NeoForgeLoaderSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappings = ParchmentSynchronizer.getLatestVersion(modProject, minMinecraftVersion),
-                            mappingsMinecraft = ParchmentSynchronizer.getLatestComponent(
-                                modProject,
-                                minMinecraftVersion
-                            ).minecraftVersion.asString(),
-                        )
-                    }
-                    val mod = modMetadata.toMod(loaderType, minMinecraftVersion, maxMinecraftVersion, versionsMetadata)
-                    val archiveVersion = mod.archiveVersion(loaderType, minMinecraftVersion, maxMinecraftVersion)
-                    configureVersionProject(mod, loader, modProject, versionProject, archiveVersion)
-                }
+                configureVersionProjects(loaderProject, modMetadata)
             }
         }
         afterEvaluate {
@@ -137,10 +81,82 @@ class CrafterGradlePlugin : Plugin<Project> {
         }
     }
 
+    private fun configureVersionProjects(loaderProject: Project, modMetadata: ModMetadata) {
+        val loaderType = loaderProject.name.setCase(`kebab-case`, snake_case).toEnumOrNull<ModLoaderType>() ?: return
+        val loader = loaderType.mapToModel()
+        val versionProjects = loaderProject.children
+        val projectVersions = versionProjects.associateWith { MinecraftVersion.parse(it.name) }
+        projectVersions.forEach { (versionProject, minMinecraftVersion) ->
+            val maxMinecraftVersion = projectVersions.values
+                .filter { it > minMinecraftVersion }
+                .minWithOrNull(MinecraftVersion.COMPARATOR)
+                ?.previousOrNull()
+                ?: loaderType.supportedVersionRange.max
+            val versionsMetadata = when (loaderType) {
+                ModLoaderType.FABRIC -> VersionsMetadata(
+                    loader = FabricLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = FabricMappingsSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                )
+
+                ModLoaderType.QUILT -> VersionsMetadata(
+                    loader = QuiltLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = QuiltMappingsSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                )
+
+                ModLoaderType.LEGACY_FABRIC -> VersionsMetadata(
+                    loader = FabricLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = LegacyFabricMappingsSynchronizer.getLatestVersion(
+                        loaderProject,
+                        minMinecraftVersion
+                    ),
+                    mappingsMinecraft = LegacyFabricMappingsSynchronizer.getLatestComponent(
+                        loaderProject,
+                        minMinecraftVersion
+                    ).minecraftVersion.asString(),
+                )
+
+                ModLoaderType.ORNITHE -> VersionsMetadata(
+                    loader = FabricLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = OrnitheMappingsSynchronizer(minMinecraftVersion.mappingsType).getLatestVersion(
+                        loaderProject,
+                        minMinecraftVersion
+                    ),
+                )
+
+                ModLoaderType.BABRIC -> VersionsMetadata(
+                    loader = BabricLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = BabricMappingsSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                )
+
+                ModLoaderType.FORGE -> VersionsMetadata(
+                    loader = ForgeLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = ParchmentSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappingsMinecraft = ParchmentSynchronizer.getLatestComponent(
+                        loaderProject,
+                        minMinecraftVersion
+                    ).minecraftVersion.asString(),
+                )
+
+                ModLoaderType.NEOFORGE -> VersionsMetadata(
+                    loader = NeoForgeLoaderSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappings = ParchmentSynchronizer.getLatestVersion(loaderProject, minMinecraftVersion),
+                    mappingsMinecraft = ParchmentSynchronizer.getLatestComponent(
+                        loaderProject,
+                        minMinecraftVersion
+                    ).minecraftVersion.asString(),
+                )
+            }
+            val mod = modMetadata.toMod(loaderType, minMinecraftVersion, maxMinecraftVersion, versionsMetadata)
+            val archiveVersion = mod.archiveVersion(loaderType, minMinecraftVersion, maxMinecraftVersion)
+            val iconFile = loaderProject.projectDirectory.parentFile?.resolve(mod.iconFileName)?.asFileOrNull()
+            configureVersionProject(mod, loader, iconFile, versionProject, archiveVersion)
+        }
+    }
+
     private fun configureVersionProject(
         mod: Mod,
         loader: ModLoader,
-        modProject: Project,
+        iconFile: File?,
         project: Project,
         archiveVersion: String,
     ) {
@@ -160,7 +176,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 jvmToolchain(mod.javaVersion)
             }
             tasks {
-                configureJvmTarget(mod.jvmTarget)
+                configureJvmTarget(mod.minJavaVersion.toJvmTarget())
                 withType<JavaCompile>().configureEach {
                     options.encoding = Charsets.UTF_8.toString()
                 }
@@ -228,7 +244,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
         }
         if (isMergedMappings) {
-            loader.configure(mod, modProject, project, sideProjects)
+            loader.configure(mod, iconFile, project, sideProjects)
         } else {
             val splitSideJarTasks = mutableListOf<TaskProvider<out Jar>>()
             val libsDirectory = project.getBuildDirectory("libs")
@@ -241,7 +257,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                         }
                     }
                 }
-                loader.configure(mod, modProject, sideProject, mapOf(side to sideProject))
+                loader.configure(mod, iconFile, sideProject, mapOf(side to sideProject))
                 val sideJarTask = when {
                     isFabricFamily -> sideProject.tasks.loomRemapJar
                     else -> sideProject.tasks.jar
@@ -312,9 +328,5 @@ class CrafterGradlePlugin : Plugin<Project> {
                 )
             }
         }
-    }
-
-    companion object {
-        const val PLUGIN_NAME: String = "crafter"
     }
 }
