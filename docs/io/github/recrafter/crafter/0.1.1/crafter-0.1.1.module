@@ -1,0 +1,218 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.recrafter",
+    "module": "crafter",
+    "version": "0.1.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "crafter-0.1.1.jar",
+          "url": "crafter-0.1.1.jar",
+          "size": 677259,
+          "sha512": "60555cbfd89a2a3ac2401a9c3912b832e67a5cb366126e3dce0ac9fce16bf68efffb3c274f6789295eeeaa299b4c684dac2b906a209472fd045617734da1bc55",
+          "sha256": "1c934d294c1119dd25938e5f63615c71e43c24e1a0884b81d6b4253bbdf5c472",
+          "sha1": "55e3a3c1998ffb7bc643e556ad9379a5a29208f0",
+          "md5": "eef869e28fc25f8144a962f9e52938a3"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin.jvm",
+          "module": "org.jetbrains.kotlin.jvm.gradle.plugin",
+          "version": {
+            "requires": "2.0.21"
+          }
+        },
+        {
+          "group": "io.github.pdvrieze.xmlutil",
+          "module": "serialization",
+          "version": {
+            "requires": "0.90.1"
+          }
+        },
+        {
+          "group": "org.jsoup",
+          "module": "jsoup",
+          "version": {
+            "requires": "1.21.2"
+          }
+        },
+        {
+          "group": "com.palantir.javapoet",
+          "module": "javapoet",
+          "version": {
+            "requires": "0.7.0"
+          }
+        },
+        {
+          "group": "io.github.diskria",
+          "module": "kotlin-utils",
+          "version": {
+            "requires": "0.8.4"
+          }
+        },
+        {
+          "group": "io.github.diskria",
+          "module": "gradle-utils",
+          "version": {
+            "requires": "0.8.11"
+          }
+        },
+        {
+          "group": "io.github.diskria",
+          "module": "kotlin-shell-dsl",
+          "version": {
+            "requires": "0.8.2"
+          }
+        },
+        {
+          "group": "io.ktor",
+          "module": "ktor-client-core",
+          "version": {
+            "requires": "3.0.0"
+          }
+        },
+        {
+          "group": "io.ktor",
+          "module": "ktor-client-cio",
+          "version": {
+            "requires": "3.0.0"
+          }
+        },
+        {
+          "group": "org.parchmentmc.librarian.forgegradle",
+          "module": "org.parchmentmc.librarian.forgegradle.gradle.plugin",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "fabric-loom",
+          "module": "fabric-loom.gradle.plugin",
+          "version": {
+            "requires": "1.12.1"
+          }
+        },
+        {
+          "group": "legacy-looming",
+          "module": "legacy-looming.gradle.plugin",
+          "version": {
+            "requires": "1.12.1"
+          }
+        },
+        {
+          "group": "ploceus",
+          "module": "ploceus.gradle.plugin",
+          "version": {
+            "requires": "1.12.1"
+          }
+        },
+        {
+          "group": "net.minecraftforge.gradle",
+          "module": "net.minecraftforge.gradle.gradle.plugin",
+          "version": {
+            "requires": "6.0.46"
+          }
+        },
+        {
+          "group": "net.neoforged.moddev",
+          "module": "net.neoforged.moddev.gradle.plugin",
+          "version": {
+            "requires": "2.0.116"
+          }
+        },
+        {
+          "group": "io.github.recrafter",
+          "module": "bedrock",
+          "version": {
+            "requires": "0.1.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "crafter-0.1.1.jar",
+          "url": "crafter-0.1.1.jar",
+          "size": 677259,
+          "sha512": "60555cbfd89a2a3ac2401a9c3912b832e67a5cb366126e3dce0ac9fce16bf68efffb3c274f6789295eeeaa299b4c684dac2b906a209472fd045617734da1bc55",
+          "sha256": "1c934d294c1119dd25938e5f63615c71e43c24e1a0884b81d6b4253bbdf5c472",
+          "sha1": "55e3a3c1998ffb7bc643e556ad9379a5a29208f0",
+          "md5": "eef869e28fc25f8144a962f9e52938a3"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "crafter-0.1.1-sources.jar",
+          "url": "crafter-0.1.1-sources.jar",
+          "size": 12259,
+          "sha512": "88e488e5d7096d1be614b58728c095dfee14c3f180a4d39067a87c29cdcf8a1d80eb0cc71b41970a767e6f4891541676491e12440bdda86324c54995f4d65003",
+          "sha256": "d9918743145dcfbbb7d0b5e09c0a8f0506dd37c4414255b5a1cc8e7d7edddded",
+          "sha1": "9648e77f06b7284131304f8277378159b85b4ba4",
+          "md5": "6d98606138c2017ff39fe13cbec24a43"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "crafter-0.1.1-javadoc.jar",
+          "url": "crafter-0.1.1-javadoc.jar",
+          "size": 261,
+          "sha512": "e5e38f653b70be6ca478cd4340c1af78f971df92174c0e2a2db0999ca76f5707c953735a2344ce2907bc14b97aed7a09a77d47254bd227230d75c5a0e3eca123",
+          "sha256": "e944ec9691d5525bbccf044966ee4e3116274297d6fc6ee743dceefdfb36ad61",
+          "sha1": "73d4210b6016445285e453ebac39b5a9e5990146",
+          "md5": "0f30eb2b01b59ed7681127cd610ce6f0"
+        }
+      ]
+    }
+  ]
+}
