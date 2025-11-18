@@ -3,11 +3,15 @@ package io.github.recrafter.crafter.neoforge
 import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
 import io.github.diskria.gradle.utils.helpers.jvm.Size
+import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
+import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
 import io.github.recrafter.crafter.neoforge.extensions.neoforge
+import net.neoforged.moddevgradle.internal.Branding
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import java.io.File
@@ -32,6 +36,7 @@ object NeoForgeModLoader : ModLoader {
             runs {
                 ModSide.values().forEach { side ->
                     create(side.getName()) {
+                        ideName = Constants.Char.EMPTY
                         gameDirectory = runDirectory
                         val memoryRange = when (side) {
                             ModSide.CLIENT -> 2..4
@@ -60,5 +65,10 @@ object NeoForgeModLoader : ModLoader {
                 }
             }
         }
+        groupLoaderTasks(
+            loaderPackageName = listOf("net.neoforged.moddevgradle"),
+            taskGroups = listOf(Branding.MDG.publicTaskGroup, Branding.MDG.internalTaskGroup),
+            loader = ModLoaderType.NEOFORGE,
+        )
     }
 }

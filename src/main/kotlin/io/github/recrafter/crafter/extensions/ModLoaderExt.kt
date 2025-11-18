@@ -10,12 +10,13 @@ import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoader
 import io.github.recrafter.crafter.core.extensions.getDataPackFormat
 import io.github.recrafter.crafter.core.extensions.getRunTaskName
+import io.github.recrafter.crafter.core.extensions.groupMatchingTasks
 import io.github.recrafter.crafter.core.extensions.mixins
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
-import io.github.recrafter.crafter.core.tasks.GenerateDataPackConfigTask
-import io.github.recrafter.crafter.core.tasks.GenerateModEntryPointsTask
-import io.github.recrafter.crafter.core.tasks.GenerateModMixinsConfigTask
-import io.github.recrafter.crafter.tasks.generate.GenerateModConfigTask
+import io.github.recrafter.crafter.core.tasks.craft.internal.CraftDataPackConfigTask
+import io.github.recrafter.crafter.core.tasks.craft.internal.CraftEntryPointsTask
+import io.github.recrafter.crafter.core.tasks.craft.internal.CraftMixinsConfigTask
+import io.github.recrafter.crafter.tasks.craft.internal.CraftModConfigTask
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.AbstractCopyTask
@@ -65,36 +66,36 @@ fun ModLoader.configure(
             }
         }
         if (isDataPackConfigRequired()) {
-            val generateDataPackConfigTask = registerTask<GenerateDataPackConfigTask> {
+            val craftDataPackConfigTask = registerTask<CraftDataPackConfigTask> {
                 this.mod = mod
                 minFormat = mod.minMinecraftVersion.getDataPackFormat(pluginProject)
                 maxFormat = mod.maxMinecraftVersion.getDataPackFormat(pluginProject)
                 outputFile = getTempFile(mod.resourcePackConfigName)
             }
             processResources {
-                copyTaskOutput(generateDataPackConfigTask)
+                copyTaskOutput(craftDataPackConfigTask)
             }
         }
-        val generateMixinsConfigTask = registerTask<GenerateModMixinsConfigTask> {
+        val craftMixinsConfigTask = registerTask<CraftMixinsConfigTask> {
             this.mod = mod
             sideSourceSetDirectories = sideProjects.mapValues { it.value.sourceSets.mixins.java.srcDirs.first() }
             outputFile = getTempFile(mod.mixinsConfigName)
         }
-        val generateModConfigTask = registerTask<GenerateModConfigTask> {
+        val craftModConfigTask = registerTask<CraftModConfigTask> {
             this.mod = mod
             this.splitSide = splitSide
             outputFile = getTempFile(mod.configName)
         }
         processResources {
-            copyTaskOutput(generateMixinsConfigTask, mod.assetsPath)
-            copyTaskOutput(generateModConfigTask, mod.configParentPath)
+            copyTaskOutput(craftMixinsConfigTask, mod.assetsPath)
+            copyTaskOutput(craftModConfigTask, mod.configParentPath)
             iconFile?.let { copyFile(it, mod.assetsPath) }
             if (!isMergedMappings) {
                 moveFile(mod.accessConfigName, mod.accessConfigPath)
             }
         }
     }
-    val generateModEntryPointsTask = registerTask<GenerateModEntryPointsTask> {
+    val craftEntryPointsTask = registerTask<CraftEntryPointsTask> {
         this.mod = mod
         sides = sideProjects.keys
         outputDirectory = craftedSourcesDirectory
@@ -105,7 +106,7 @@ fun ModLoader.configure(
             val sideSourceSets = sideProjects.flatMap { it.value.sourceSets }
             java {
                 srcDirs(
-                    generateModEntryPointsTask.map { it.outputDirectory },
+                    craftEntryPointsTask.map { it.outputDirectory },
                     sideSourceSets.flatMap { it.java.srcDirs },
                 )
                 destinationDirectory = mergedSourceSetsDirectory
@@ -121,4 +122,12 @@ fun ModLoader.configure(
         }
     }
     configurePlugin(mod, pluginProject, sideProjects.keys, accessConfig)
+    groupIdeTasks()
 }
+
+private fun Project.groupIdeTasks() {
+    groupMatchingTasks("IDE/Eclipse", "eclipse")
+    groupMatchingTasks("IDE/VSCode", "vscode")
+    groupMatchingTasks("IDE/IntelliJ IDEA", "idea", "intellij")
+}
+

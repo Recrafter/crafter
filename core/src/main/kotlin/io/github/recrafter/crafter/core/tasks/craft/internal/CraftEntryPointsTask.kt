@@ -1,4 +1,4 @@
-package io.github.recrafter.crafter.core.tasks
+package io.github.recrafter.crafter.core.tasks.craft.internal
 
 import com.palantir.javapoet.*
 import io.github.diskria.kotlin.utils.Constants
@@ -21,7 +21,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import javax.lang.model.element.Modifier
 
-abstract class GenerateModEntryPointsTask : DefaultTask() {
+abstract class CraftEntryPointsTask : DefaultTask() {
 
     @get:Internal
     abstract val mod: Property<Mod>
@@ -33,7 +33,7 @@ abstract class GenerateModEntryPointsTask : DefaultTask() {
     abstract val outputDirectory: DirectoryProperty
 
     init {
-        group = CrafterConstants.TASK_GROUP
+        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
     }
 
     @TaskAction

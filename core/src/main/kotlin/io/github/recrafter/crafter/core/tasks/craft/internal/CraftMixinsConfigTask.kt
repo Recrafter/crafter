@@ -1,4 +1,4 @@
-package io.github.recrafter.crafter.core.tasks
+package io.github.recrafter.crafter.core.tasks.craft.internal
 
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.*
@@ -20,7 +20,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-abstract class GenerateModMixinsConfigTask : DefaultTask() {
+abstract class CraftMixinsConfigTask : DefaultTask() {
 
     @get:Internal
     abstract val mod: Property<Mod>
@@ -32,7 +32,7 @@ abstract class GenerateModMixinsConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.TASK_GROUP
+        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
     }
 
     @TaskAction

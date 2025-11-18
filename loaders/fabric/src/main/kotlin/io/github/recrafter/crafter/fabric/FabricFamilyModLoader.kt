@@ -21,17 +21,21 @@ import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.mappingsType
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
+import io.github.recrafter.crafter.core.extensions.lazyDisable
 import io.github.recrafter.crafter.core.extensions.mappings
 import io.github.recrafter.crafter.core.extensions.minecraft
 import io.github.recrafter.crafter.core.extensions.modImplementation
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
-import io.github.recrafter.crafter.fabric.extensions.fabric
+import io.github.recrafter.crafter.fabric.extensions.quilt
 import io.github.recrafter.crafter.fabric.extensions.legacyFabric
 import io.github.recrafter.crafter.fabric.extensions.ornithe
 import io.ktor.http.*
+import net.fabricmc.loom.util.Constants.TaskGroup
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.invoke
 import java.io.File
 
 abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
@@ -40,7 +44,7 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
 
     override fun configurePlugin(mod: Mod, project: Project, sides: Set<ModSide>, accessConfig: File) = with(project) {
         val runDirectory = projectDirectory.resolve(mod.runDirectoryName)
-        fabric {
+        quilt {
             if (loader == ModLoaderType.BABRIC) {
                 ensurePluginApplied("maven-publish")
                 ensurePluginApplied("babric-loom-extension")
@@ -60,6 +64,7 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
             runs {
                 ModSide.values().forEach { side ->
                     named(side.getName()) {
+                        ideConfigGenerated(false)
                         name = side.getName(`Title Case`)
                         runDir = runDirectory.resolve(side.getName()).relativeTo(projectDirectory).path
                         when (side) {
@@ -114,6 +119,20 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
             mod.log(project, "Mappings: $mappingsArtifact")
             mappings(mappingsArtifact)
         }
+        val extraPackageNamePrefix = when (loader) {
+            ModLoaderType.LEGACY_FABRIC -> "net.legacyfabric.legacylooming"
+            ModLoaderType.ORNITHE -> "net.ornithemc.ploceus"
+            ModLoaderType.BABRIC -> "babric"
+            else -> null
+        }
+        tasks {
+            lazyDisable("ideaSyncTask")
+        }
+        groupLoaderTasks(
+            loaderPackageName = listOfNotNull("net.fabricmc.loom", extraPackageNamePrefix),
+            taskGroups = listOf(TaskGroup.FABRIC, TaskGroup.IDE),
+            loader = loader,
+        )
     }
 
     private fun resolveLoader(mod: Mod): String =

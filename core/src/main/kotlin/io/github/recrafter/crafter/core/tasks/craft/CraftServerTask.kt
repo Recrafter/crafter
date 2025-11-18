@@ -1,4 +1,4 @@
-package io.github.recrafter.crafter.core.tasks.test
+package io.github.recrafter.crafter.core.tasks.craft
 
 import io.github.recrafter.crafter.core.CrafterConstants
 import org.gradle.api.DefaultTask
@@ -6,6 +6,6 @@ import org.gradle.api.DefaultTask
 abstract class CraftServerTask : DefaultTask() {
 
     init {
-        group = CrafterConstants.TASK_GROUP
+        group = CrafterConstants.TASKS_CATEGORY
     }
 }

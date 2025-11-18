@@ -1,4 +1,4 @@
-package io.github.recrafter.crafter.core.tasks
+package io.github.recrafter.crafter.core.tasks.craft.internal
 
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFile
@@ -14,7 +14,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-abstract class GenerateDataPackConfigTask : DefaultTask() {
+abstract class CraftDataPackConfigTask : DefaultTask() {
 
     @get:Internal
     abstract val mod: Property<Mod>
@@ -29,7 +29,7 @@ abstract class GenerateDataPackConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.TASK_GROUP
+        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
     }
 
     @TaskAction

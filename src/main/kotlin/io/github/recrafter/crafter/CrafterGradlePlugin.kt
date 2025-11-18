@@ -33,9 +33,9 @@ import io.github.recrafter.crafter.core.helpers.server.EulaHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerPropertiesHelper
 import io.github.recrafter.crafter.core.sync.parchment.ParchmentSynchronizer
-import io.github.recrafter.crafter.core.tasks.ZipSplitSidesModTask
-import io.github.recrafter.crafter.core.tasks.test.CraftClientTask
-import io.github.recrafter.crafter.core.tasks.test.CraftServerTask
+import io.github.recrafter.crafter.core.tasks.craft.CraftClientTask
+import io.github.recrafter.crafter.core.tasks.craft.CraftServerTask
+import io.github.recrafter.crafter.core.tasks.external.ZipSplitSidesModTask
 import io.github.recrafter.crafter.extensions.configure
 import io.github.recrafter.crafter.extensions.configureJvmTarget
 import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
@@ -67,7 +67,7 @@ import java.io.File
 @Suppress("unused")
 class CrafterGradlePlugin : Plugin<Project> {
 
-    override fun apply(project: Project): Unit = with(project) {
+    override fun apply(project: Project) = with(project) {
         if (!project.isRootProject()) {
             gradleError("The Crafter must be applied only to the root project")
         }

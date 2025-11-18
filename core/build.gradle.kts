@@ -1,17 +1,17 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    `kotlin-dsl`
     alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
-    implementation(gradleKotlinDsl())
-    implementation(libs.kotlin.serialization.xml)
-    implementation(libs.kotlin.coroutines)
-    implementation(libs.kotlin.jvm.plugin)
-    implementation(libs.jsoup)
-    implementation(libs.java.poet)
+    implementation(kotlin("gradle-plugin"))
 
     implementation(libs.bedrock)
+
+    implementation(libs.kotlin.serialization.xml)
+    implementation(libs.java.poet)
+    implementation(libs.jsoup)
+    implementation(libs.ktor)
+
     implementation(libs.bundles.diskria.utils)
-    implementation(libs.bundles.ktor.client)
 }

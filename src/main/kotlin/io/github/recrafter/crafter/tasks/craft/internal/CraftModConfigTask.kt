@@ -1,11 +1,11 @@
-package io.github.recrafter.crafter.tasks.generate
+package io.github.recrafter.crafter.tasks.craft.internal
 
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFile
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeToJson
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeToToml
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeTomlToFile
-import io.github.recrafter.bedrock.loaders.ModLoaderType.*
+import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.Mod
@@ -21,7 +21,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-abstract class GenerateModConfigTask : DefaultTask() {
+abstract class CraftModConfigTask : DefaultTask() {
 
     @get:Internal
     abstract val mod: Property<Mod>
@@ -33,7 +33,7 @@ abstract class GenerateModConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.TASK_GROUP
+        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
     }
 
     @TaskAction
@@ -43,44 +43,44 @@ abstract class GenerateModConfigTask : DefaultTask() {
         val outputFile = outputFile.get().asFile.ensureFileExists()
 
         when (mod.loader) {
-            FABRIC -> {
-                val config = FabricModConfig.of(mod, splitSide)
+            ModLoaderType.FABRIC -> {
+                val config = FabricModConfig.Companion.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
-            QUILT -> {
-                val config = QuiltModConfig.of(mod, splitSide)
+            ModLoaderType.QUILT -> {
+                val config = QuiltModConfig.Companion.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
-            LEGACY_FABRIC -> {
-                val config = FabricModConfig.of(mod, splitSide)
+            ModLoaderType.LEGACY_FABRIC -> {
+                val config = FabricModConfig.Companion.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
-            ORNITHE -> {
-                val config = OrnitheModConfig.of(mod, splitSide)
+            ModLoaderType.ORNITHE -> {
+                val config = OrnitheModConfig.Companion.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
-            BABRIC -> {
-                val config = FabricModConfig.of(mod, splitSide)
+            ModLoaderType.BABRIC -> {
+                val config = FabricModConfig.Companion.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
-            FORGE -> {
-                val config = ForgeModConfig.of(mod)
+            ModLoaderType.FORGE -> {
+                val config = ForgeModConfig.Companion.of(mod)
                 mod.log(project, "Mod config generated", config.serializeToToml())
                 config.serializeTomlToFile(outputFile)
             }
 
-            NEOFORGE -> {
-                val config = NeoForgeModConfig.of(mod)
+            ModLoaderType.NEOFORGE -> {
+                val config = NeoForgeModConfig.Companion.of(mod)
                 mod.log(project, "Mod config generated", config.serializeToToml())
                 config.serializeTomlToFile(outputFile)
             }

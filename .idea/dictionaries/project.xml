@@ -23,7 +23,9 @@
       <w>jvmargs</w>
       <w>ldtteam</w>
       <w>legacyfabric</w>
+      <w>legacylooming</w>
       <w>minecraftforge</w>
+      <w>moddevgradle</w>
       <w>modid</w>
       <w>modrinth</w>
       <w>mojang</w>
@@ -42,6 +44,7 @@
       <w>spdx</w>
       <w>spongepowered</w>
       <w>temurin</w>
+      <w>vscode</w>
     </words>
   </dictionary>
 </component>

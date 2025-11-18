@@ -5,29 +5,30 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     `kotlin-dsl`
-    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.projektor)
 }
 
-val includedModules = buildList {
+val includedProjects = buildList {
     add(project(":core"))
     addAll(project(":loaders").children)
 }
 
 dependencies {
-    implementation(libs.kotlin.jvm.plugin)
-    implementation(libs.kotlin.serialization.xml)
-    implementation(libs.jsoup)
-    implementation(libs.java.poet)
+    implementation(kotlin("gradle-plugin"))
 
-    implementation(libs.bundles.diskria.utils)
-    implementation(libs.bundles.ktor.client)
     implementation(libs.bundles.loader.plugins)
-
     implementation(libs.bedrock)
 
-    includedModules.forEach { compileOnly(it) }
+    implementation(libs.kotlin.serialization.xml)
+    implementation(libs.java.poet)
+    implementation(libs.jsoup)
+
+    implementation(libs.bundles.diskria.utils)
+
+    includedProjects.forEach {
+        compileOnly(it)
+    }
 }
 
 projekt {
@@ -38,9 +39,9 @@ projekt {
 
 tasks {
     jar {
-        includedModules.forEach {
+        includedProjects.forEach {
             dependsOn(it.tasks.jar)
-            from(it.sourceSets.main.output)
+            from(it.sourceSets.map { it.output })
         }
     }
 }
