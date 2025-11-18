@@ -46,7 +46,7 @@ abstract class ComponentSynchronizer {
                 .groupBy { it.minecraftVersion }
                 .filterKeys { minecraftVersion ->
                     loader?.let { loader ->
-                        loader.supportedVersionRange.includesMinecraftVersion(minecraftVersion) &&
+                        loader.supportedVersionRange.includesVersion(minecraftVersion) &&
                                 (mappingsType == null || mappingsType == minecraftVersion.mappingsType)
                     } ?: true
                 }

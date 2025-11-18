@@ -10,5 +10,5 @@ interface ModLoader {
     fun configurePlugin(mod: Mod, project: Project, sides: Set<ModSide>, accessConfig: File): Any?
     fun getPrepareRunTasks(pluginProject: Project, side: ModSide): List<Task> = emptyList()
     fun getAccessConfigPreset(): String = Constants.Char.EMPTY
-    fun isResourcePackConfigRequired(): Boolean = false
+    fun isDataPackConfigRequired(): Boolean = false
 }

@@ -10,8 +10,7 @@ import io.github.recrafter.bedrock.versions.MappingsType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
-import io.ktor.http.Url
-import io.ktor.http.path
+import io.ktor.http.*
 import java.util.concurrent.TimeUnit
 
 class OrnitheMappingsSynchronizer(
@@ -20,7 +19,7 @@ class OrnitheMappingsSynchronizer(
 
     override val loader: ModLoaderType = ModLoaderType.ORNITHE
 
-    override val componentName: String = "feather-${mappingsType.getName()}-mappings"
+    override val componentName: String = "${mappingsType.getName()}-mappings"
 
     override val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(7)
 

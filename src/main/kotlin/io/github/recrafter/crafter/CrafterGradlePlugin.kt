@@ -58,7 +58,10 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JvmVendorSpec
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.provideDelegate
+import org.gradle.kotlin.dsl.withType
 import java.io.File
 
 @Suppress("unused")
@@ -168,6 +171,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 archivesName = mod.id
             }
             java {
+                withSourcesJar()
                 toolchain {
                     configureJavaVendor(mod.javaVersion, JvmVendorSpec.ADOPTIUM, JvmVendorSpec.AZUL)
                 }
@@ -314,7 +318,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
         }
         ModSide.values().forEach { side ->
-            val pluginProject = if (isMergedMappings) project else sideProjects[side] ?: return@forEach
+            val pluginProject = if (isMergedMappings) project else sideProjects.values.first()
             when (side) {
                 ModSide.CLIENT -> project.registerTask<CraftClientTask>()
                 ModSide.SERVER -> project.registerTask<CraftServerTask>()

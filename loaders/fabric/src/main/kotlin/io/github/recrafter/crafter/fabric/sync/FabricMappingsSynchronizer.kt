@@ -14,7 +14,7 @@ object FabricMappingsSynchronizer : MavenComponentSynchronizer() {
 
     override val loader: ModLoaderType = ModLoaderType.FABRIC
 
-    override val componentName: String = "yarn"
+    override val componentName: String = "mappings"
 
     override val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(7)
 

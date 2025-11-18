@@ -11,9 +11,9 @@ data class ResourcePackConfig(
     val pack: PackConfig,
 ) {
     companion object {
-        fun of(mod: Mod, format: String): ResourcePackConfig =
+        fun of(mod: Mod, minFormat: String, maxFormat: String = minFormat): ResourcePackConfig =
             ResourcePackConfig(
-                pack = PackConfig.of(mod, format)
+                pack = PackConfig.of(mod, minFormat, maxFormat)
             )
     }
 }

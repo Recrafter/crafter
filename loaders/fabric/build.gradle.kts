@@ -11,9 +11,9 @@ dependencies {
     implementation(libs.bundles.diskria.utils)
     implementation(libs.bundles.ktor.client)
 
-    implementation(libs.fabric.plugin)
-    implementation(libs.legacy.fabric.plugin)
-    implementation(libs.ornithe.plugin)
+    compileOnly(libs.quilt.plugin)
+    compileOnly(libs.legacy.fabric.plugin)
+    compileOnly(libs.ornithe.plugin)
 
     compileOnly(project(":core"))
 }

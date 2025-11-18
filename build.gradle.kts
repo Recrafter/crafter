@@ -23,7 +23,7 @@ dependencies {
 
     implementation(libs.bundles.diskria.utils)
     implementation(libs.bundles.ktor.client)
-    implementation(libs.bundles.implementation.loader.plugins)
+    implementation(libs.bundles.loader.plugins)
 
     implementation(libs.bedrock)
 

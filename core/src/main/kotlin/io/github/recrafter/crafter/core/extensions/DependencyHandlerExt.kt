@@ -5,13 +5,16 @@ import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+fun DependencyHandler.minecraft(dependencyNotation: Any): Dependency? =
+    add("minecraft", dependencyNotation)
+
 fun DependencyHandler.minecraft(
     groupId: String,
     artefactId: String,
     version: String,
     classifier: String? = null
 ): Dependency? =
-    add("minecraft", groupId, artefactId, version, classifier)
+    minecraft(buildArtifactCoordinates(groupId, artefactId, version, classifier))
 
 fun DependencyHandler.mappings(dependencyNotation: Any): Dependency? =
     add("mappings", dependencyNotation)

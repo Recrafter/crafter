@@ -11,9 +11,9 @@ data class DataPackConfig(
     val pack: PackConfig,
 ) {
     companion object {
-        fun of(mod: Mod, format: String): DataPackConfig =
+        fun of(mod: Mod, minFormat: String, maxFormat: String = minFormat): DataPackConfig =
             DataPackConfig(
-                pack = PackConfig.of(mod, format)
+                pack = PackConfig.of(mod, minFormat, maxFormat)
             )
     }
 }

@@ -1,6 +1,7 @@
 package io.github.recrafter.crafter.forge
 
 import io.github.diskria.gradle.utils.extensions.*
+import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
 import io.github.diskria.gradle.utils.helpers.jvm.Size
 import io.github.diskria.kotlin.utils.Constants
@@ -27,7 +28,7 @@ object ForgeModLoader : ModLoader {
     override fun getPrepareRunTasks(pluginProject: Project, side: ModSide): List<Task> =
         listOfNotNull(pluginProject.getTaskOrNull("prepareRun" + side.getName(PascalCase)))
 
-    override fun isResourcePackConfigRequired(): Boolean = true
+    override fun isDataPackConfigRequired(): Boolean = true
 
     override fun configurePlugin(
         mod: Mod,
@@ -39,11 +40,11 @@ object ForgeModLoader : ModLoader {
         forge {
             ensurePluginApplied("org.parchmentmc.librarian.forgegradle")
 
+            val mappingsArtifact = mod.versions.mappings + Constants.Char.HYPHEN + mod.versions.mappingsMinecraft
+            mod.log(project, "Mappings: $mappingsArtifact")
+            mappings("parchment", mappingsArtifact)
+
             reobf = mod.minecraftVersion < Release.V_1_20_6
-            mappings(
-                "parchment",
-                mod.versions.mappings + Constants.Char.HYPHEN + mod.versions.mappingsMinecraft
-            )
             setAccessTransformer(accessConfig)
             runs {
                 ModSide.values().forEach { side ->
@@ -75,7 +76,9 @@ object ForgeModLoader : ModLoader {
         }
         dependencies {
             val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.versions.loader}"
-            minecraft("net.minecraftforge", "forge", forgeVersion)
+            val minecraftArtifact = buildArtifactCoordinates("net.minecraftforge", "forge", forgeVersion)
+            mod.log(project, "Minecraft: $minecraftArtifact")
+            minecraft(minecraftArtifact)
         }
         tasks {
             jar {

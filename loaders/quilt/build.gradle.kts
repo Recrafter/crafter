@@ -11,7 +11,6 @@ dependencies {
     implementation(libs.bundles.diskria.utils)
     implementation(libs.bundles.ktor.client)
 
-    compileOnly(libs.quilt.plugin)
-
     compileOnly(project(":core"))
+    compileOnly(project(":loaders:fabric"))
 }

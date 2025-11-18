@@ -12,14 +12,14 @@ import java.util.concurrent.TimeUnit
 
 object BabricMappingsSynchronizer : MavenComponentSynchronizer() {
 
-    override val loader: ModLoaderType = ModLoaderType.FABRIC
+    override val loader: ModLoaderType = ModLoaderType.BABRIC
 
-    override val componentName: String = "yarn"
+    override val componentName: String = "mappings"
 
     override val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(7)
 
     override val mavenUrl: Url =
-        buildUrl("maven.fabricmc.net") {
+        buildUrl("maven.glass-launcher.net") {
             path("babric", "babric", "barn", MavenMetadata.FILE_NAME)
         }
 

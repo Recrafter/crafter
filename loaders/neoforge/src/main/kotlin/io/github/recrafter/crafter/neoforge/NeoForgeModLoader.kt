@@ -9,8 +9,8 @@ import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoader
 import io.github.recrafter.crafter.neoforge.extensions.neoforge
 import org.gradle.api.Project
-import java.io.File
 import org.gradle.kotlin.dsl.assign
+import java.io.File
 
 object NeoForgeModLoader : ModLoader {
 
@@ -26,6 +26,7 @@ object NeoForgeModLoader : ModLoader {
             parchment {
                 minecraftVersion = mod.versions.mappingsMinecraft
                 mappingsVersion = mod.versions.mappings
+                mod.log(project, "Mappings: ${parchmentArtifact.get()}")
             }
             setAccessTransformers(accessConfig)
             runs {

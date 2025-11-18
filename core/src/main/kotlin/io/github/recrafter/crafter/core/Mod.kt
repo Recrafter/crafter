@@ -1,6 +1,7 @@
 package io.github.recrafter.crafter.core
 
 import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.log
 import io.github.diskria.gradle.utils.helpers.JarConstants
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
@@ -16,6 +17,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
+import org.gradle.api.Project
 import java.util.*
 
 data class Mod(
@@ -42,6 +44,8 @@ data class Mod(
     val packageName: String = namespace.appendPackageName(id.setCase(snake_case, `dot․case`))
     val packagePath: String = packageName.setCase(`dot․case`, `path∕case`)
     val minecraftVersion: MinecraftVersion = minMinecraftVersion
+
+    val versionRange: MinecraftVersionRange = minMinecraftVersion..maxMinecraftVersion
 
     val loaderFamily: ModLoaderFamily =
         ModLoaderFamily.of(loader)
@@ -128,6 +132,17 @@ data class Mod(
             }
             return maxJava
         }
+
+    fun log(project: Project, title: String, message: String? = null) {
+        project.log(buildString {
+            append("[Crafter] ")
+            append("[${loader.displayName} / ${versionRange.asString()}] $title")
+            message?.let {
+                appendLine()
+                append(it)
+            }
+        })
+    }
 
     fun getEntryPointName(side: ModSide): String =
         buildString {

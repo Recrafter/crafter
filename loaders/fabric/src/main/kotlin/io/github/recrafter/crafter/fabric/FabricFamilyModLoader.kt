@@ -1,13 +1,17 @@
 package io.github.recrafter.crafter.fabric
 
 import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
+import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
 import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.extensions.restoreDependencyResolutionRepositories
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
 import io.github.diskria.gradle.utils.helpers.jvm.Size
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.`Title Case`
+import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
+import io.github.diskria.kotlin.utils.extensions.common.fileName
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.era.common.MinecraftEra
 import io.github.recrafter.bedrock.loaders.ModLoaderType
@@ -24,6 +28,7 @@ import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
 import io.github.recrafter.crafter.fabric.extensions.fabric
 import io.github.recrafter.crafter.fabric.extensions.legacyFabric
 import io.github.recrafter.crafter.fabric.extensions.ornithe
+import io.ktor.http.*
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.dependencies
@@ -36,6 +41,22 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
     override fun configurePlugin(mod: Mod, project: Project, sides: Set<ModSide>, accessConfig: File) = with(project) {
         val runDirectory = projectDirectory.resolve(mod.runDirectoryName)
         fabric {
+            if (loader == ModLoaderType.BABRIC) {
+                ensurePluginApplied("maven-publish")
+                ensurePluginApplied("babric-loom-extension")
+                customMinecraftMetadata = buildUrl("babric.github.io") {
+                    path("manifest-polyfill", fileName(mod.minecraftVersion.asString(), Constants.File.Extension.JSON))
+                }.toString()
+                intermediaryUrl = buildUrl("maven.glass-launcher.net") {
+                    path("babric", "babric", "intermediary")
+                }.toString().run {
+                    val placeholder = "%1\$s"
+                    this
+                        .appendPath(placeholder)
+                        .appendPath(fileName("intermediary-$placeholder-v2", Constants.File.Extension.JAR))
+                }
+            }
+            accessWidenerPath = accessConfig
             runs {
                 ModSide.values().forEach { side ->
                     named(side.getName()) {
@@ -67,20 +88,12 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
                     }
                 }
             }
-            accessWidenerPath = accessConfig
         }
         if (mod.minecraftVersion.mappingsType != MappingsType.MERGED) {
-            val splitSide = sides.single()
-            fabric {
-                when (splitSide) {
-                    ModSide.CLIENT -> clientOnlyMinecraftJar()
-                    ModSide.SERVER -> serverOnlyMinecraftJar()
-                }
-            }
             if (loader == ModLoaderType.ORNITHE) {
                 ornithe {
                     @Suppress("DEPRECATION")
-                    when (splitSide) {
+                    when (sides.single()) {
                         ModSide.CLIENT -> clientOnlyMappings()
                         ModSide.SERVER -> serverOnlyMappings()
                     }
@@ -89,11 +102,26 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
         }
         restoreDependencyResolutionRepositories()
         dependencies {
-            minecraft("com.mojang", "minecraft", mod.minecraftVersion.asString())
-            modImplementation("net.fabricmc", "fabric-loader", mod.versions.loader)
-            mappings(resolveMappings(project, mod))
+            val minecraftArtifact = buildArtifactCoordinates("com.mojang", "minecraft", mod.minecraftVersion.asString())
+            mod.log(project, "Minecraft: $minecraftArtifact")
+            minecraft(minecraftArtifact)
+
+            val loaderArtifact = resolveLoader(mod)
+            mod.log(project, "Loader: $loaderArtifact")
+            modImplementation(loaderArtifact)
+
+            val mappingsArtifact = resolveMappings(project, mod)
+            mod.log(project, "Mappings: $mappingsArtifact")
+            mappings(mappingsArtifact)
         }
     }
+
+    private fun resolveLoader(mod: Mod): String =
+        when (loader) {
+            ModLoaderType.QUILT -> buildArtifactCoordinates("org.quiltmc", "quilt-loader", mod.versions.loader)
+            ModLoaderType.BABRIC -> buildArtifactCoordinates("babric", "fabric-loader", mod.versions.loader)
+            else -> buildArtifactCoordinates("net.fabricmc", "fabric-loader", mod.versions.loader)
+        }
 
     private fun resolveMappings(project: Project, mod: Mod): Any = with(project) {
         when (loader) {
@@ -104,8 +132,17 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
                 "v2"
             )
 
+            ModLoaderType.QUILT -> buildArtifactCoordinates(
+                "org.quiltmc",
+                "quilt-mappings",
+                mod.versions.mappings.orEmpty(),
+                "intermediary-v2"
+            )
+
             ModLoaderType.LEGACY_FABRIC -> legacyFabric.yarn(mod.versions.mappingsMinecraft, mod.versions.mappings)
             ModLoaderType.ORNITHE -> ornithe.featherMappings(mod.versions.mappings)
+            ModLoaderType.BABRIC -> buildArtifactCoordinates("babric", "barn", mod.versions.mappings.orEmpty(), "v2")
+
             else -> failWithUnsupportedType(loader::class)
         }
     }

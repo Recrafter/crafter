@@ -2,14 +2,12 @@
 projektor = "4.+"
 
 parchment-plugin = "1.2.0"
-fabric-plugin = "1.12.1"
 quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"
-ornithe-plugin = "1.12.1"
-babric-plugin = "1.5.3"
+ornithe-plugin = "1.11.6"
+babric-plugin = "1.13.2"
 forge-plugin = "6.0.46"
 neoforge-plugin = "2.0.116"
-
 kotlin = "2.0.21"
 kotlin-serialization-xml = "0.90.1"
 ktor = "3.0.0"
@@ -24,7 +22,7 @@ java-poet = "0.7.0"
 jsoup = "1.21.2"
 okio = "3.9.1"
 
-bedrock = "0.1.3"
+bedrock = "0.1.4"
 
 [plugins]
 projektor = { id = "io.github.diskria.projektor", version.ref = "projektor" }
@@ -46,11 +44,10 @@ kotlin-serialization-xml = { group = "io.github.pdvrieze.xmlutil", name = "seria
 kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
 
 parchment-plugin = { group = "org.parchmentmc.librarian.forgegradle", name = "org.parchmentmc.librarian.forgegradle.gradle.plugin", version.ref = "parchment-plugin" }
-fabric-plugin = { group = "fabric-loom", name = "fabric-loom.gradle.plugin", version.ref = "fabric-plugin" }
 quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
-babric-plugin = { group = "babric-loom", name = "babric-loom.gradle.plugin", version.ref = "babric-plugin" }
+babric-plugin = { group = "babric-loom-extension", name = "babric-loom-extension.gradle.plugin", version.ref = "babric-plugin" }
 forge-plugin = { group = "net.minecraftforge.gradle", name = "net.minecraftforge.gradle.gradle.plugin", version.ref = "forge-plugin" }
 neoforge-plugin = { group = "net.neoforged.moddev", name = "net.neoforged.moddev.gradle.plugin", version.ref = "neoforge-plugin" }
 
@@ -70,11 +67,12 @@ ktor-client = [
     "ktor-client-core",
     "ktor-client-cio",
 ]
-implementation-loader-plugins = [
+loader-plugins = [
     "parchment-plugin",
-    "fabric-plugin",
+    "quilt-plugin",
     "legacy-fabric-plugin",
     "ornithe-plugin",
+    "babric-plugin",
     "forge-plugin",
     "neoforge-plugin",
 ]

@@ -14,4 +14,5 @@ dependencies {
     compileOnly(libs.babric.plugin)
 
     compileOnly(project(":core"))
+    compileOnly(project(":loaders:fabric"))
 }

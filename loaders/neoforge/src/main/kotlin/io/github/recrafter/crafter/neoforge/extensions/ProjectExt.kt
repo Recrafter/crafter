@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.neoforge.extensions
 
-import io.github.diskria.gradle.utils.extensions.*
+import io.github.diskria.gradle.utils.extensions.withPluginExtension
 import net.neoforged.moddevgradle.dsl.NeoForgeExtension
 import org.gradle.api.Project
 

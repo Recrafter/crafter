@@ -5,6 +5,7 @@ import io.github.diskria.kotlin.utils.extensions.*
 import io.github.diskria.kotlin.utils.extensions.common.`dot․case`
 import io.github.diskria.kotlin.utils.extensions.common.`path∕case`
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFile
+import io.github.diskria.kotlin.utils.extensions.serialization.serializeToJson
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.Mod
@@ -57,6 +58,7 @@ abstract class GenerateModMixinsConfigTask : DefaultTask() {
         }.filterValues { it.isNotEmpty() }
 
         val config = MixinsConfig.of(mod, sideMixins)
+        mod.log(project, "Mixins config generated", config.serializeToJson())
         config.serializeJsonToFile(outputFile.ensureFileExists())
     }
 }

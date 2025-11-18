@@ -24,7 +24,7 @@ import javax.lang.model.element.Modifier
 abstract class GenerateModEntryPointsTask : DefaultTask() {
 
     @get:Internal
-    abstract val minecraftMod: Property<Mod>
+    abstract val mod: Property<Mod>
 
     @get:Internal
     abstract val sides: SetProperty<ModSide>
@@ -38,14 +38,15 @@ abstract class GenerateModEntryPointsTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val minecraftMod = minecraftMod.get()
+        val mod = mod.get()
         val sides = sides.get()
         val outputDirectory = outputDirectory.get().asFile
 
         sides.forEach { side ->
-            val entryPointClass = buildSideEntryPointClass(minecraftMod, side)
-            val packageName = minecraftMod.packageName.appendPackageName(side.getName())
+            val entryPointClass = buildSideEntryPointClass(mod, side)
+            val packageName = mod.packageName.appendPackageName(side.getName())
             val javaFile = JavaFile.builder(packageName, entryPointClass).build()
+            mod.log(project, "${side.getName(PascalCase)} entry point generated", javaFile.toString())
             javaFile.writeTo(outputDirectory)
         }
     }

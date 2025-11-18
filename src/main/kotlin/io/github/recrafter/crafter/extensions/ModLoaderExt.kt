@@ -8,13 +8,13 @@ import io.github.recrafter.bedrock.versions.mappingsType
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoader
-import io.github.recrafter.crafter.core.extensions.getResourcePackFormat
+import io.github.recrafter.crafter.core.extensions.getDataPackFormat
 import io.github.recrafter.crafter.core.extensions.getRunTaskName
 import io.github.recrafter.crafter.core.extensions.mixins
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
+import io.github.recrafter.crafter.core.tasks.GenerateDataPackConfigTask
 import io.github.recrafter.crafter.core.tasks.GenerateModEntryPointsTask
 import io.github.recrafter.crafter.core.tasks.GenerateModMixinsConfigTask
-import io.github.recrafter.crafter.core.tasks.GenerateResourcePackConfigTask
 import io.github.recrafter.crafter.tasks.generate.GenerateModConfigTask
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
@@ -64,14 +64,15 @@ fun ModLoader.configure(
                 }
             }
         }
-        if (isResourcePackConfigRequired()) {
-            val generateResourcePackConfigTask = registerTask<GenerateResourcePackConfigTask> {
+        if (isDataPackConfigRequired()) {
+            val generateDataPackConfigTask = registerTask<GenerateDataPackConfigTask> {
                 this.mod = mod
+                minFormat = mod.minMinecraftVersion.getDataPackFormat(pluginProject)
+                maxFormat = mod.maxMinecraftVersion.getDataPackFormat(pluginProject)
                 outputFile = getTempFile(mod.resourcePackConfigName)
-                format = mod.minecraftVersion.getResourcePackFormat(pluginProject)
             }
             processResources {
-                copyTaskOutput(generateResourcePackConfigTask)
+                copyTaskOutput(generateDataPackConfigTask)
             }
         }
         val generateMixinsConfigTask = registerTask<GenerateModMixinsConfigTask> {
@@ -94,7 +95,7 @@ fun ModLoader.configure(
         }
     }
     val generateModEntryPointsTask = registerTask<GenerateModEntryPointsTask> {
-        minecraftMod = mod
+        this.mod = mod
         sides = sideProjects.keys
         outputDirectory = craftedSourcesDirectory
     }

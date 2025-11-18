@@ -8,8 +8,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
-import io.ktor.http.Url
-import io.ktor.http.path
+import io.ktor.http.*
 import java.util.concurrent.TimeUnit
 
 object ForgeLoaderSynchronizer : MavenComponentSynchronizer() {

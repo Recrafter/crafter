@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.bundles.diskria.utils)
     implementation(libs.bundles.ktor.client)
 
-    implementation(libs.neoforge.plugin)
+    compileOnly(libs.neoforge.plugin)
 
     compileOnly(project(":core"))
 }
