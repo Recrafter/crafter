@@ -1,6 +1,6 @@
 import io.github.diskria.gradle.utils.extensions.children
 import io.github.diskria.gradle.utils.extensions.getCatalogVersion
-import io.github.diskria.gradle.utils.extensions.main
+import io.github.diskria.gradle.utils.extensions.implementation
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -20,7 +20,7 @@ dependencies {
     implementation(libs.bundles.loader.plugins)
     implementation(libs.bedrock)
 
-    implementation(libs.kotlin.serialization.xml)
+    implementation(libs.kotlin.serialization.json)
     implementation(libs.java.poet)
     implementation(libs.jsoup)
 

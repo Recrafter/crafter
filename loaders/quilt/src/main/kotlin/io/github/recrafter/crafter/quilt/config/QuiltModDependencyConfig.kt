@@ -2,6 +2,7 @@ package io.github.recrafter.crafter.quilt.config
 
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.versions.VersionBound
 import io.github.recrafter.crafter.core.versions.range.InequalityVersionRange
 import kotlinx.serialization.SerialName
@@ -24,7 +25,7 @@ data class QuiltModDependencyConfig(
         fun createJavaDependency(mod: Mod): QuiltModDependencyConfig =
             of(
                 id = "java",
-                version = InequalityVersionRange.min(VersionBound.inclusive(mod.minJavaVersion.toString())),
+                version = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
             )
 
         fun createMinecraftDependency(mod: Mod): QuiltModDependencyConfig =

@@ -27,7 +27,7 @@ val Project.ornithe: PloceusGradleExtensionApi
         return getExtension<PloceusGradleExtensionApi>()
     }
 
-fun Project.quilt(configure: LoomGradleExtensionAPI.() -> Unit = {}) {
+fun Project.loom(configure: LoomGradleExtensionAPI.() -> Unit = {}) {
     withPluginExtension<LoomGradleExtensionAPI>("org.quiltmc.loom", configure)
 }
 

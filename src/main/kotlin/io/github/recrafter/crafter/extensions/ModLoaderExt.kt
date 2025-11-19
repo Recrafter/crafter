@@ -7,7 +7,7 @@ import io.github.recrafter.bedrock.versions.MappingsType
 import io.github.recrafter.bedrock.versions.mappingsType
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.getDataPackFormat
 import io.github.recrafter.crafter.core.extensions.getRunTaskName
 import io.github.recrafter.crafter.core.extensions.groupMatchingTasks
@@ -28,9 +28,10 @@ import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
 import java.io.File
 
-fun ModLoader.configure(
+fun ModLoaderAdapter.configure(
     mod: Mod,
     iconFile: File?,
+    versionProject: Project,
     pluginProject: Project,
     sideProjects: Map<ModSide, Project>,
 ) = with(pluginProject) {
@@ -57,10 +58,13 @@ fun ModLoader.configure(
         ModSide.values().forEach { side ->
             lazyConfigure<JavaExec>(side.getRunTaskName()) {
                 addToClasspath(jar.get().archiveFile)
-                if (isMergedMappings) {
+                if (side == ModSide.CLIENT) {
                     javaLauncher = pluginProject.getExtension<JavaToolchainService>().launcherFor {
-                        val javaVersion = mod.minecraftVersion.minJavaVersion
-                        configureJavaVendor(javaVersion, JvmVendorSpec.ADOPTIUM, JvmVendorSpec.AZUL)
+                        configureJavaVendor(
+                            mod.minecraftVersion.minJavaVersion,
+                            JvmVendorSpec.ADOPTIUM,
+                            JvmVendorSpec.AZUL,
+                        )
                     }
                 }
             }
@@ -121,13 +125,12 @@ fun ModLoader.configure(
             output.setResourcesDir(mergedSourceSetsDirectory)
         }
     }
-    configurePlugin(mod, pluginProject, sideProjects.keys, accessConfig)
+    configurePlugin(mod, versionProject, pluginProject, sideProjects.keys, accessConfig)
     groupIdeTasks()
 }
 
 private fun Project.groupIdeTasks() {
     groupMatchingTasks("IDE/Eclipse", "eclipse")
     groupMatchingTasks("IDE/VSCode", "vscode")
-    groupMatchingTasks("IDE/IntelliJ IDEA", "idea", "intellij")
+    groupMatchingTasks("IDE/IntelliJ IDEA", "intellij", "idea")
 }
-

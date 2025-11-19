@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.extensions
 
-import io.github.recrafter.crafter.extensions.mappers.toInt
+import io.github.recrafter.crafter.core.extensions.toInt
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.compile.JavaCompile

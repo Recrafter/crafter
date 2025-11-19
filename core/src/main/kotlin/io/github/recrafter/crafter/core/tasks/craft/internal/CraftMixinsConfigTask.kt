@@ -32,7 +32,7 @@ abstract class CraftMixinsConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
+        group = CrafterConstants.INTERNAL_TASKS_GROUP
     }
 
     @TaskAction

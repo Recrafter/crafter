@@ -1,4 +1,4 @@
-package io.github.recrafter.crafter.extensions.mappers
+package io.github.recrafter.crafter.core.extensions
 
 import io.github.diskria.gradle.utils.helpers.jvm.JavaConstants
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget

@@ -18,6 +18,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import javax.lang.model.element.Modifier
 
@@ -29,11 +30,11 @@ abstract class CraftEntryPointsTask : DefaultTask() {
     @get:Internal
     abstract val sides: SetProperty<ModSide>
 
-    @get:Internal
+    @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
 
     init {
-        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
+        group = CrafterConstants.INTERNAL_TASKS_GROUP
     }
 
     @TaskAction

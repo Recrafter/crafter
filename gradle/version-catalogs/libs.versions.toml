@@ -11,12 +11,13 @@ neoforge-plugin = "2.0.116"
 
 kotlin = "2.0.21"
 
+kotlin-serialization-json = "1.7.3"
 kotlin-serialization-xml = "0.90.1"
 java-poet = "0.7.0"
 jsoup = "1.21.2"
 ktor = "3.0.0"
 
-kotlin-utils = "0.8.4"
+kotlin-utils = "0.8.6"
 gradle-utils = "0.8.11"
 
 bedrock = "0.1.4"
@@ -27,6 +28,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [libraries]
+kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json-jvm", version.ref = "kotlin-serialization-json" }
 kotlin-serialization-xml = { group = "io.github.pdvrieze.xmlutil", name = "serialization", version.ref = "kotlin-serialization-xml" }
 java-poet = { group = "com.palantir.javapoet", name = "javapoet", version.ref = "java-poet" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
@@ -49,6 +51,10 @@ neoforge-plugin = { group = "net.neoforged.moddev", name = "net.neoforged.moddev
 diskria-utils = [
     "kotlin-utils",
     "gradle-utils",
+]
+kotlin-serialization = [
+    "kotlin-serialization-json",
+    "kotlin-serialization-xml",
 ]
 loader-plugins = [
     "parchment-plugin",

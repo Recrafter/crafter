@@ -8,7 +8,7 @@ import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
 import io.github.recrafter.crafter.neoforge.extensions.neoforge
 import net.neoforged.moddevgradle.internal.Branding
@@ -16,21 +16,22 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import java.io.File
 
-object NeoForgeModLoader : ModLoader {
+object NeoForgeModLoaderAdapter : ModLoaderAdapter {
 
     override fun configurePlugin(
         mod: Mod,
-        project: Project,
+        versionProject: Project,
+        pluginProject: Project,
         sides: Set<ModSide>,
         accessConfig: File,
-    ) = with(project) {
-        val runDirectory = project.projectDirectory.resolve(mod.runDirectoryName)
+    ) = with(pluginProject) {
+        val runDirectory = versionProject.projectDirectory.resolve(mod.runDirectoryName)
         neoforge {
             version = mod.versions.loader
             parchment {
                 minecraftVersion = mod.versions.mappingsMinecraft
                 mappingsVersion = mod.versions.mappings
-                mod.log(project, "Mappings: ${parchmentArtifact.get()}")
+                mod.log(pluginProject, "Mappings: ${parchmentArtifact.get()}")
             }
             setAccessTransformers(accessConfig)
             runs {

@@ -7,6 +7,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -47,7 +48,7 @@ data class MixinsConfig(
         fun of(mod: Mod, sideMixins: Map<ModSide, List<String>>): MixinsConfig =
             MixinsConfig(
                 packageName = mod.packageName.appendPackageName(MixinsHelper.MIXINS_NAME),
-                jvmTargetVersion = "JAVA_${mod.minJavaVersion}",
+                jvmTargetVersion = "JAVA_${mod.jvmTarget.toInt()}",
                 injectorConfig = InjectorConfig.newInstance(),
                 overwriteConfig = OverwriteConfig.newInstance(),
                 refmap = if (mod.loaderFamily == ModLoaderFamily.FABRIC) mod.refmapFileName else null,

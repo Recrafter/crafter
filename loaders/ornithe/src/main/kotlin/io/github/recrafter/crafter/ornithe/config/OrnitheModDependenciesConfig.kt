@@ -1,6 +1,7 @@
 package io.github.recrafter.crafter.ornithe.config
 
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.versions.VersionBound
 import io.github.recrafter.crafter.core.versions.range.InequalityVersionRange
 import kotlinx.serialization.SerialName
@@ -17,7 +18,7 @@ data class OrnitheModDependenciesConfig(
     companion object {
         fun of(mod: Mod): OrnitheModDependenciesConfig =
             OrnitheModDependenciesConfig(
-                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.minJavaVersion.toString())),
+                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
                 loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
             )
     }

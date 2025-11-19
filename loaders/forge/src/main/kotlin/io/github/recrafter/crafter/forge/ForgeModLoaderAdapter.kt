@@ -17,7 +17,7 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
 import io.github.recrafter.crafter.core.extensions.lazyDisable
 import io.github.recrafter.crafter.core.extensions.minecraft
@@ -29,7 +29,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
 import java.io.File
 
-object ForgeModLoader : ModLoader {
+object ForgeModLoaderAdapter : ModLoaderAdapter {
 
     override fun getPrepareRunTasks(pluginProject: Project, side: ModSide): List<Task> =
         listOfNotNull(
@@ -40,16 +40,17 @@ object ForgeModLoader : ModLoader {
 
     override fun configurePlugin(
         mod: Mod,
-        project: Project,
+        versionProject: Project,
+        pluginProject: Project,
         sides: Set<ModSide>,
         accessConfig: File,
-    ) = with(project) {
-        val runDirectory = project.projectDirectory.resolve(mod.runDirectoryName)
+    ) = with(pluginProject) {
+        val runDirectory = versionProject.projectDirectory.resolve(mod.runDirectoryName)
         forge {
             ensurePluginApplied("org.parchmentmc.librarian.forgegradle")
 
             val mappingsArtifact = mod.versions.mappings + Constants.Char.HYPHEN + mod.versions.mappingsMinecraft
-            mod.log(project, "Mappings: $mappingsArtifact")
+            mod.log(pluginProject, "Mappings: $mappingsArtifact")
             mappings("parchment", mappingsArtifact)
 
             reobf = mod.minecraftVersion < Release.V_1_20_6
@@ -85,7 +86,7 @@ object ForgeModLoader : ModLoader {
         dependencies {
             val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.versions.loader}"
             val minecraftArtifact = buildArtifactCoordinates("net.minecraftforge", "forge", forgeVersion)
-            mod.log(project, "Minecraft: $minecraftArtifact")
+            mod.log(pluginProject, "Minecraft: $minecraftArtifact")
             minecraft(minecraftArtifact)
         }
         tasks {

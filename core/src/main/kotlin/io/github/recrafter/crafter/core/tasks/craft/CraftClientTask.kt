@@ -6,6 +6,6 @@ import org.gradle.api.DefaultTask
 abstract class CraftClientTask : DefaultTask() {
 
     init {
-        group = CrafterConstants.TASKS_CATEGORY
+        group = CrafterConstants.PUBLIC_TASKS_GROUP
     }
 }

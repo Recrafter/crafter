@@ -17,7 +17,9 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
+import io.github.recrafter.crafter.core.extensions.toJvmTarget
 import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.*
 
 data class Mod(
@@ -123,14 +125,14 @@ data class Mod(
     val offlinePlayerUUID: UUID =
         UUID.nameUUIDFromBytes("OfflinePlayer:$player".toByteArray(Charsets.UTF_8))
 
-    val minJavaVersion: Int
+    val jvmTarget: JvmTarget
         get() {
-            val minJava = minMinecraftVersion.minJavaVersion
-            val maxJava = maxMinecraftVersion.minJavaVersion
-            if (minJava != maxJava) {
-                gradleError("Minecraft version range crosses Java compatibility: $minJava -> $maxJava")
+            val minJvmTarget = minMinecraftVersion.minJavaVersion.toJvmTarget()
+            val maxJvmTarget = maxMinecraftVersion.minJavaVersion.toJvmTarget()
+            if (minJvmTarget != maxJvmTarget) {
+                gradleError("Minecraft version range crosses Java compatibility: $minJvmTarget -> $maxJvmTarget")
             }
-            return maxJava
+            return maxJvmTarget
         }
 
     fun log(project: Project, title: String, message: String? = null) {

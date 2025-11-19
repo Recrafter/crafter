@@ -74,7 +74,7 @@ abstract class ComponentSynchronizer {
         val cacheRoot = project
             .rootDirectory
             .resolve(GradleDirectories.CACHE)
-            .resolve(CrafterConstants.PLUGIN_NAME)
+            .resolve(CrafterConstants.PLUGIN_LOWER_NAME)
         val parentDirectory = loader?.let { cacheRoot.resolve(it.getName(`kebab-case`)) } ?: cacheRoot
         return parentDirectory.resolve(fileName("$componentName-versions", Constants.File.Extension.JSON))
     }

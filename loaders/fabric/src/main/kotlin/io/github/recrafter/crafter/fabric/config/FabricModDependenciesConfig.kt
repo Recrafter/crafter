@@ -3,6 +3,7 @@ package io.github.recrafter.crafter.fabric.config
 import io.github.recrafter.bedrock.era.common.MinecraftEra
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.versions.VersionBound
 import io.github.recrafter.crafter.core.versions.range.InequalityVersionRange
 import kotlinx.serialization.SerialName
@@ -22,7 +23,7 @@ data class FabricModDependenciesConfig(
     companion object {
         fun of(mod: Mod): FabricModDependenciesConfig =
             FabricModDependenciesConfig(
-                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.minJavaVersion.toString())),
+                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
                 minecraftVersion = InequalityVersionRange.min(
                     VersionBound.inclusive(
                         when (mod.minecraftVersion.getEra()) {

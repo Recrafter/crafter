@@ -33,7 +33,7 @@ abstract class CraftModConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.INTERNAL_TASKS_CATEGORY
+        group = CrafterConstants.INTERNAL_TASKS_GROUP
     }
 
     @TaskAction
@@ -44,43 +44,43 @@ abstract class CraftModConfigTask : DefaultTask() {
 
         when (mod.loader) {
             ModLoaderType.FABRIC -> {
-                val config = FabricModConfig.Companion.of(mod, splitSide)
+                val config = FabricModConfig.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
             ModLoaderType.QUILT -> {
-                val config = QuiltModConfig.Companion.of(mod, splitSide)
+                val config = QuiltModConfig.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
             ModLoaderType.LEGACY_FABRIC -> {
-                val config = FabricModConfig.Companion.of(mod, splitSide)
+                val config = FabricModConfig.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
             ModLoaderType.ORNITHE -> {
-                val config = OrnitheModConfig.Companion.of(mod, splitSide)
+                val config = OrnitheModConfig.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
             ModLoaderType.BABRIC -> {
-                val config = FabricModConfig.Companion.of(mod, splitSide)
+                val config = FabricModConfig.of(mod, splitSide)
                 mod.log(project, "Mod config generated", config.serializeToJson())
                 config.serializeJsonToFile(outputFile)
             }
 
             ModLoaderType.FORGE -> {
-                val config = ForgeModConfig.Companion.of(mod)
+                val config = ForgeModConfig.of(mod)
                 mod.log(project, "Mod config generated", config.serializeToToml())
                 config.serializeTomlToFile(outputFile)
             }
 
             ModLoaderType.NEOFORGE -> {
-                val config = NeoForgeModConfig.Companion.of(mod)
+                val config = NeoForgeModConfig.of(mod)
                 mod.log(project, "Mod config generated", config.serializeToToml())
                 config.serializeTomlToFile(outputFile)
             }

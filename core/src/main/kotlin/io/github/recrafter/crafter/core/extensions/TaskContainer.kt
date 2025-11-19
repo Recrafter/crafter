@@ -6,8 +6,7 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.TaskContainer
 
 fun Task.isCrafterTask(): Boolean =
-    group == CrafterConstants.TASKS_CATEGORY ||
-            group == CrafterConstants.INTERNAL_TASKS_CATEGORY
+    group == CrafterConstants.PUBLIC_TASKS_GROUP || group == CrafterConstants.INTERNAL_TASKS_GROUP
 
 inline fun <reified T : Task> TaskContainer.lazyDisableTyped(taskName: String) {
     matching { it.name == taskName && T::class.isInstance(it) }.configureEach { (this as T).disable() }

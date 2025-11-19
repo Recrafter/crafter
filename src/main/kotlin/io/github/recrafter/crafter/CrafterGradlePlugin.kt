@@ -23,11 +23,12 @@ import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.babric.sync.BabricLoaderSynchronizer
 import io.github.recrafter.crafter.babric.sync.BabricMappingsSynchronizer
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.ModLoader
+import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.ModMetadata
 import io.github.recrafter.crafter.core.VersionsMetadata
 import io.github.recrafter.crafter.core.extensions.getRunTaskName
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
+import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import io.github.recrafter.crafter.core.helpers.server.EulaHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
@@ -42,7 +43,6 @@ import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
 import io.github.recrafter.crafter.extensions.kotlin
 import io.github.recrafter.crafter.extensions.kotlinApply
 import io.github.recrafter.crafter.extensions.mappers.mapToModel
-import io.github.recrafter.crafter.extensions.mappers.toJvmTarget
 import io.github.recrafter.crafter.fabric.extensions.loomRemapJar
 import io.github.recrafter.crafter.fabric.sync.FabricLoaderSynchronizer
 import io.github.recrafter.crafter.fabric.sync.FabricMappingsSynchronizer
@@ -52,6 +52,8 @@ import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSynchronizer
 import io.github.recrafter.crafter.ornithe.sync.OrnitheMappingsSynchronizer
 import io.github.recrafter.crafter.quilt.sync.QuiltLoaderSynchronizer
 import io.github.recrafter.crafter.quilt.sync.QuiltMappingsSynchronizer
+import io.github.recrafter.crafter.tasks.cli.InstallCrafterCLITask
+import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
@@ -62,6 +64,7 @@ import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.withType
+import org.gradle.util.GradleVersion
 import java.io.File
 
 @Suppress("unused")
@@ -71,10 +74,16 @@ class CrafterGradlePlugin : Plugin<Project> {
         if (!project.isRootProject()) {
             gradleError("The Crafter must be applied only to the root project")
         }
+        requireGradleVersion()
 
         val extension = registerExtension<CrafterExtension>()
         extension.onConfigurationReady {
             val modMetadata = extension.buildModMetadata(getModRecipe())
+            registerTask<InstallCrafterCLITask> {
+                this.modMetadata = modMetadata
+            }
+            InstallCrafterCLITask.saveGradleFingerprint(project, modMetadata)
+
             children.forEach { loaderProject ->
                 configureVersionProjects(loaderProject, modMetadata)
             }
@@ -158,7 +167,7 @@ class CrafterGradlePlugin : Plugin<Project> {
 
     private fun configureVersionProject(
         mod: Mod,
-        loader: ModLoader,
+        loaderAdapter: ModLoaderAdapter,
         iconFile: File?,
         project: Project,
         archiveVersion: String,
@@ -171,6 +180,8 @@ class CrafterGradlePlugin : Plugin<Project> {
                 archivesName = mod.id
             }
             java {
+                sourceCompatibility = JavaVersion.toVersion(mod.javaVersion)
+                targetCompatibility = JavaVersion.toVersion(mod.jvmTarget.toInt())
                 withSourcesJar()
                 toolchain {
                     configureJavaVendor(mod.javaVersion, JvmVendorSpec.ADOPTIUM, JvmVendorSpec.AZUL)
@@ -180,7 +191,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 jvmToolchain(mod.javaVersion)
             }
             tasks {
-                configureJvmTarget(mod.minJavaVersion.toJvmTarget())
+                configureJvmTarget(mod.jvmTarget)
                 withType<JavaCompile>().configureEach {
                     options.encoding = Charsets.UTF_8.toString()
                 }
@@ -248,7 +259,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
         }
         if (isMergedMappings) {
-            loader.configure(mod, iconFile, project, sideProjects)
+            loaderAdapter.configure(mod, iconFile, project, project, sideProjects)
         } else {
             val splitSideJarTasks = mutableListOf<TaskProvider<out Jar>>()
             val libsDirectory = project.getBuildDirectory("libs")
@@ -261,7 +272,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                         }
                     }
                 }
-                loader.configure(mod, iconFile, sideProject, mapOf(side to sideProject))
+                loaderAdapter.configure(mod, iconFile, project, sideProject, mapOf(side to sideProject))
                 val sideJarTask = when {
                     isFabricFamily -> sideProject.tasks.loomRemapJar
                     else -> sideProject.tasks.jar
@@ -326,11 +337,33 @@ class CrafterGradlePlugin : Plugin<Project> {
                 dependsSequentiallyOn(
                     buildList {
                         add(project.tasks.build.get())
-                        addAll(loader.getPrepareRunTasks(pluginProject, side))
+                        addAll(loaderAdapter.getPrepareRunTasks(pluginProject, side))
                         addIfNotNull(pluginProject.getTaskOrNull(side.getRunTaskName()))
                     }
                 )
             }
         }
+    }
+
+    private fun requireGradleVersion() {
+        val currentGradleVersion = GradleVersion.current().version
+        require(currentGradleVersion == REQUIRED_GRADLE_VERSION) {
+            gradleError(
+                """
+                Unsupported Gradle version.
+                Current:  $currentGradleVersion
+                Required: $REQUIRED_GRADLE_VERSION
+                Update with command:
+                  ./gradlew wrapper --gradle-version $REQUIRED_GRADLE_VERSION --distribution-type all
+                """.trimIndent()
+            )
+        }
+    }
+
+    companion object {
+        private const val REQUIRED_GRADLE_VERSION: String = "8.14.3"
+
+        val version: String
+            get() = CrafterGradlePlugin::class.java.`package`.implementationVersion
     }
 }

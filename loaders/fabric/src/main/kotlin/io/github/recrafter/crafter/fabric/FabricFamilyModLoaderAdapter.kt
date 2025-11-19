@@ -20,15 +20,11 @@ import io.github.recrafter.bedrock.versions.MappingsType
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.mappingsType
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.ModLoader
-import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
-import io.github.recrafter.crafter.core.extensions.lazyDisable
-import io.github.recrafter.crafter.core.extensions.mappings
-import io.github.recrafter.crafter.core.extensions.minecraft
-import io.github.recrafter.crafter.core.extensions.modImplementation
+import io.github.recrafter.crafter.core.ModLoaderAdapter
+import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
-import io.github.recrafter.crafter.fabric.extensions.quilt
 import io.github.recrafter.crafter.fabric.extensions.legacyFabric
+import io.github.recrafter.crafter.fabric.extensions.loom
 import io.github.recrafter.crafter.fabric.extensions.ornithe
 import io.ktor.http.*
 import net.fabricmc.loom.util.Constants.TaskGroup
@@ -38,13 +34,19 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
 import java.io.File
 
-abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
+abstract class FabricFamilyModLoaderAdapter(val loader: ModLoaderType) : ModLoaderAdapter {
 
     override fun getAccessConfigPreset(): String = AccessConfigHelper.WIDENER_PRESET
 
-    override fun configurePlugin(mod: Mod, project: Project, sides: Set<ModSide>, accessConfig: File) = with(project) {
-        val runDirectory = projectDirectory.resolve(mod.runDirectoryName)
-        quilt {
+    override fun configurePlugin(
+        mod: Mod,
+        versionProject: Project,
+        pluginProject: Project,
+        sides: Set<ModSide>,
+        accessConfig: File
+    ) = with(pluginProject) {
+        val runDirectory = versionProject.projectDirectory.resolve(mod.runDirectoryName)
+        loom {
             if (loader == ModLoaderType.BABRIC) {
                 ensurePluginApplied("maven-publish")
                 ensurePluginApplied("babric-loom-extension")
@@ -108,15 +110,15 @@ abstract class FabricFamilyModLoader(val loader: ModLoaderType) : ModLoader {
         restoreDependencyResolutionRepositories()
         dependencies {
             val minecraftArtifact = buildArtifactCoordinates("com.mojang", "minecraft", mod.minecraftVersion.asString())
-            mod.log(project, "Minecraft: $minecraftArtifact")
+            mod.log(pluginProject, "Minecraft: $minecraftArtifact")
             minecraft(minecraftArtifact)
 
             val loaderArtifact = resolveLoader(mod)
-            mod.log(project, "Loader: $loaderArtifact")
+            mod.log(pluginProject, "Loader: $loaderArtifact")
             modImplementation(loaderArtifact)
 
-            val mappingsArtifact = resolveMappings(project, mod)
-            mod.log(project, "Mappings: $mappingsArtifact")
+            val mappingsArtifact = resolveMappings(pluginProject, mod)
+            mod.log(pluginProject, "Mappings: $mappingsArtifact")
             mappings(mappingsArtifact)
         }
         val extraPackageNamePrefix = when (loader) {
