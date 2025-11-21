@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.recrafter.crafter</groupId>
+  <artifactId>io.github.recrafter.crafter.gradle.plugin</artifactId>
+  <version>0.2.2</version>
+  <packaging>pom</packaging>
+  <name>Crafter</name>
+  <description>Gradle meta-plugin that unifies Minecraft mod development across all loaders and versions — introducing a declarative, mixin-driven workflow.</description>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.recrafter</groupId>
+      <artifactId>crafter</artifactId>
+      <version>0.2.2</version>
+    </dependency>
+  </dependencies>
+</project>
