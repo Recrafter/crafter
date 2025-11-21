@@ -2,7 +2,6 @@ package io.github.recrafter.crafter.fabric.config
 
 import io.github.diskria.kotlin.utils.serialization.annotations.EncodeDefaults
 import io.github.diskria.kotlin.utils.serialization.annotations.PrettyPrint
-import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -44,7 +43,7 @@ data class FabricModConfig(
     val dependencies: FabricModDependenciesConfig,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): FabricModConfig =
+        fun of(mod: Mod): FabricModConfig =
             FabricModConfig(
                 schemaVersion = 1,
                 id = mod.id,
@@ -58,7 +57,7 @@ data class FabricModConfig(
                 accessConfigPath = mod.accessConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = FabricModLinksConfig.of(mod),
-                entryPoints = FabricModEntryPointsConfig.of(mod, splitSide),
+                entryPoints = FabricModEntryPointsConfig.of(mod),
                 dependencies = FabricModDependenciesConfig.of(mod),
             )
     }

@@ -20,7 +20,6 @@ abstract class CrafterExtension @Inject constructor(protected val objects: Objec
             description = requireProperty(configuration.description, configuration::description.name),
             version = requireProperty(configuration.version, configuration::version.name),
             licenseId = requireProperty(configuration.licenseId, configuration::licenseId.name),
-            archiveVersion = requireProperty(configuration.archiveVersion, configuration::archiveVersion.name),
             homepageUrl = configuration.homepageUrl.orNull,
             runDirectoryName = requireProperty(configuration.runDirectoryName, configuration::runDirectoryName.name),
             javaVersion = requireProperty(configuration.javaVersion, configuration::javaVersion.name),

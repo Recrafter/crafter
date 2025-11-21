@@ -1,26 +1,25 @@
 [versions]
 projektor = "4.+"
 
-parchment-plugin = "1.2.0"
+kotlin = "2.0.21"
+kotlin-serialization-json = "1.7.3"
+kotlin-serialization-xml = "0.90.1"
+ktor = "3.0.0"
+
+java-poet = "0.7.0"
+jsoup = "1.21.2"
+
+kotlin-utils = "0.8.7"
+gradle-utils = "0.8.11"
+
+bedrock = "0.1.9"
+
 quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"
 ornithe-plugin = "1.11.6"
 babric-plugin = "1.13.2"
 forge-plugin = "6.0.46"
 neoforge-plugin = "2.0.116"
-
-kotlin = "2.0.21"
-
-kotlin-serialization-json = "1.7.3"
-kotlin-serialization-xml = "0.90.1"
-java-poet = "0.7.0"
-jsoup = "1.21.2"
-ktor = "3.0.0"
-
-kotlin-utils = "0.8.6"
-gradle-utils = "0.8.11"
-
-bedrock = "0.1.4"
 
 [plugins]
 projektor = { id = "io.github.diskria.projektor", version.ref = "projektor" }
@@ -30,16 +29,16 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 [libraries]
 kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json-jvm", version.ref = "kotlin-serialization-json" }
 kotlin-serialization-xml = { group = "io.github.pdvrieze.xmlutil", name = "serialization", version.ref = "kotlin-serialization-xml" }
+ktor = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+
 java-poet = { group = "com.palantir.javapoet", name = "javapoet", version.ref = "java-poet" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
-ktor = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 
 kotlin-utils = { group = "io.github.diskria", name = "kotlin-utils", version.ref = "kotlin-utils" }
 gradle-utils = { group = "io.github.diskria", name = "gradle-utils", version.ref = "gradle-utils" }
 
 bedrock = { group = "io.github.recrafter", name = "bedrock", version.ref = "bedrock" }
 
-parchment-plugin = { group = "org.parchmentmc.librarian.forgegradle", name = "org.parchmentmc.librarian.forgegradle.gradle.plugin", version.ref = "parchment-plugin" }
 quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
@@ -52,12 +51,7 @@ diskria-utils = [
     "kotlin-utils",
     "gradle-utils",
 ]
-kotlin-serialization = [
-    "kotlin-serialization-json",
-    "kotlin-serialization-xml",
-]
 loader-plugins = [
-    "parchment-plugin",
     "quilt-plugin",
     "legacy-fabric-plugin",
     "ornithe-plugin",

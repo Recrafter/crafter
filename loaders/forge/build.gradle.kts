@@ -7,9 +7,9 @@ dependencies {
     implementation(kotlin("gradle-plugin"))
 
     compileOnly(project(":core"))
+    compileOnly(libs.forge.plugin)
 
     implementation(libs.bedrock)
-    compileOnly(libs.forge.plugin)
 
     implementation(libs.ktor)
 

@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.quilt.config
 
+import io.github.recrafter.bedrock.MinecraftConstants
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.extensions.toInt
@@ -30,7 +31,7 @@ data class QuiltModDependencyConfig(
 
         fun createMinecraftDependency(mod: Mod): QuiltModDependencyConfig =
             of(
-                id = "minecraft",
+                id = MinecraftConstants.FULL_GAME_NAME.lowercase(),
                 version = InequalityVersionRange.min(VersionBound.inclusive(mod.minecraftVersion.asString())),
             )
 

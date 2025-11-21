@@ -1,6 +1,5 @@
 import io.github.diskria.gradle.utils.extensions.children
 import io.github.diskria.gradle.utils.extensions.getCatalogVersion
-import io.github.diskria.gradle.utils.extensions.implementation
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -11,6 +10,7 @@ plugins {
 
 val includedProjects = buildList {
     add(project(":core"))
+    add(project(":cli"))
     addAll(project(":loaders").children)
 }
 

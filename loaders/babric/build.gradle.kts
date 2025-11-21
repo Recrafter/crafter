@@ -10,7 +10,6 @@ dependencies {
     compileOnly(project(":loaders:fabric"))
 
     implementation(libs.bedrock)
-    compileOnly(libs.babric.plugin)
 
     implementation(libs.ktor)
 

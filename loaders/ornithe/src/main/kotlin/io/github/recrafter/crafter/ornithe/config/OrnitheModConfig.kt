@@ -2,7 +2,6 @@ package io.github.recrafter.crafter.ornithe.config
 
 import io.github.diskria.kotlin.utils.serialization.annotations.EncodeDefaults
 import io.github.diskria.kotlin.utils.serialization.annotations.PrettyPrint
-import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -44,7 +43,7 @@ data class OrnitheModConfig(
     val dependencies: OrnitheModDependenciesConfig,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): OrnitheModConfig =
+        fun of(mod: Mod): OrnitheModConfig =
             OrnitheModConfig(
                 schemaVersion = 1,
                 id = mod.id,
@@ -58,7 +57,7 @@ data class OrnitheModConfig(
                 accessConfigPath = mod.accessConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = OrnitheModLinksConfig.of(mod),
-                entryPoints = OrnitheModEntryPointsConfig.of(mod, splitSide),
+                entryPoints = OrnitheModEntryPointsConfig.of(mod),
                 dependencies = OrnitheModDependenciesConfig.of(mod),
             )
     }

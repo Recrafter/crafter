@@ -13,13 +13,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import org.jsoup.Jsoup
-import java.util.concurrent.TimeUnit
 
 abstract class PackFormatSynchronizer : ComponentSynchronizer() {
 
     abstract val wikiTableCaption: String
-
-    final override val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(7)
 
     override suspend fun fetchComponents(): List<MinecraftComponent> =
         HttpClient(CIO).use { client ->

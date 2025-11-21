@@ -11,7 +11,7 @@ import io.github.recrafter.crafter.neoforge.NeoForgeModLoaderAdapter
 import io.github.recrafter.crafter.ornithe.OrnitheModLoaderAdapter
 import io.github.recrafter.crafter.quilt.QuiltModLoaderAdapter
 
-fun ModLoaderType.mapToModel(): ModLoaderAdapter =
+fun ModLoaderType.mapToAdapter(): ModLoaderAdapter =
     when (this) {
         FABRIC -> FabricModLoaderAdapter
         QUILT -> QuiltModLoaderAdapter

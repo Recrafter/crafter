@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.core
 
+import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.kotlin.utils.extensions.appendPath
 
 object CrafterConstants {
@@ -8,4 +9,7 @@ object CrafterConstants {
 
     val PLUGIN_LOWER_NAME: String = PLUGIN_NAME.lowercase()
     val INTERNAL_TASKS_GROUP: String = PUBLIC_TASKS_GROUP.appendPath("internal")
+
+    val pluginVersion: String
+        get() = this::class.java.`package`?.implementationVersion ?: gradleError("Failed to get plugin version")
 }

@@ -3,12 +3,14 @@ package io.github.recrafter.crafter.core
 import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.gradle.utils.extensions.log
 import io.github.diskria.gradle.utils.helpers.JarConstants
+import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.*
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.setCase
+import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.MinecraftConstants
 import io.github.recrafter.bedrock.era.Release
@@ -18,10 +20,12 @@ import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.core.extensions.toJvmTarget
+import kotlinx.serialization.Serializable
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.*
 
+@Serializable
 data class Mod(
     val id: String,
     val name: String,
@@ -37,80 +41,88 @@ data class Mod(
     val issuesUrl: String?,
     val homepageUrl: String?,
     val runDirectoryName: String,
-    val archiveVersion: (ModLoaderType, MinecraftVersion, MinecraftVersion) -> String,
     val loader: ModLoaderType,
     val versions: VersionsMetadata,
+
+    @Serializable(with = MinecraftVersionSerializer::class)
     val minMinecraftVersion: MinecraftVersion,
+
+    @Serializable(with = MinecraftVersionSerializer::class)
     val maxMinecraftVersion: MinecraftVersion,
 ) {
-    val packageName: String = namespace.appendPackageName(id.setCase(snake_case, `dot․case`))
-    val packagePath: String = packageName.setCase(`dot․case`, `path∕case`)
-    val minecraftVersion: MinecraftVersion = minMinecraftVersion
+    val packageName: String
+        get() = namespace.appendPackageName(id.setCase(snake_case, `dot․case`))
 
-    val versionRange: MinecraftVersionRange = minMinecraftVersion..maxMinecraftVersion
+    val packagePath: String
+        get() = packageName.setCase(`dot․case`, `path∕case`)
 
-    val loaderFamily: ModLoaderFamily =
-        ModLoaderFamily.of(loader)
+    val minecraftVersion: MinecraftVersion
+        get() = minMinecraftVersion
 
-    val assetsPath: String =
-        "assets".appendPath(id)
+    val versionRange: MinecraftVersionRange
+        get() = minMinecraftVersion..maxMinecraftVersion
 
-    val iconFileName: String =
-        fileName("icon", Constants.File.Extension.PNG)
+    val loaderFamily: ModLoaderFamily
+        get() = ModLoaderFamily.of(loader)
 
-    val iconPath: String =
-        assetsPath.appendPath(iconFileName)
+    val iconFileName: String
+        get() = fileName("icon", Constants.File.Extension.PNG)
 
-    val accessConfigName: String =
-        when (loaderFamily) {
-            ModLoaderFamily.FABRIC -> fileName(id, "accesswidener")
+    val iconPath: String
+        get() = iconFileName
+
+    val accessConfigName: String
+        get() = when (loaderFamily) {
+            ModLoaderFamily.FABRIC -> fileName("cfg", "accesswidener")
             ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
         }
 
+    val configsDirectoryPath: String
+        get() = JarConstants.Directory.META_INF
+
     val accessConfigPath: String
-        get() {
-            val parentDirectory = when (loader) {
-                ModLoaderType.FORGE -> JarConstants.Directory.META_INF
-                else -> assetsPath
-            }
-            return parentDirectory.appendPath(accessConfigName)
+        get() = configsDirectoryPath.appendPath(accessConfigName)
+
+    val mixinsConfigName: String
+        get() = fileName(id, "mixins", Constants.File.Extension.JSON)
+
+    val mixinsConfigPath: String
+        get() = configsDirectoryPath.appendPath(mixinsConfigName)
+
+    val resourcePackConfigName: String
+        get() = fileName("pack", "mcmeta")
+
+    val refmapFileName: String
+        get() = when (loaderFamily) {
+            ModLoaderFamily.FABRIC -> fileName(id + "_refmap", Constants.File.Extension.JSON)
+            ModLoaderFamily.FORGE -> gradleError(
+                "Invalid configuration: refmap generation attempted for Forge, but it is only supported on Fabric"
+            )
         }
 
-    val mixinsConfigName: String =
-        fileName(id, "mixins", Constants.File.Extension.JSON)
-
-    val mixinsConfigPath: String =
-        assetsPath.appendPath(mixinsConfigName)
-
-    val resourcePackConfigName: String =
-        fileName("pack", "mcmeta")
-
-    val refmapFileName: String =
-        fileName(id + "_refmap", Constants.File.Extension.JSON)
-
-    val configName: String =
-        when (loaderFamily) {
+    val loaderConfigPath: String
+        get() = when (loaderFamily) {
             ModLoaderFamily.FABRIC -> {
                 fileName(
-                    if (loader == ModLoaderType.QUILT) loader.getName() else ModLoaderFamily.FABRIC.getName(),
+                    when (loader) {
+                        ModLoaderType.QUILT -> loader.getName()
+                        else -> ModLoaderFamily.FABRIC.getName()
+                    },
                     "mod",
                     Constants.File.Extension.JSON
                 )
             }
 
-            ModLoaderFamily.FORGE -> when {
-                loader == ModLoaderType.NEOFORGE && minecraftVersion >= Release.V_1_20_5 -> {
-                    fileName(ModLoaderType.NEOFORGE.getName(), "mods", Constants.File.Extension.TOML)
+            ModLoaderFamily.FORGE -> {
+                val fileName = when {
+                    loader == ModLoaderType.NEOFORGE && minecraftVersion >= Release.V_1_20_5 -> {
+                        fileName(ModLoaderType.NEOFORGE.getName(), "mods", Constants.File.Extension.TOML)
+                    }
+
+                    else -> fileName("mods", Constants.File.Extension.TOML)
                 }
-
-                else -> fileName("mods", Constants.File.Extension.TOML)
+                configsDirectoryPath.appendPath(fileName)
             }
-        }
-
-    val configParentPath: String =
-        when (loaderFamily) {
-            ModLoaderFamily.FABRIC -> Constants.Char.EMPTY
-            ModLoaderFamily.FORGE -> JarConstants.Directory.META_INF
         }
 
     val configEnvironment: String
@@ -122,8 +134,8 @@ data class Mod(
             }
         }
 
-    val offlinePlayerUUID: UUID =
-        UUID.nameUUIDFromBytes("OfflinePlayer:$player".toByteArray(Charsets.UTF_8))
+    val offlinePlayerUUID: UUID
+        get() = UUID.nameUUIDFromBytes("OfflinePlayer:$player".toByteArray(Charsets.UTF_8))
 
     val jvmTarget: JvmTarget
         get() {
@@ -135,21 +147,23 @@ data class Mod(
             return maxJvmTarget
         }
 
-    fun log(project: Project, title: String, message: String? = null) {
-        project.log(buildString {
-            append("[Crafter] ")
-            append("[${loader.displayName} / ${versionRange.asString()}] $title")
-            message?.let {
-                appendLine()
-                append(it)
-            }
-        })
-    }
+    val isReobfNeeded: Boolean =
+        loaderFamily == ModLoaderFamily.FORGE && minecraftVersion < Release.V_1_20_6
+
+    val archiveVersion: String
+        get() = buildString {
+            append(loader.getName())
+            append(Constants.Char.HYPHEN)
+            append(version)
+            append(Constants.Char.PLUS)
+            append(MinecraftConstants.SHORT_GAME_NAME)
+            append(versionRange.asString())
+        }
 
     fun getEntryPointName(side: ModSide): String =
         buildString {
             append(MinecraftConstants.FULL_GAME_NAME)
-            if (minecraftVersion.mappingsType != MappingsType.MERGED ||
+            if (loader == ModLoaderType.ORNITHE ||
                 side == ModSide.CLIENT ||
                 environment == ModEnvironment.DEDICATED_SERVER_ONLY
             ) {
@@ -157,4 +171,15 @@ data class Mod(
             }
             append("Mod")
         }
+
+    fun log(project: Project, title: String, message: String? = null) {
+        project.log(buildString {
+            append("${CrafterConstants.PLUGIN_NAME.wrapWithBrackets(BracketsType.SQUARE)} ")
+            append("[${loader.displayName} / ${versionRange.asString()}] $title")
+            message?.let {
+                appendLine()
+                append(it)
+            }
+        })
+    }
 }

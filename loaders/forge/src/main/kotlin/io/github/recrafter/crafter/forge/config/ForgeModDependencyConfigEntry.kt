@@ -1,5 +1,9 @@
 package io.github.recrafter.crafter.forge.config
 
+import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.mappers.getName
+import io.github.recrafter.bedrock.MinecraftConstants
+import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.versions.VersionBound
@@ -33,14 +37,18 @@ data class ForgeModDependencyConfigEntry(
 
         fun createMinecraftDependency(mod: Mod): ForgeModDependencyConfigEntry =
             of(
-                id = "minecraft",
+                id = MinecraftConstants.FULL_GAME_NAME.lowercase(),
                 version = IntervalVersionRange.min(VersionBound.inclusive(mod.minecraftVersion.asString())),
             )
 
         fun createLoaderDependency(mod: Mod): ForgeModDependencyConfigEntry =
             of(
-                id = "forge",
-                version = IntervalVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                id = ModLoaderType.FORGE.getName(),
+                version = IntervalVersionRange.min(
+                    VersionBound.inclusive(
+                        mod.versions.loader.substringBefore(Constants.Char.DOT)
+                    )
+                ),
             )
     }
 }

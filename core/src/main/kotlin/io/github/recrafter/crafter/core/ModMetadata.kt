@@ -3,6 +3,7 @@ package io.github.recrafter.crafter.core
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.versions.MinecraftVersion
+import io.github.recrafter.bedrock.versions.isInternalServer
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,7 +13,6 @@ data class ModMetadata(
     val description: String,
     val version: String,
     val licenseId: String,
-    val archiveVersion: (ModLoaderType, MinecraftVersion, MinecraftVersion) -> String,
     val homepageUrl: String?,
     val runDirectoryName: String,
     val javaVersion: Int,
@@ -36,7 +36,6 @@ data class ModMetadata(
             description = description,
             version = version,
             licenseId = licenseId,
-            archiveVersion = archiveVersion,
             homepageUrl = homepageUrl,
             runDirectoryName = runDirectoryName,
             javaVersion = javaVersion,
@@ -45,7 +44,7 @@ data class ModMetadata(
             namespace = namespace,
             repoUrl = repoUrl,
             issuesUrl = issuesUrl,
-            environment = environment,
+            environment = if (minMinecraftVersion.isInternalServer) ModEnvironment.CLIENT_ONLY else environment,
             loader = loader,
             versions = versionsMetadata,
             minMinecraftVersion = minMinecraftVersion,

@@ -9,15 +9,12 @@ import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
-import java.util.concurrent.TimeUnit
 
 object NeoForgeLoaderSynchronizer : MavenComponentSynchronizer() {
 
     override val loader: ModLoaderType = ModLoaderType.NEOFORGE
 
     override val componentName: String = "loader"
-
-    override val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(7)
 
     override val mavenUrl: Url =
         buildUrl("maven.neoforged.net") {

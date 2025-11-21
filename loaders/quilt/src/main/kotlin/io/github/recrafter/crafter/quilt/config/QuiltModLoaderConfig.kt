@@ -1,6 +1,5 @@
 package io.github.recrafter.crafter.quilt.config
 
-import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -9,6 +8,7 @@ import kotlinx.serialization.Serializable
 data class QuiltModLoaderConfig(
     @SerialName("group")
     val namespace: String,
+
     val id: String,
     val version: String,
     val metadata: QuiltModMetadataConfig,
@@ -23,14 +23,14 @@ data class QuiltModLoaderConfig(
     val dependencies: List<QuiltModDependencyConfig>,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): QuiltModLoaderConfig =
+        fun of(mod: Mod): QuiltModLoaderConfig =
             QuiltModLoaderConfig(
                 namespace = mod.namespace,
                 id = mod.id,
                 version = mod.version,
                 metadata = QuiltModMetadataConfig.of(mod),
                 mappings = "net.fabricmc:intermediary",
-                entryPoints = QuiltModEntryPointsConfig.of(mod, splitSide),
+                entryPoints = QuiltModEntryPointsConfig.of(mod),
                 dependencies = listOf(
                     QuiltModDependencyConfig.createJavaDependency(mod),
                     QuiltModDependencyConfig.createMinecraftDependency(mod),

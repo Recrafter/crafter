@@ -1,12 +1,12 @@
 package io.github.recrafter.crafter.neoforge
 
-import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
 import io.github.diskria.gradle.utils.helpers.jvm.Size
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
+import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
@@ -16,28 +16,24 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import java.io.File
 
-object NeoForgeModLoaderAdapter : ModLoaderAdapter {
+object NeoForgeModLoaderAdapter : ModLoaderAdapter() {
 
     override fun configurePlugin(
         mod: Mod,
-        versionProject: Project,
-        pluginProject: Project,
-        sides: Set<ModSide>,
+        project: Project,
+        runDirectory: File,
         accessConfig: File,
-    ) = with(pluginProject) {
-        val runDirectory = versionProject.projectDirectory.resolve(mod.runDirectoryName)
+        isRunConfigurationsDisabled: Boolean,
+    ) = with(project) {
         neoforge {
             version = mod.versions.loader
-            parchment {
-                minecraftVersion = mod.versions.mappingsMinecraft
-                mappingsVersion = mod.versions.mappings
-                mod.log(pluginProject, "Mappings: ${parchmentArtifact.get()}")
-            }
             setAccessTransformers(accessConfig)
             runs {
                 ModSide.values().forEach { side ->
                     create(side.getName()) {
-                        ideName = Constants.Char.EMPTY
+                        if (isRunConfigurationsDisabled) {
+                            ideName = Constants.Char.EMPTY
+                        }
                         gameDirectory = runDirectory
                         val memoryRange = when (side) {
                             ModSide.CLIENT -> 2..4

@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.forge.config
 
+import io.github.diskria.kotlin.utils.Constants
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.versions.VersionBound
@@ -29,7 +30,11 @@ data class ForgeModConfig(
         fun of(mod: Mod): ForgeModConfig =
             ForgeModConfig(
                 modLoader = "javafml",
-                loaderVersion = IntervalVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                loaderVersion = IntervalVersionRange.min(
+                    VersionBound.inclusive(
+                        mod.versions.loader.substringBefore(Constants.Char.DOT)
+                    )
+                ),
                 licenseId = mod.licenseId,
                 issuesUrl = mod.issuesUrl,
                 isClientSideOnly = mod.environment == ModEnvironment.CLIENT_ONLY,

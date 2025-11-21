@@ -1,21 +1,16 @@
 package io.github.recrafter.crafter.forge
 
 import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
-import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
 import io.github.diskria.gradle.utils.extensions.getTaskOrNull
 import io.github.diskria.gradle.utils.extensions.jar
-import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
 import io.github.diskria.gradle.utils.helpers.jvm.Size
-import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
 import io.github.diskria.kotlin.utils.words.PascalCase
-import io.github.recrafter.bedrock.era.Release
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.asString
-import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
@@ -29,31 +24,26 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
 import java.io.File
 
-object ForgeModLoaderAdapter : ModLoaderAdapter {
+object ForgeModLoaderAdapter : ModLoaderAdapter() {
 
-    override fun getPrepareRunTasks(pluginProject: Project, side: ModSide): List<Task> =
+    override fun getPrepareRunTasks(loaderProject: Project, side: ModSide): List<Task> =
         listOfNotNull(
-            pluginProject.getTaskOrNull("prepareRun" + side.getName(PascalCase) + "Compile"),
+            loaderProject.getTaskOrNull("prepareRun" + side.getName(PascalCase) + "Compile"),
         )
 
     override fun isDataPackConfigRequired(): Boolean = true
 
     override fun configurePlugin(
         mod: Mod,
-        versionProject: Project,
-        pluginProject: Project,
-        sides: Set<ModSide>,
+        project: Project,
+        runDirectory: File,
         accessConfig: File,
-    ) = with(pluginProject) {
-        val runDirectory = versionProject.projectDirectory.resolve(mod.runDirectoryName)
+        isRunConfigurationsDisabled: Boolean,
+    ) = with(project) {
         forge {
-            ensurePluginApplied("org.parchmentmc.librarian.forgegradle")
+            mappings("official", mod.minecraftVersion.asString())
 
-            val mappingsArtifact = mod.versions.mappings + Constants.Char.HYPHEN + mod.versions.mappingsMinecraft
-            mod.log(pluginProject, "Mappings: $mappingsArtifact")
-            mappings("parchment", mappingsArtifact)
-
-            reobf = mod.minecraftVersion < Release.V_1_20_6
+            reobf = mod.isReobfNeeded
             setAccessTransformer(accessConfig)
             runs {
                 ModSide.values().forEach { side ->
@@ -86,7 +76,7 @@ object ForgeModLoaderAdapter : ModLoaderAdapter {
         dependencies {
             val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.versions.loader}"
             val minecraftArtifact = buildArtifactCoordinates("net.minecraftforge", "forge", forgeVersion)
-            mod.log(pluginProject, "Minecraft: $minecraftArtifact")
+            mod.log(project, "Minecraft: $minecraftArtifact")
             minecraft(minecraftArtifact)
         }
         tasks {
@@ -99,9 +89,14 @@ object ForgeModLoaderAdapter : ModLoaderAdapter {
                         ).associate { it.name to it.value }
                     )
                 }
+                if (mod.isReobfNeeded) {
+                    finalizedBy("reobfJar")
+                }
             }
             lazyDisable("makeSrcDirs")
-            lazyDisable("genIntellijRuns")
+            if (isRunConfigurationsDisabled) {
+                lazyDisable("genIntellijRuns")
+            }
         }
         groupLoaderTasks(
             loaderPackageName = listOf("net.minecraftforge.gradle"),

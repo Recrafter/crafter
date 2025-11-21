@@ -20,29 +20,25 @@ data class FabricModEntryPointsConfig(
     val serverEntryPoints: List<String>? = null,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): FabricModEntryPointsConfig {
+        fun of(mod: Mod ): FabricModEntryPointsConfig {
             val clientEntryPoints = FabricModEntryPointsConfig(
                 clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT))
             )
             val serverEntryPoints = FabricModEntryPointsConfig(
                 serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
             )
-            return when (splitSide) {
-                ModSide.CLIENT -> clientEntryPoints
-                ModSide.SERVER -> serverEntryPoints
-                null -> when (mod.environment) {
-                    ModEnvironment.CLIENT_SERVER -> FabricModEntryPointsConfig(
-                        mainEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
-                        clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT)),
-                    )
+            return when (mod.environment) {
+                ModEnvironment.CLIENT_SERVER -> FabricModEntryPointsConfig(
+                    mainEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
+                    clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT)),
+                )
 
-                    ModEnvironment.CLIENT_ONLY -> clientEntryPoints
-                    ModEnvironment.SERVER_ONLY -> FabricModEntryPointsConfig(
-                        mainEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
-                    )
+                ModEnvironment.CLIENT_ONLY -> clientEntryPoints
+                ModEnvironment.SERVER_ONLY -> FabricModEntryPointsConfig(
+                serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
+            )
 
-                    ModEnvironment.DEDICATED_SERVER_ONLY -> serverEntryPoints
-                }
+                ModEnvironment.DEDICATED_SERVER_ONLY -> serverEntryPoints
             }
         }
 

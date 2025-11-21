@@ -15,22 +15,23 @@ import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFi
 import io.github.diskria.kotlin.utils.extensions.toSemver
 import io.github.diskria.kotlin.utils.extensions.wrapWithSingleQuote
 import io.github.recrafter.bedrock.loaders.ModLoaderType
-import io.github.recrafter.bedrock.versions.*
+import io.github.recrafter.bedrock.versions.MinecraftVersion
+import io.github.recrafter.bedrock.versions.asString
+import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 abstract class ComponentSynchronizer {
 
     protected open val loader: ModLoaderType? = null
 
-    protected open val mappingsType: MappingsType? = null
-
     protected abstract val componentName: String
 
-    protected abstract val cacheDurationMillis: Long
+    protected open val cacheDurationMillis: Long = TimeUnit.DAYS.toMillis(1)
 
     protected open fun mapLatestVersion(version: String): String = version
 
@@ -45,10 +46,7 @@ abstract class ComponentSynchronizer {
             val versions = fetchComponents()
                 .groupBy { it.minecraftVersion }
                 .filterKeys { minecraftVersion ->
-                    loader?.let { loader ->
-                        loader.supportedVersionRange.includesVersion(minecraftVersion) &&
-                                (mappingsType == null || mappingsType == minecraftVersion.mappingsType)
-                    } ?: true
+                    loader?.supportedVersionRange?.includesVersion(minecraftVersion) ?: true
                 }
                 .mapValues {
                     val version = it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }

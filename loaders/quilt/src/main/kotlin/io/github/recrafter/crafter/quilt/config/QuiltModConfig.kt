@@ -1,7 +1,6 @@
 package io.github.recrafter.crafter.quilt.config
 
 import io.github.diskria.kotlin.utils.serialization.annotations.PrettyPrint
-import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,10 +18,10 @@ data class QuiltModConfig(
     val mixinsConfigPath: String,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): QuiltModConfig =
+        fun of(mod: Mod): QuiltModConfig =
             QuiltModConfig(
                 schemaVersion = 1,
-                loader = QuiltModLoaderConfig.of(mod, splitSide),
+                loader = QuiltModLoaderConfig.of(mod),
                 mixinsConfigPath = mod.mixinsConfigPath,
             )
     }

@@ -9,6 +9,7 @@ dependencies {
     compileOnly(project(":core"))
     compileOnly(libs.quilt.plugin)
     compileOnly(libs.legacy.fabric.plugin)
+    compileOnly(libs.babric.plugin)
     compileOnly(libs.ornithe.plugin)
 
     implementation(libs.bedrock)

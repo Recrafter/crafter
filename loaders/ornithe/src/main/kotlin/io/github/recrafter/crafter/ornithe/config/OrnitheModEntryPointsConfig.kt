@@ -20,30 +20,24 @@ data class OrnitheModEntryPointsConfig(
     val serverEntryPoints: List<String>? = null,
 ) {
     companion object {
-        fun of(mod: Mod, splitSide: ModSide?): OrnitheModEntryPointsConfig =
-            if (splitSide != null) {
-                OrnitheModEntryPointsConfig(
-                    initEntryPoints = listOf(buildPackageName(mod, splitSide)),
+        fun of(mod: Mod): OrnitheModEntryPointsConfig =
+            when (mod.environment) {
+                ModEnvironment.CLIENT_SERVER -> OrnitheModEntryPointsConfig(
+                    initEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
+                    clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT)),
                 )
-            } else {
-                when (mod.environment) {
-                    ModEnvironment.CLIENT_SERVER -> OrnitheModEntryPointsConfig(
-                        initEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
-                        clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT)),
-                    )
 
-                    ModEnvironment.CLIENT_ONLY -> OrnitheModEntryPointsConfig(
-                        clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT))
-                    )
+                ModEnvironment.CLIENT_ONLY -> OrnitheModEntryPointsConfig(
+                    clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT))
+                )
 
-                    ModEnvironment.SERVER_ONLY -> OrnitheModEntryPointsConfig(
-                        initEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
-                    )
+                ModEnvironment.SERVER_ONLY -> OrnitheModEntryPointsConfig(
+                    initEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER)),
+                )
 
-                    ModEnvironment.DEDICATED_SERVER_ONLY -> OrnitheModEntryPointsConfig(
-                        serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
-                    )
-                }
+                ModEnvironment.DEDICATED_SERVER_ONLY -> OrnitheModEntryPointsConfig(
+                    serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
+                )
             }
 
         private fun buildPackageName(mod: Mod, side: ModSide): String =
