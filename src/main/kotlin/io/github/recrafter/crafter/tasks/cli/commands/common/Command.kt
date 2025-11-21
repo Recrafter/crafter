@@ -5,16 +5,16 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
 import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
 import io.github.diskria.kotlin.utils.extensions.common.camelCase
-import io.github.diskria.kotlin.utils.extensions.generics.joinByNewLine
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
-import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.helpers.shell.ShellHelper
 import io.github.recrafter.crafter.helpers.shell.arguments.ArgumentReference
 import io.github.recrafter.crafter.helpers.shell.arguments.Arguments
+import io.github.recrafter.crafter.helpers.shell.syntax.ShellBooleanOperator
 import io.github.recrafter.crafter.helpers.shell.syntax.ShellCase
+import io.github.recrafter.crafter.helpers.shell.syntax.ShellIf
 import io.github.recrafter.crafter.tasks.cli.Fingerprint
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.elementNames
@@ -35,57 +35,50 @@ abstract class Command<T : Arguments>(
         }
     }
 
-    val schema: String
+    val signature: String
         get() = name +
                 Constants.Char.SPACE +
                 arguments.joinBySpace { (name, _) -> name.wrapWithBrackets(BracketsType.ANGLE) }
 
     abstract fun run(fingerprint: Fingerprint, arguments: T): String
 
-    abstract fun complete(fingerprint: Fingerprint, currentWord: String, variants: (List<String>) -> String): String
+    abstract fun complete(
+        fingerprint: Fingerprint,
+        currentWordIndex: String,
+        variants: (List<String>) -> String
+    ): String
 
     fun generateRunCase(fingerprint: Fingerprint): ShellCase =
-        ShellHelper.case(name, aliases) {
+        ShellCase.of(name, aliases) {
             if (arguments.isNotEmpty()) {
-                val conditions = arguments.joinToString(ShellHelper.OR.wrapWithSpace()) { (_, reference) ->
-                    val condition = " -z $reference "
-                    condition.wrapWithBrackets(BracketsType.SQUARE)
+                arguments.mapIndexed { index, (_, reference) ->
+                    initVar(reference.name, getScriptArgument(index + 2))
                 }
-                append {
-                    arguments
-                        .mapIndexed { index, (_, reference) ->
-                            val scriptArgument = ShellHelper.variable(index + 2)
-                            "${reference.name}=$scriptArgument"
-                        }
-                        .joinByNewLine()
-                }
-                append {
-                    """
-                    if $conditions; then
-                      ${ShellHelper.echoRed("Wrong $name command usage.")}
-                      ${ShellHelper.echo("Usage: ./${fingerprint.scriptFileName} $schema")}
-                      ${ShellHelper.fail()}
-                    fi
-                    """
-                }
+                shellIfThen(
+                    ShellIf.ofIf(arguments.map { (_, reference) -> "-z $reference" }, ShellBooleanOperator.OR) {
+                        printErr("Wrong $name command usage.")
+                        shellPrintln("Usage: ${ShellHelper.terminalCommand(fingerprint.scriptName, signature)}")
+                        throwException()
+                    }
+                )
             }
-            append { run(fingerprint, createArguments()) }
+            code { run(fingerprint, createArguments()) }
         }
 
     @Suppress("SpellCheckingInspection")
-    fun generateCompletionCase(fingerprint: Fingerprint): ShellCase =
-        ShellHelper.case(name, aliases) {
-            if (arguments.isNotEmpty()) {
-                append { "local " + arguments.joinBySpace { (name, _) -> name } }
+    fun generateCompletionCase(fingerprint: Fingerprint, currentWord: String): ShellCase =
+        ShellCase.of(name, aliases) {
+            arguments.forEach { (name, _) ->
+                declareLocalVar(name)
             }
-            append {
+            code {
                 complete(
                     fingerprint = fingerprint,
-                    currentWord = ShellHelper.variable("COMP_CWORD"),
+                    currentWordIndex = getVar("COMP_CWORD"),
                     variants = { variants ->
                         val variantsString = variants.joinBySpace().wrapWithDoubleQuote()
-                        val typingWord = ShellHelper.variable("typingWord")
-                        "COMPREPLY=($(compgen -W $variantsString -- $typingWord))"
+                        val completionReply = sh.invoke("compgen", "-W $variantsString -- $currentWord")
+                        sh.initArray("COMPREPLY", completionReply)
                     },
                 )
             }

@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.extensions.common
 
-import io.github.recrafter.crafter.helpers.shell.ScriptBuilder
+import io.github.recrafter.crafter.helpers.shell.ShellScriptBuilder
 
-fun buildScript(builder: ScriptBuilder.() -> ScriptBuilder): String =
-    builder(ScriptBuilder()).toString()
+fun shellScript(builder: ShellScriptBuilder.() -> ShellScriptBuilder): String =
+    builder(ShellScriptBuilder()).toString()

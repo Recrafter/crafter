@@ -22,6 +22,7 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.babric.sync.BabricLoaderSynchronizer
 import io.github.recrafter.crafter.babric.sync.BabricMappingsSynchronizer
+import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.ModMetadata
@@ -47,6 +48,7 @@ import io.github.recrafter.crafter.fabric.extensions.loomRemapJar
 import io.github.recrafter.crafter.fabric.sync.FabricLoaderSynchronizer
 import io.github.recrafter.crafter.fabric.sync.FabricMappingsSynchronizer
 import io.github.recrafter.crafter.forge.sync.ForgeLoaderSynchronizer
+import io.github.recrafter.crafter.helpers.shell.ShellHelper
 import io.github.recrafter.crafter.legacy_fabric.sync.LegacyFabricMappingsSynchronizer
 import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSynchronizer
 import io.github.recrafter.crafter.ornithe.sync.OrnitheMappingsSynchronizer
@@ -67,12 +69,11 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.util.GradleVersion
 import java.io.File
 
-@Suppress("unused")
 class CrafterGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
         if (!project.isRootProject()) {
-            gradleError("The Crafter must be applied only to the root project")
+            gradleError("The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project")
         }
         requireGradleVersion()
 
@@ -346,15 +347,16 @@ class CrafterGradlePlugin : Plugin<Project> {
     }
 
     private fun requireGradleVersion() {
-        val currentGradleVersion = GradleVersion.current().version
-        require(currentGradleVersion == REQUIRED_GRADLE_VERSION) {
+        val currentVersion = GradleVersion.current().version
+        val requiredVersion = GradleVersion.current().version
+        require(currentVersion == requiredVersion) {
             gradleError(
                 """
                 Unsupported Gradle version.
-                Current:  $currentGradleVersion
-                Required: $REQUIRED_GRADLE_VERSION
+                Current:  $currentVersion
+                Required: $requiredVersion
                 Update with command:
-                  ./gradlew wrapper --gradle-version $REQUIRED_GRADLE_VERSION --distribution-type all
+                  ${ShellHelper.gradleCommand("wrapper --gradle-version $requiredVersion --distribution-type all")}
                 """.trimIndent()
             )
         }

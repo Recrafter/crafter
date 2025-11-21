@@ -4,8 +4,9 @@ import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.asString
-import io.github.recrafter.crafter.extensions.common.buildScript
-import io.github.recrafter.crafter.helpers.shell.ShellHelper
+import io.github.recrafter.crafter.extensions.common.shellScript
+import io.github.recrafter.crafter.helpers.shell.syntax.ShellCase
+import io.github.recrafter.crafter.helpers.shell.syntax.ShellIf
 import io.github.recrafter.crafter.tasks.cli.Fingerprint
 import io.github.recrafter.crafter.tasks.cli.commands.common.Command
 
@@ -15,38 +16,35 @@ class InitCommand : Command<InitArguments>(
     aliases = listOf("i"),
     serializer = InitArguments.serializer(),
 ) {
-    override fun run(fingerprint: Fingerprint, arguments: InitArguments): String = buildScript {
-        append {
+    override fun run(fingerprint: Fingerprint, arguments: InitArguments): String = shellScript {
+        code {
             ""
         }
     }
 
     override fun complete(
         fingerprint: Fingerprint,
-        currentWord: String,
+        currentWordIndex: String,
         variants: (List<String>) -> String
-    ): String = buildScript {
-        append {
-            """
-            loader=${ShellHelper.arrayElement("COMP_WORDS", index = 2)}
-            if [ $currentWord -eq 2 ]; then
-              ${variants(getLoaderNames(fingerprint))}
-            elif [ $currentWord -eq 3 ]; then
-            """
-        }
-        withIndent {
-            append {
-                ShellHelper.whenBy(
-                    "loader",
-                    fingerprint.loaderVersions.map { (loader, versions) ->
-                        ShellHelper.case(getLoaderName(loader)) {
-                            append { variants(versions.map { it.asString() }) }
+    ): String = shellScript {
+        initLocalVar("loader", getArrayValue("COMP_WORDS", 2))
+        shellIfThen(
+            ShellIf.ofIf("$currentWordIndex -eq 2") {
+                code { variants(getLoaderNames(fingerprint)) }
+            },
+            ShellIf.ofIf("$currentWordIndex -eq 3") {
+                withIndent {
+                    shellWhen(
+                        "loader",
+                        fingerprint.loaderVersions.map { (loader, versions) ->
+                            ShellCase.of(getLoaderName(loader)) {
+                                code { variants(versions.map { it.asString() }) }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
-        }
-        append { "fi" }
+        )
     }
 
     private fun getLoaderNames(fingerprint: Fingerprint): List<String> =
