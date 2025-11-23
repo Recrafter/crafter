@@ -28,7 +28,7 @@ data class ModMetadata(
         loader: ModLoaderType,
         minMinecraftVersion: MinecraftVersion,
         maxMinecraftVersion: MinecraftVersion,
-        versionsMetadata: VersionsMetadata,
+        loaderMetadata: LoaderMetadata,
     ): Mod =
         Mod(
             id = id,
@@ -46,7 +46,7 @@ data class ModMetadata(
             issuesUrl = issuesUrl,
             environment = if (minMinecraftVersion.isInternalServer) ModEnvironment.CLIENT_ONLY else environment,
             loader = loader,
-            versions = versionsMetadata,
+            loaderMetadata = loaderMetadata,
             minMinecraftVersion = minMinecraftVersion,
             maxMinecraftVersion = maxMinecraftVersion,
         )

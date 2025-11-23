@@ -8,6 +8,7 @@ dependencies {
 
     compileOnly(project(":core"))
     compileOnly(project(":loaders:fabric"))
+    compileOnly(libs.legacy.fabric.plugin)
 
     implementation(libs.bedrock)
     implementation(libs.ktor)

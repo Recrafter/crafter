@@ -1,23 +1,23 @@
-package io.github.recrafter.crafter.fabric.sync
+package io.github.recrafter.crafter.babric.sync
 
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.Semver
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
+import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-object FabricMappingsSynchronizer : MavenComponentSynchronizer() {
+object BarnMappingsSync : MavenComponentSync() {
 
-    override val loader: ModLoaderType = ModLoaderType.FABRIC
+    override val loader: ModLoaderType = ModLoaderType.BABRIC
 
     override val componentName: String = "mappings"
 
     override val mavenUrl: Url =
-        buildUrl("maven.fabricmc.net") {
-            path("net", "fabricmc", "yarn", MavenMetadata.FILE_NAME)
+        buildUrl("maven.glass-launcher.net") {
+            path("babric", "babric", "barn", MavenMetadata.FILE_NAME)
         }
 
     override fun parseMinecraftVersion(version: String): MinecraftVersion? =

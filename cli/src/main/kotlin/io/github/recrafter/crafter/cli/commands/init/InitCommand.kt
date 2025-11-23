@@ -1,17 +1,12 @@
 package io.github.recrafter.crafter.cli.commands.init
 
-import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
-import io.github.diskria.kotlin.utils.extensions.mappers.getName
-import io.github.recrafter.bedrock.loaders.ModLoaderType
-import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.commands.common.Command
 import io.github.recrafter.crafter.cli.completion.ShellCompletion
 import io.github.recrafter.crafter.cli.extensions.common.shellScript
-import io.github.recrafter.crafter.cli.shell.syntax.ShellCase
 import io.github.recrafter.crafter.cli.shell.syntax.ShellIf
 
-class InitCommand : Command<InitArguments>(
+object InitCommand : Command<InitArguments>(
     name = "init",
     description = "Init a new mod project",
     aliases = listOf("i"),
@@ -23,34 +18,17 @@ class InitCommand : Command<InitArguments>(
         }
     }
 
-    override fun complete(
-        fingerprint: Fingerprint,
-        currentWordIndex: String,
-        variants: (List<String>) -> String
-    ): String = shellScript {
-        initLocalVar("loader", getArrayValue(ShellCompletion.WORDS, 2))
-        shellIfThen(
+    override fun complete(currentWordIndex: String, reply: (String) -> String): String = shellScript {
+        val loader = initLocalVar("loader", sh.getArrayValue(ShellCompletion.WORDS, 2))
+        buildIfThen(
             ShellIf.ofIf("$currentWordIndex -eq 2") {
-                code { variants(getLoaderNames(fingerprint)) }
+                code { reply(sh.getVar("LOADERS")) }
             },
             ShellIf.ofIf("$currentWordIndex -eq 3") {
                 withIndent {
-                    shellWhen(
-                        "loader",
-                        fingerprint.loaderVersions.map { (loader, versions) ->
-                            ShellCase.of(getLoaderName(loader)) {
-                                code { variants(versions.map { it.asString() }) }
-                            }
-                        }
-                    )
+                    code { reply(sh.getArrayValue("VERSIONS", loader)) }
                 }
             }
         )
     }
-
-    private fun getLoaderNames(fingerprint: Fingerprint): List<String> =
-        fingerprint.loaderVersions.keys.map { getLoaderName(it) }
-
-    private fun getLoaderName(loader: ModLoaderType): String =
-        loader.getName(`kebab-case`)
 }

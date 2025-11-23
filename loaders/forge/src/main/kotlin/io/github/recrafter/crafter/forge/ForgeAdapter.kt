@@ -24,7 +24,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
 import java.io.File
 
-object ForgeModLoaderAdapter : ModLoaderAdapter() {
+object ForgeAdapter : ModLoaderAdapter() {
 
     override fun getPrepareRunTasks(loaderProject: Project, side: ModSide): List<Task> =
         listOfNotNull(
@@ -74,7 +74,7 @@ object ForgeModLoaderAdapter : ModLoaderAdapter() {
             }
         }
         dependencies {
-            val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.versions.loader}"
+            val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.loaderMetadata.loaderVersion}"
             val minecraftArtifact = buildArtifactCoordinates("net.minecraftforge", "forge", forgeVersion)
             mod.log(project, "Minecraft: $minecraftArtifact")
             minecraft(minecraftArtifact)
@@ -99,7 +99,7 @@ object ForgeModLoaderAdapter : ModLoaderAdapter() {
             }
         }
         groupLoaderTasks(
-            loaderPackageName = listOf("net.minecraftforge.gradle"),
+            loaderPackageNamePrefixes = listOf("net.minecraftforge.gradle"),
             taskGroups = listOf(RunConfig.PREPARE_RUNS_GROUP),
             taskNames = listOf("makeSrcDirs"),
             loader = ModLoaderType.FORGE,

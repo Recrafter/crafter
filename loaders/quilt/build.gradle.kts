@@ -8,6 +8,7 @@ dependencies {
 
     compileOnly(project(":core"))
     compileOnly(project(":loaders:fabric"))
+    compileOnly(libs.quilt.plugin)
 
     implementation(libs.bedrock)
 

@@ -8,10 +8,10 @@ import io.github.diskria.kotlin.utils.extensions.common.camelCase
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
-import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.completion.ShellCompletion
 import io.github.recrafter.crafter.cli.shell.ShellHelper
+import io.github.recrafter.crafter.cli.shell.ShellScriptBuilder
 import io.github.recrafter.crafter.cli.shell.arguments.ArgumentReference
 import io.github.recrafter.crafter.cli.shell.arguments.Arguments
 import io.github.recrafter.crafter.cli.shell.syntax.ShellCase
@@ -43,20 +43,17 @@ abstract class Command<T : Arguments>(
 
     abstract fun run(fingerprint: Fingerprint, arguments: T): String
 
-    abstract fun complete(
-        fingerprint: Fingerprint,
-        currentWordIndex: String,
-        variants: (List<String>) -> String
-    ): String
+    abstract fun complete(currentWordIndex: String, reply: (String) -> String): String
 
-    fun generateRunCase(fingerprint: Fingerprint): ShellCase =
-        ShellCase.of(name, aliases) {
+    fun runCase(fingerprint: Fingerprint): ShellCase =
+        case {
             if (arguments.isNotEmpty()) {
                 arguments.mapIndexed { index, (_, reference) ->
-                    initVar(reference.name, getScriptArgument(index + 2))
+                    initVar(reference.name, sh.getScriptArgument(index + 2))
                 }
-                shellIfThen(
-                    ShellIf.ofIf(arguments.map { (_, reference) -> isEmpty(reference) }, ShellLogicalOperator.OR) {
+                val condition = arguments.map { (_, reference) -> sh.isEmpty(reference.toString()) }
+                buildIfThen(
+                    ShellIf.ofIf(condition, ShellLogicalOperator.OR) {
                         printErr("Wrong $name command usage.")
                         shellPrintln("Usage: ${ShellHelper.terminalCommand(fingerprint.scriptName, signature)}")
                         throwException()
@@ -66,23 +63,18 @@ abstract class Command<T : Arguments>(
             code { run(fingerprint, createArguments()) }
         }
 
-    fun generateCompletionCase(fingerprint: Fingerprint, currentWord: String): ShellCase =
-        ShellCase.of(name, aliases) {
-            arguments.forEach { (name, _) ->
-                declareLocalVar(name)
-            }
+    fun completionCase(currentWord: String): ShellCase =
+        case {
             code {
-                complete(
-                    fingerprint = fingerprint,
-                    currentWordIndex = getVar(ShellCompletion.CURRENT_WORD),
-                    variants = { variants ->
-                        val variantsString = variants.joinBySpace().wrapWithDoubleQuote()
-                        val completionReply = sh.invoke(ShellCompletion.GENERATE, "-W $variantsString -- $currentWord")
-                        sh.initArray(ShellCompletion.REPLY, completionReply)
-                    },
-                )
+                complete(sh.getVar(ShellCompletion.CURRENT_WORD)) { reply ->
+                    val generatedReply = sh.invoke(ShellCompletion.GENERATE, "-W $reply -- $currentWord")
+                    sh.initArray(ShellCompletion.REPLY, generatedReply)
+                }
             }
         }
+
+    private fun Command<*>.case(builder: ShellScriptBuilder.() -> ShellScriptBuilder): ShellCase =
+        ShellCase.of(name, aliases, builder)
 
     private fun createArguments(): T =
         Json.decodeFromJsonElement(

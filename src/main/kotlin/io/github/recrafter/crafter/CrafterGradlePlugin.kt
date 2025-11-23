@@ -2,23 +2,27 @@ package io.github.recrafter.crafter
 
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.gradle.utils.extensions.common.gradleError
-import io.github.diskria.kotlin.utils.extensions.asFileOrNull
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
-import io.github.diskria.kotlin.utils.extensions.common.snake_case
 import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.generics.addIfNotNull
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
-import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
-import io.github.diskria.kotlin.utils.extensions.setCase
+import io.github.diskria.kotlin.utils.extensions.mappers.toEnum
+import io.github.diskria.kotlin.utils.extensions.toBooleanOrNull
 import io.github.recrafter.bedrock.extensions.getModRecipe
+import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
+import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
-import io.github.recrafter.bedrock.versions.asString
-import io.github.recrafter.crafter.babric.sync.BabricMappingsSynchronizer
-import io.github.recrafter.crafter.core.*
+import io.github.recrafter.crafter.babric.sync.BarnMappingsSync
+import io.github.recrafter.crafter.cli.shell.ShellHelper
+import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.core.LoaderMetadata
+import io.github.recrafter.crafter.core.ModMetadata
+import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.getRunTaskName
+import io.github.recrafter.crafter.core.extensions.isLoaderProject
 import io.github.recrafter.crafter.core.extensions.kotlinApply
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import io.github.recrafter.crafter.core.helpers.server.EulaHelper
@@ -28,29 +32,33 @@ import io.github.recrafter.crafter.core.tasks.public.CraftClientTask
 import io.github.recrafter.crafter.core.tasks.public.CraftServerTask
 import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
 import io.github.recrafter.crafter.extensions.mappers.mapToAdapter
-import io.github.recrafter.crafter.fabric.sync.FabricFamilyLoaderSynchronizer
-import io.github.recrafter.crafter.fabric.sync.FabricMappingsSynchronizer
-import io.github.recrafter.crafter.forge.sync.ForgeLoaderSynchronizer
-import io.github.recrafter.crafter.legacy_fabric.sync.LegacyFabricMappingsSynchronizer
-import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSynchronizer
-import io.github.recrafter.crafter.ornithe.sync.OrnitheMappingsSynchronizer
-import io.github.recrafter.crafter.quilt.sync.QuiltMappingsSynchronizer
+import io.github.recrafter.crafter.fabric.sync.FabricFamilyLoaderSync
+import io.github.recrafter.crafter.forge.sync.ForgeLoaderSync
+import io.github.recrafter.crafter.legacy_fabric.sync.LegacyYarnMappingsSync
+import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSync
+import io.github.recrafter.crafter.ornithe.sync.FeatherMappingsSync
 import io.github.recrafter.crafter.tasks.internal.CraftModConfigTask
 import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.wrapper.Wrapper
-import org.gradle.kotlin.dsl.assign
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.named
-import java.io.File
+import org.gradle.kotlin.dsl.*
+import org.gradle.util.GradleVersion
 
+@Suppress("unused")
 class CrafterGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
         if (!project.isRootProject()) {
             gradleError("The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project")
         }
+        tasks {
+            named<Wrapper>("wrapper") {
+                gradleVersion = RECOMMENDED_GRADLE_VERSION
+                distributionType = Wrapper.DistributionType.BIN
+            }
+        }
+        checkEnvironment(project)
 
         val extension = registerExtension<CrafterExtension>()
         extension.onConfigurationReady {
@@ -60,14 +68,21 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
             InstallCrafterCLITask.saveGradleFingerprint(project, modMetadata)
 
-            tasks {
-                named<Wrapper>("wrapper") {
-                    setGradleVersion("8.14.3")
-                    distributionType = Wrapper.DistributionType.ALL
+            val isBisectFlowRunning = System.getProperty("bisect")?.toBooleanOrNull() == true
+            val loaderProjects = children.filter { it.isLoaderProject() }
+            if (isBisectFlowRunning) {
+                val bisectTarget: MinecraftVersion by extra
+                val loaderProject = loaderProjects.single()
+                val modProject = loaderProject.children.single()
+                configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(bisectTarget))
+            } else {
+                loaderProjects.forEach { loaderProject ->
+                    loaderProject.children
+                        .associateWith { MinecraftVersionRange.parse(it.name, PROJECT_NAME_SEPARATOR) }
+                        .forEach { (modProject, versionRange) ->
+                            configureModProject(loaderProject, modProject, modMetadata, versionRange)
+                        }
                 }
-            }
-            children.forEach { loaderProject ->
-                configureVersionProjects(loaderProject, modMetadata)
             }
         }
         afterEvaluate {
@@ -75,84 +90,64 @@ class CrafterGradlePlugin : Plugin<Project> {
         }
     }
 
-    private fun configureVersionProjects(loaderProject: Project, modMetadata: ModMetadata) {
-        val loaderType = loaderProject.name.setCase(`kebab-case`, snake_case).toEnumOrNull<ModLoaderType>() ?: return
-        val loader = loaderType.mapToAdapter()
-        val versionProjects = loaderProject.children
-        val projectVersions = versionProjects.associateWith { MinecraftVersionRange.parse(it.name) }
-        projectVersions.forEach { (versionProject, range) ->
-            val minecraftVersion = range.min
-            val maxMinecraftVersion = range.max
-
-            val loaderSynchronizer = FabricFamilyLoaderSynchronizer(loaderType)
-            val versionsMetadata = when (loaderType) {
-                ModLoaderType.FABRIC -> VersionsMetadata(
-                    loader = loaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    mappings = FabricMappingsSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                )
-
-                ModLoaderType.QUILT -> VersionsMetadata(
-                    loader = loaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    mappings = QuiltMappingsSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                )
-
-                ModLoaderType.LEGACY_FABRIC -> {
-                    val component = LegacyFabricMappingsSynchronizer.getLatestComponent(loaderProject, minecraftVersion)
-                    VersionsMetadata(
-                        loader = loaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                        mappings = component.latestVersion,
-                        mappingsMinecraft = component.minecraftVersion.asString(),
-                    )
-                }
-
-                ModLoaderType.ORNITHE -> {
-                    VersionsMetadata(
-                        loader = loaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                        mappings = OrnitheMappingsSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    )
-                }
-
-                ModLoaderType.BABRIC -> VersionsMetadata(
-                    loader = loaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    mappings = BabricMappingsSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                )
-
-                ModLoaderType.FORGE -> {
-                    VersionsMetadata(
-                        loader = ForgeLoaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    )
-                }
-
-                ModLoaderType.NEOFORGE -> {
-                    VersionsMetadata(
-                        loader = NeoForgeLoaderSynchronizer.getLatestVersion(loaderProject, minecraftVersion),
-                    )
-                }
-            }
-            val mod = modMetadata.toMod(loaderType, minecraftVersion, maxMinecraftVersion, versionsMetadata)
-            val iconFile = loaderProject.projectDirectory.parentFile?.resolve(mod.iconFileName)?.asFileOrNull()
-            configureVersionProject(mod, loader, iconFile, versionProject, mod.archiveVersion)
-        }
-    }
-
-    private fun configureVersionProject(
-        mod: Mod,
-        loaderAdapter: ModLoaderAdapter,
-        iconFile: File?,
+    private fun resolveLoaderMetadata(
+        loader: ModLoaderType,
         project: Project,
-        archiveVersion: String,
+        version: MinecraftVersion
+    ): LoaderMetadata =
+        when (loader.family) {
+            ModLoaderFamily.FABRIC -> {
+                LoaderMetadata(
+                    loaderVersion = FabricFamilyLoaderSync(loader).getLatestVersion(project, version),
+                    mappingsVersion = when (loader) {
+                        ModLoaderType.LEGACY_FABRIC -> LegacyYarnMappingsSync.getLatestVersion(project, version)
+                        ModLoaderType.BABRIC -> BarnMappingsSync.getLatestVersion(project, version)
+                        ModLoaderType.ORNITHE -> FeatherMappingsSync.getLatestVersion(project, version)
+                        else -> null
+                    },
+                    minecraftVersion = when (loader) {
+                        ModLoaderType.LEGACY_FABRIC -> LegacyYarnMappingsSync.getMinecraftVersion(project, version)
+                        else -> version
+                    }
+                )
+            }
+
+            ModLoaderFamily.FORGE -> {
+                val loaderVersion = when (loader) {
+                    ModLoaderType.FORGE -> ForgeLoaderSync.getLatestVersion(project, version)
+                    ModLoaderType.NEOFORGE -> NeoForgeLoaderSync.getLatestVersion(project, version)
+                    else -> TODO()
+                }
+                LoaderMetadata(
+                    loaderVersion = loaderVersion,
+                    minecraftVersion = version
+                )
+            }
+        }
+
+    private fun configureModProject(
+        loaderProject: Project,
+        modProject: Project,
+        modMetadata: ModMetadata,
+        versionRange: MinecraftVersionRange,
     ) {
-        with(project) {
+        val minVersion = versionRange.min
+        val maxVersion = versionRange.max
+        val loader = loaderProject.name.toEnum<ModLoaderType>(`kebab-case`)
+        val loaderAdapter = loader.mapToAdapter()
+        val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)
+        val mod = modMetadata.toMod(loader, minVersion, maxVersion, loaderMetadata)
+        with(modProject) {
             ensurePluginApplied("org.jetbrains.kotlin.jvm")
             group = mod.namespace
-            version = archiveVersion
+            version = mod.archiveVersion
         }
         val sideProjects = mod.environment.sides.associateWith { side ->
-            project.children.first { it.name == side.getName() }.kotlinApply {
+            modProject.children.first { it.name == side.getName() }.kotlinApply {
                 ensurePluginApplied("org.jetbrains.kotlin.jvm")
             }
         }
-        val runDirectory = project.projectDirectory.resolve(mod.runDirectoryName)
+        val runDirectory = modProject.projectDirectory.resolve(mod.runDirectoryName)
         runDirectory.resolve(ModSide.SERVER.getName()).ensureDirectoryExists {
             resolve(EulaHelper.FILE_NAME).ensureFileExists {
                 writeText(EulaHelper.buildPreset(mod))
@@ -165,7 +160,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
         }
         sideProjects.values.forEach { sideProject ->
-            val pluginMainSourceSet = project.sourceSets.main
+            val pluginMainSourceSet = modProject.sourceSets.main
             sideProject.sourceSets.main.addToClasspath(pluginMainSourceSet, withOutput = true)
             val mixins = sideProject.sourceSets.create(MixinsHelper.MIXINS_NAME).apply {
                 addToClasspath(pluginMainSourceSet, withOutput = true)
@@ -178,24 +173,46 @@ class CrafterGradlePlugin : Plugin<Project> {
                 }
             }
         }
-        val craftModConfigTask = project.registerTask<CraftModConfigTask> {
+        val craftModConfigTask = modProject.registerTask<CraftModConfigTask> {
             this.mod.set(mod)
             outputFile = getTempFile(mod.loaderConfigPath)
         }
-        loaderAdapter.configureInternal(mod, iconFile, project, runDirectory, sideProjects, craftModConfigTask)
+        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects, craftModConfigTask)
         ModSide.values().forEach { side ->
             when (side) {
-                ModSide.CLIENT -> project.registerTask<CraftClientTask>()
-                ModSide.SERVER -> project.registerTask<CraftServerTask>()
+                ModSide.CLIENT -> modProject.registerTask<CraftClientTask>()
+                ModSide.SERVER -> modProject.registerTask<CraftServerTask>()
             } {
                 dependsSequentiallyOn(
                     buildList {
-                        add(project.tasks.build.get())
-                        addAll(loaderAdapter.getPrepareRunTasks(project, side))
-                        addIfNotNull(project.getTaskOrNull(side.getRunTaskName()))
+                        add(modProject.tasks.build.get())
+                        addAll(loaderAdapter.getPrepareRunTasks(modProject, side))
+                        addIfNotNull(modProject.getTaskOrNull(side.getRunTaskName()))
                     }
                 )
             }
         }
+    }
+
+    private fun checkEnvironment(project: Project) {
+        val currentVersion = GradleVersion.current().version
+        if (currentVersion != RECOMMENDED_GRADLE_VERSION) {
+            project.logger.warn(
+                buildString {
+                    appendLine(
+                        "Detected Gradle version $currentVersion may not be fully compatible " +
+                                "with ${CrafterConstants.PLUGIN_NAME}."
+                    )
+                    appendLine("Recommended Gradle version: $RECOMMENDED_GRADLE_VERSION")
+                    append("To update, run: ${ShellHelper.gradleTaskCommand("wrapper")}")
+                }
+            )
+        }
+    }
+
+    companion object {
+        private const val RECOMMENDED_GRADLE_VERSION: String = "8.14.3"
+        private const val PROJECT_NAME_SEPARATOR: String = "--"
+        private const val BISECT_FLOW_FLAG = "bisect"
     }
 }

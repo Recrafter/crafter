@@ -25,7 +25,7 @@ data class FabricModDependenciesConfig(
                 minecraftVersion = InequalityVersionRange.min(
                     VersionBound.inclusive(mod.minecraftVersion.normalizedSemver)
                 ),
-                loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
             )
     }
 }

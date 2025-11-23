@@ -4,37 +4,48 @@ import io.github.diskria.gradle.utils.extensions.configureExtension
 import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
 import io.github.diskria.gradle.utils.extensions.getGeneratedResourcesDirectory
 import io.github.diskria.gradle.utils.extensions.getGeneratedSourcesDirectory
+import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
+import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.crafter.core.CrafterConstants
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.invoke
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
+fun Project.isLoaderProject(): Boolean =
+    name.toEnumOrNull<ModLoaderType>(`kebab-case`) != null
+
 fun Project.groupLoaderTasks(
-    loaderPackageName: List<String> = emptyList(),
+    loaderPackageNamePrefixes: List<String> = emptyList(),
     taskGroups: List<String> = emptyList(),
     taskNames: List<String> = emptyList(),
     loader: ModLoaderType,
 ) {
     gradle.taskGraph.whenReady {
-        tasks.matching { task ->
-            val packageName = task.javaClass.packageName.orEmpty()
-            loaderPackageName.any { packageName.startsWith(it) } ||
-                    task.group != null && taskGroups.contains(task.group) ||
-                    taskNames.contains(task.name)
-        }.configureEach {
-            group = "Mod Loader/${loader.displayName}"
+        tasks {
+            matching { task ->
+                val packageName = task.javaClass.packageName.orEmpty()
+                loaderPackageNamePrefixes.any { packageName.startsWith(it) } ||
+                        task.group != null && taskGroups.contains(task.group) ||
+                        taskNames.contains(task.name)
+            }.configureEach {
+                group = "Mod Loader/${loader.displayName}"
+            }
         }
     }
 }
 
 fun Project.groupMatchingTasks(name: String, vararg keywords: String) {
     gradle.taskGraph.whenReady {
-        tasks
-            .matching { task ->
-                !task.isCrafterTask() && keywords.any { task.name.lowercase().contains(it.lowercase()) }
+        tasks {
+            matching { task ->
+                !task.isCrafterTask() &&
+                        keywords.any { task.name.lowercase().contains(it.lowercase()) }
+            }.configureEach {
+                group = name
             }
-            .configureEach { group = name }
+        }
     }
 }
 

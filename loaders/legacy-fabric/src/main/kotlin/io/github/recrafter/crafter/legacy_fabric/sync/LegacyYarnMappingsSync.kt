@@ -5,11 +5,11 @@ import io.github.diskria.kotlin.utils.Semver
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
+import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-object LegacyFabricMappingsSynchronizer : MavenComponentSynchronizer() {
+object LegacyYarnMappingsSync : MavenComponentSync() {
 
     override val loader: ModLoaderType = ModLoaderType.LEGACY_FABRIC
 

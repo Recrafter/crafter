@@ -53,14 +53,14 @@ abstract class CraftModConfigTask : DefaultTask() {
                 outputFile.writeText(config)
             }
 
-            ModLoaderType.ORNITHE -> {
-                val config = OrnitheModConfig.of(mod).serializeToJson()
+            ModLoaderType.BABRIC -> {
+                val config = FabricModConfig.of(mod).serializeToJson()
                 mod.log(project, "Mod config generated", config)
                 outputFile.writeText(config)
             }
 
-            ModLoaderType.BABRIC -> {
-                val config = FabricModConfig.of(mod).serializeToJson()
+            ModLoaderType.ORNITHE -> {
+                val config = OrnitheModConfig.of(mod).serializeToJson()
                 mod.log(project, "Mod config generated", config)
                 outputFile.writeText(config)
             }

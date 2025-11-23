@@ -32,11 +32,11 @@ pluginManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "0.1.6"
+    id("io.github.recrafter.recipe") version "0.2.0"
 }
 
 projekt {
-    version = "0.2.4"
+    version = "0.2.5"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,
@@ -46,7 +46,9 @@ projekt {
 }
 
 recipe {
-    mavenReposOnly()
+    crafter {
+        craftingCrafters()
+    }
 }
 
 include(":core")

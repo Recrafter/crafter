@@ -38,7 +38,7 @@ data class QuiltModDependencyConfig(
         fun createLoaderDependency(mod: Mod): QuiltModDependencyConfig =
             of(
                 id = "quilt_loader",
-                version = InequalityVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                version = InequalityVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
             )
     }
 }

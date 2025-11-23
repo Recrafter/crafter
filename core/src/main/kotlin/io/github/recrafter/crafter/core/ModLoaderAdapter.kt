@@ -3,12 +3,12 @@ package io.github.recrafter.crafter.core
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.DateFormat
+import io.github.diskria.kotlin.utils.extensions.asFileOrNull
 import io.github.diskria.kotlin.utils.extensions.common.`Train-Case`
 import io.github.diskria.kotlin.utils.extensions.common.nowDate
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.format
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
-import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.isIntegratedServer
@@ -26,13 +26,11 @@ import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.withType
 import java.io.File
@@ -53,7 +51,6 @@ abstract class ModLoaderAdapter {
 
     fun configureInternal(
         mod: Mod,
-        iconFile: File?,
         project: Project,
         runDirectory: File,
         sideProjects: Map<ModSide, Project>,
@@ -77,7 +74,10 @@ abstract class ModLoaderAdapter {
         tasks {
             configureJvmTarget(mod.jvmTarget)
             withType<JavaCompile>().configureEach {
-                options.encoding = Charsets.UTF_8.toString()
+                with(options) {
+                    encoding = Charsets.UTF_8.toString()
+                    compilerArgs.add("-Xlint:-options")
+                }
             }
             lazyConfigure<Jar>("sourcesJar") {
                 exclude(mod.accessConfigPath)
@@ -170,7 +170,9 @@ abstract class ModLoaderAdapter {
             processResources {
                 copyTaskOutput(craftMixinsConfigTask, mod.mixinsConfigPath)
                 copyTaskOutput(craftModConfigTask, mod.loaderConfigPath)
-                iconFile?.let { copyFile(it, mod.iconPath) }
+                project.rootProject.projectDirectory.resolve(mod.iconFileName).asFileOrNull()?.let { iconFile ->
+                    copyFile(iconFile, mod.iconPath)
+                }
                 moveFile(mod.accessConfigName, mod.accessConfigPath)
             }
         }

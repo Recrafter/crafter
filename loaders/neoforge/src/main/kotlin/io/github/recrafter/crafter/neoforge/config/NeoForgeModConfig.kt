@@ -14,7 +14,7 @@ data class NeoForgeModConfig(
 
     val mods: List<NeoForgeModConfigEntry>,
     val mixins: List<NeoForgeModMixinConfigEntry>,
-    val accessTransformers: List<NeoForgeModAccessTransformerConfigEntry>,
+    val accessTransformers: List<NeoForgeModAccessConfigEntry>,
     val dependencies: Map<String, List<NeoForgeModDependencyConfigEntry>>,
 ) {
     companion object {
@@ -29,7 +29,7 @@ data class NeoForgeModConfig(
                     NeoForgeModMixinConfigEntry.of(mod),
                 ),
                 accessTransformers = listOf(
-                    NeoForgeModAccessTransformerConfigEntry.of(mod),
+                    NeoForgeModAccessConfigEntry.of(mod),
                 ),
                 dependencies = mapOf(
                     mod.id to listOf(

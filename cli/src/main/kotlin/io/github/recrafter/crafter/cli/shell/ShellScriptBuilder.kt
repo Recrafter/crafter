@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.cli.shell
 
+import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendFollowingIndent
@@ -10,7 +11,6 @@ import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
 import io.github.recrafter.crafter.cli.extensions.common.shellScript
-import io.github.recrafter.crafter.cli.shell.arguments.ArgumentReference
 import io.github.recrafter.crafter.cli.shell.syntax.ShellCase
 import io.github.recrafter.crafter.cli.shell.syntax.ShellIf
 import io.github.recrafter.crafter.cli.shell.syntax.ShellKeyword
@@ -45,30 +45,6 @@ class ShellScriptBuilder {
         return this
     }
 
-    fun ShellScriptBuilder.getVar(name: String): String =
-        getShellVar(name)
-
-    fun ShellScriptBuilder.getScriptArgument(index: Int): String =
-        getVar(index.toString())
-
-    fun ShellScriptBuilder.getArrayValue(array: String, index: String): String =
-        getVar(array + index.wrapWithBrackets(BracketsType.SQUARE))
-
-    fun ShellScriptBuilder.getArrayValue(array: String, index: Int): String =
-        getArrayValue(array, index.toString())
-
-    fun ShellScriptBuilder.getLocalVar(name: String): String =
-        getShellVar(name, isLocal = true)
-
-    fun ShellScriptBuilder.isFileExists(path: String): String =
-        "-f ${path.wrapWithDoubleQuote()}"
-
-    fun ShellScriptBuilder.isEmpty(reference: ArgumentReference): String =
-        "-z ${reference.name}"
-
-    fun ShellScriptBuilder.isNotEmpty(reference: ArgumentReference): String =
-        "-n ${reference.name}"
-
     fun ShellScriptBuilder.shebang(): ShellScriptBuilder =
         code { "#!/usr/bin/env bash" }
 
@@ -78,11 +54,18 @@ class ShellScriptBuilder {
     fun ShellScriptBuilder.initVar(name: String, value: String, quote: Boolean = false): ShellScriptBuilder =
         code { sh.initVar(name, value, quote) }
 
-    fun ShellScriptBuilder.initLocalVar(name: String, value: String): ShellScriptBuilder =
-        initVar(name, value)
+    fun ShellScriptBuilder.initMap(name: String, map: Map<String, String>): ShellScriptBuilder {
+        require(name.uppercase() == name) { gradleError("Shell variable names must be uppercase") }
+        code { "declare -A $name" }
+        map.toList().sortedBy { it.first }.forEach { (key, value) -> putToMap(name, key, value) }
+        return this
+    }
 
-    fun ShellScriptBuilder.initArray(name: String, contents: String? = Constants.Char.EMPTY): ShellScriptBuilder =
-        initVar(name, "($contents)")
+    fun ShellScriptBuilder.putToMap(name: String, key: String, value: String): ShellScriptBuilder =
+        initVar(name + key.wrapWithBrackets(BracketsType.SQUARE), value.wrapWithDoubleQuote())
+
+    fun ShellScriptBuilder.initArray(name: String, contents: String = Constants.Char.EMPTY): ShellScriptBuilder =
+        code { sh.initArray(name, contents) }
 
     fun ShellScriptBuilder.shellPrintln(
         text: String = Constants.Char.EMPTY,
@@ -100,14 +83,7 @@ class ShellScriptBuilder {
         return this
     }
 
-    fun ShellScriptBuilder.declareLocalVar(name: String, initValue: String? = null): ShellScriptBuilder {
-        require(name.lowercase() == name) { "Shell local variable names must be lowercase and single-word." }
-        code { "local $name" }
-        initValue?.let { code { "$name=$it" } }
-        return this
-    }
-
-    fun ShellScriptBuilder.shellIfThen(vararg ifs: ShellIf): ShellScriptBuilder =
+    fun ShellScriptBuilder.buildIfThen(vararg ifs: ShellIf): ShellScriptBuilder =
         code {
             val list = ifs.toList()
             list.withIndex().joinByNewLine { (index, current) ->
@@ -118,8 +94,8 @@ class ShellScriptBuilder {
             }
         }
 
-    fun ShellScriptBuilder.shellWhen(variable: String, cases: List<ShellCase>): ShellScriptBuilder {
-        code { "${ShellKeyword.CASE.token} ${getLocalVar(variable)} in" }
+    fun ShellScriptBuilder.buildWhen(variable: String, cases: List<ShellCase>): ShellScriptBuilder {
+        code { "${ShellKeyword.CASE.token} ${sh.getLocalVar(variable)} in" }
         withIndent {
             code { cases.joinByNewLine { it.script } }
         }
@@ -127,20 +103,26 @@ class ShellScriptBuilder {
         return this
     }
 
-    fun ShellScriptBuilder.shellFun(
+    fun ShellScriptBuilder.initLocalVar(name: String, initValue: String): String {
+        code { "local $name" }
+        code { "$name=$initValue" }
+        return sh.getVar(name, quote = false)
+    }
+
+    fun ShellScriptBuilder.function(
         name: String,
         builder: ShellScriptBuilder.() -> ShellScriptBuilder
-    ): ShellScriptBuilder {
+    ): String {
         code { "$name() {" }
         withIndent(builder = builder)
         code { "}" }
-        return this
+        return name
     }
 
     fun Sh.initVar(name: String, value: String, quote: Boolean = false): String =
         "$name=" + value.modifyIf(quote) { it.wrapWithDoubleQuote() }
 
-    fun Sh.initArray(name: String, contents: String? = Constants.Char.EMPTY): String =
+    fun Sh.initArray(name: String, contents: String = Constants.Char.EMPTY): String =
         initVar(name, "($contents)")
 
     fun Sh.shellPrintln(text: String = Constants.Char.EMPTY, allowEscape: Boolean = false, padding: Int = 0): String =
@@ -159,6 +141,30 @@ class ShellScriptBuilder {
     fun Sh.readFile(path: String): String =
         invoke("cat", path.wrapWithDoubleQuote())
 
+    fun Sh.isEmpty(variable: String): String =
+        "-z $variable"
+
+    fun Sh.isNotEmpty(variable: String): String =
+        "-n $variable"
+
+    fun Sh.isFileExists(path: String): String =
+        "-f ${path.wrapWithDoubleQuote()}"
+
+    fun Sh.getVar(name: String, quote: Boolean = true): String =
+        getShellVar(name, quote = quote)
+
+    fun Sh.getScriptArgument(index: Int): String =
+        getVar(index.toString())
+
+    fun Sh.getArrayValue(array: String, index: String): String =
+        getVar(array + index.wrapWithBrackets(BracketsType.SQUARE))
+
+    fun Sh.getArrayValue(array: String, index: Int): String =
+        getArrayValue(array, index.toString())
+
+    fun Sh.getLocalVar(name: String, quote: Boolean = true): String =
+        getShellVar(name, isLocal = true, quote = quote)
+
     override fun toString(): String =
         script
 
@@ -167,9 +173,11 @@ class ShellScriptBuilder {
     companion object {
         private const val DEFAULT_INDENT: Int = 4
 
-        fun getShellVar(name: String, isLocal: Boolean = false): String {
-            require(isLocal || name.uppercase() == name) { "Shell variable names must be uppercase" }
-            return "$${name.wrapWithBrackets(BracketsType.CURLY)}".wrapWithDoubleQuote()
+        fun getShellVar(name: String, isLocal: Boolean = false, quote: Boolean = true): String {
+            if (isLocal) {
+                require(name.uppercase() != name) { gradleError("Shell local variable names must be lowercase") }
+            }
+            return "$${name.wrapWithBrackets(BracketsType.CURLY)}".modifyIf(quote) { it.wrapWithDoubleQuote() }
         }
     }
 }

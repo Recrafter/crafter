@@ -7,6 +7,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import kotlinx.serialization.SerialName
@@ -51,7 +52,7 @@ data class MixinsConfig(
                 jvmTargetVersion = "JAVA_${mod.jvmTarget.toInt()}",
                 injectorConfig = InjectorConfig.newInstance(),
                 overwriteConfig = OverwriteConfig.newInstance(),
-                refmap = if (mod.loaderFamily == ModLoaderFamily.FABRIC) mod.refmapFileName else null,
+                refmap = if (mod.loader.family == ModLoaderFamily.FABRIC) mod.refmapFileName else null,
                 mainMixins = when (mod.environment) {
                     ModEnvironment.DEDICATED_SERVER_ONLY -> null
                     else -> sideMixins[ModSide.SERVER]

@@ -19,6 +19,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
+import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.toJvmTarget
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
@@ -42,12 +43,8 @@ data class Mod(
     val homepageUrl: String?,
     val runDirectoryName: String,
     val loader: ModLoaderType,
-    val versions: VersionsMetadata,
-
-    @Serializable(with = MinecraftVersionSerializer::class)
+    val loaderMetadata: LoaderMetadata,
     val minMinecraftVersion: MinecraftVersion,
-
-    @Serializable(with = MinecraftVersionSerializer::class)
     val maxMinecraftVersion: MinecraftVersion,
 ) {
     val packageName: String
@@ -62,9 +59,6 @@ data class Mod(
     val versionRange: MinecraftVersionRange
         get() = minMinecraftVersion..maxMinecraftVersion
 
-    val loaderFamily: ModLoaderFamily
-        get() = ModLoaderFamily.of(loader)
-
     val iconFileName: String
         get() = fileName("icon", Constants.File.Extension.PNG)
 
@@ -72,7 +66,7 @@ data class Mod(
         get() = iconFileName
 
     val accessConfigName: String
-        get() = when (loaderFamily) {
+        get() = when (loader.family) {
             ModLoaderFamily.FABRIC -> fileName("cfg", "accesswidener")
             ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
         }
@@ -93,7 +87,7 @@ data class Mod(
         get() = fileName("pack", "mcmeta")
 
     val refmapFileName: String
-        get() = when (loaderFamily) {
+        get() = when (loader.family) {
             ModLoaderFamily.FABRIC -> fileName(id + "_refmap", Constants.File.Extension.JSON)
             ModLoaderFamily.FORGE -> gradleError(
                 "Invalid configuration: refmap generation attempted for Forge, but it is only supported on Fabric"
@@ -101,7 +95,7 @@ data class Mod(
         }
 
     val loaderConfigPath: String
-        get() = when (loaderFamily) {
+        get() = when (loader.family) {
             ModLoaderFamily.FABRIC -> {
                 fileName(
                     when (loader) {
@@ -128,7 +122,7 @@ data class Mod(
     val configEnvironment: String
         get() {
             val splitSide = if (environment == ModEnvironment.SERVER_ONLY) null else environment.sides.singleOrNull()
-            return when (loaderFamily) {
+            return when (loader.family) {
                 ModLoaderFamily.FABRIC -> splitSide?.getName() ?: Constants.Char.ASTERISK.toString()
                 ModLoaderFamily.FORGE -> splitSide?.getName(SCREAMING_SNAKE_CASE) ?: "BOTH"
             }
@@ -148,7 +142,7 @@ data class Mod(
         }
 
     val isReobfNeeded: Boolean =
-        loaderFamily == ModLoaderFamily.FORGE && minecraftVersion < Release.V_1_20_6
+        loader.family == ModLoaderFamily.FORGE && minecraftVersion < Release.V_1_20_6
 
     val archiveVersion: String
         get() = buildString {

@@ -3,8 +3,10 @@ package io.github.recrafter.crafter.cli.commands.help
 import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendSuffix
+import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
+import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
 import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.commands.common.Command
@@ -56,10 +58,6 @@ class HelpCommand(val logo: String, val commandsProvider: () -> List<Command<*>>
         return@shellScript this
     }
 
-    override fun complete(
-        fingerprint: Fingerprint,
-        currentWordIndex: String,
-        variants: (List<String>) -> String
-    ): String =
-        variants(commandsProvider().map { it.name })
+    override fun complete(currentWordIndex: String, reply: (String) -> String): String =
+        reply(commandsProvider().joinBySpace { it.name }.wrapWithDoubleQuote())
 }

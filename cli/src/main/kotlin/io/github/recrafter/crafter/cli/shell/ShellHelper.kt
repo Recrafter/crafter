@@ -1,7 +1,7 @@
 package io.github.recrafter.crafter.cli.shell
 
 import io.github.diskria.kotlin.utils.Constants
-import io.github.diskria.kotlin.utils.extensions.common.modifyIf
+import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 
 object ShellHelper {
 
@@ -14,6 +14,9 @@ object ShellHelper {
             append(arguments)
         }
 
-    fun gradleCommand(command: String, quiet: Boolean = false): String =
-        terminalCommand("gradlew", command.modifyIf(quiet) { "$it --quiet" })
+    fun gradleTaskCommand(command: String): String =
+        terminalCommand("gradlew", command)
+
+    fun runSequentially(commands: List<String>): String =
+        commands.toList().joinToString(Constants.Char.AMPERSAND.repeat(2))
 }

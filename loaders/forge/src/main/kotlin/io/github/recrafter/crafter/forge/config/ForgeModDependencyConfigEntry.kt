@@ -46,7 +46,7 @@ data class ForgeModDependencyConfigEntry(
                 id = ModLoaderType.FORGE.getName(),
                 version = IntervalVersionRange.min(
                     VersionBound.inclusive(
-                        mod.versions.loader.substringBefore(Constants.Char.DOT)
+                        mod.loaderMetadata.loaderVersion.substringBefore(Constants.Char.DOT)
                     )
                 ),
             )

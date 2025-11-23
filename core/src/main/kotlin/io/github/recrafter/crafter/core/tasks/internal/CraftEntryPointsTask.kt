@@ -13,6 +13,7 @@ import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.properties.ModProperty
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -65,7 +66,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
         val builder = TypeSpec.classBuilder(className).apply {
             addModifiers(Modifier.PUBLIC)
         }
-        return when (mod.loaderFamily) {
+        return when (mod.loader.family) {
             ModLoaderFamily.FABRIC -> {
                 val initializerPrefix = when (environmentSide) {
                     ModSide.CLIENT -> environmentSide.getName(PascalCase)
@@ -84,6 +85,15 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                 builder
                     .addSuperinterface(superInterfaceClass)
                     .addMethod(initializeMethod)
+                    .apply {
+                        if (mod.loader == ModLoaderType.QUILT) {
+                            addAnnotation(
+                                AnnotationSpec.builder(SuppressWarnings::class.java)
+                                    .addMember("value", "\$S", "deprecation")
+                                    .build()
+                            )
+                        }
+                    }
                     .build()
             }
 
@@ -91,7 +101,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                 val modAnnotationPackageName = when (mod.loader) {
                     ModLoaderType.FORGE -> "net.minecraftforge.fml.common"
                     ModLoaderType.NEOFORGE -> "net.neoforged.fml.common"
-                    else -> failWithUnsupportedType(mod.loader::class)
+                    else -> TODO()
                 }
                 val modAnnotation = AnnotationSpec.builder(ClassName.get(modAnnotationPackageName, "Mod")).run {
                     addMember("value", "\$S", mod.id)

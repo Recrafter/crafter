@@ -18,6 +18,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.compareTo
+import io.github.recrafter.bedrock.versions.contains
 import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
 import kotlinx.coroutines.runBlocking
@@ -25,7 +26,7 @@ import org.gradle.api.Project
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-abstract class ComponentSynchronizer {
+abstract class ComponentSync {
 
     protected open val loader: ModLoaderType? = null
 
@@ -39,14 +40,20 @@ abstract class ComponentSynchronizer {
 
     protected abstract suspend fun fetchComponents(): List<MinecraftComponent>
 
-    fun getLatestComponent(project: Project, minecraftVersion: MinecraftVersion): MinecraftComponent {
+    open fun getLatestVersion(project: Project, minecraftVersion: MinecraftVersion): String =
+        getLatestComponent(project, minecraftVersion).latestVersion
+
+    fun getMinecraftVersion(project: Project, minecraftVersion: MinecraftVersion): MinecraftVersion =
+        getLatestComponent(project, minecraftVersion).minecraftVersion
+
+    private fun getLatestComponent(project: Project, minecraftVersion: MinecraftVersion): MinecraftComponent {
         val cacheFile = getCacheFile(project)
         val cache = cacheFile.takeIf { it.exists() }?.deserializeJsonFromFile<MinecraftComponents>()
         val components = cache?.takeIf { nowMillis() - it.lastSyncMillis < cacheDurationMillis } ?: runBlocking {
             val versions = fetchComponents()
                 .groupBy { it.minecraftVersion }
                 .filterKeys { minecraftVersion ->
-                    loader?.supportedVersionRange?.includesVersion(minecraftVersion) ?: true
+                    loader?.supportedVersionRange?.contains(minecraftVersion) ?: true
                 }
                 .mapValues {
                     val version = it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }
@@ -64,9 +71,6 @@ abstract class ComponentSynchronizer {
                         "not found for Minecraft ${minecraftVersion.asString()}"
             )
     }
-
-    open fun getLatestVersion(project: Project, minecraftVersion: MinecraftVersion): String =
-        getLatestComponent(project, minecraftVersion).latestVersion
 
     private fun getCacheFile(project: Project): File {
         val cacheRoot = project

@@ -19,7 +19,7 @@ data class OrnitheModDependenciesConfig(
         fun of(mod: Mod): OrnitheModDependenciesConfig =
             OrnitheModDependenciesConfig(
                 javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
-                loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
             )
     }
 }

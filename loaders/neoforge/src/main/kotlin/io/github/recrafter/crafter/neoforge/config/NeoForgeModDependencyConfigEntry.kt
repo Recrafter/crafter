@@ -42,7 +42,7 @@ data class NeoForgeModDependencyConfigEntry(
         fun createLoaderDependency(mod: Mod): NeoForgeModDependencyConfigEntry =
             of(
                 id = ModLoaderType.NEOFORGE.getName(),
-                version = IntervalVersionRange.min(VersionBound.inclusive(mod.versions.loader)),
+                version = IntervalVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
             )
     }
 }

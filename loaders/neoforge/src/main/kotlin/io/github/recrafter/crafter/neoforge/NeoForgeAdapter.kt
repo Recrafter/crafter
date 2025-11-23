@@ -6,7 +6,6 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
@@ -16,7 +15,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import java.io.File
 
-object NeoForgeModLoaderAdapter : ModLoaderAdapter() {
+object NeoForgeAdapter : ModLoaderAdapter() {
 
     override fun configurePlugin(
         mod: Mod,
@@ -26,7 +25,7 @@ object NeoForgeModLoaderAdapter : ModLoaderAdapter() {
         isRunConfigurationsDisabled: Boolean,
     ) = with(project) {
         neoforge {
-            version = mod.versions.loader
+            version = mod.loaderMetadata.loaderVersion
             setAccessTransformers(accessConfig)
             runs {
                 ModSide.values().forEach { side ->
@@ -63,7 +62,7 @@ object NeoForgeModLoaderAdapter : ModLoaderAdapter() {
             }
         }
         groupLoaderTasks(
-            loaderPackageName = listOf("net.neoforged.moddevgradle"),
+            loaderPackageNamePrefixes = listOf("net.neoforged.moddevgradle"),
             taskGroups = listOf(Branding.MDG.publicTaskGroup, Branding.MDG.internalTaskGroup),
             loader = ModLoaderType.NEOFORGE,
         )

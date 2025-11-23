@@ -9,10 +9,10 @@ ktor = "3.0.0"
 java-poet = "0.7.0"
 jsoup = "1.21.2"
 
-kotlin-utils = "0.8.7"
+kotlin-utils = "0.8.8"
 gradle-utils = "0.8.11"
 
-bedrock = "0.1.9"
+bedrock = "0.2.1"
 
 quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"

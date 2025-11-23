@@ -1,10 +1,11 @@
-package io.github.recrafter.crafter.core.sync.common
+package io.github.recrafter.crafter.core
 
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MinecraftComponent(
+data class LoaderMetadata(
+    val loaderVersion: String,
+    val mappingsVersion: String? = null,
     val minecraftVersion: MinecraftVersion,
-    val latestVersion: String,
 )

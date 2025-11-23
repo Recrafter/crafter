@@ -2,7 +2,7 @@ package io.github.recrafter.crafter.core.sync.maven
 
 import io.github.diskria.kotlin.utils.extensions.serialization.deserializeFromXml
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.common.ComponentSynchronizer
+import io.github.recrafter.crafter.core.sync.common.ComponentSync
 import io.github.recrafter.crafter.core.sync.common.MinecraftComponent
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -10,7 +10,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-abstract class MavenComponentSynchronizer : ComponentSynchronizer() {
+abstract class MavenComponentSync : ComponentSync() {
 
     abstract val mavenUrl: Url
 

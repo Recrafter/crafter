@@ -1,8 +1,5 @@
 package io.github.recrafter.crafter.cli
 
-import io.github.recrafter.bedrock.loaders.ModLoaderType
-import io.github.recrafter.bedrock.versions.MinecraftVersion
-
 data class Fingerprint(
     val pluginVersion: String,
     val gradleTaskName: String,
@@ -11,5 +8,5 @@ data class Fingerprint(
     val modEnvironment: String,
     val modNamespace: String,
     val modId: String,
-    val loaderVersions: Map<ModLoaderType, List<MinecraftVersion>>,
+    val loaderVersions: Map<String, String>,
 )

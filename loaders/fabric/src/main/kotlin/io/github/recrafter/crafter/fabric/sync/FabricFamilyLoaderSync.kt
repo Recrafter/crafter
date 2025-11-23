@@ -8,11 +8,11 @@ import io.github.diskria.kotlin.utils.extensions.toSemverOrNull
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSynchronizer
+import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-class FabricFamilyLoaderSynchronizer(override val loader: ModLoaderType) : MavenComponentSynchronizer() {
+class FabricFamilyLoaderSync(override val loader: ModLoaderType) : MavenComponentSync() {
 
     override val componentName: String = "loader"
 
@@ -36,7 +36,7 @@ class FabricFamilyLoaderSynchronizer(override val loader: ModLoaderType) : Maven
                 }
             }
 
-            else -> failWithUnsupportedType(loader::class)
+            else -> TODO()
         }
 
     override fun parseMinecraftVersion(version: String): MinecraftVersion =
