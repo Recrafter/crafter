@@ -6,15 +6,11 @@ import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.diskria.kotlin.utils.extensions.toSemver
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
+import io.github.recrafter.crafter.core.sync.common.LoaderSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-object ForgeLoaderSync : MavenComponentSync() {
-
-    override val componentName: String = "loader"
-
-    override val loader: ModLoaderType = ModLoaderType.FORGE
+object ForgeLoaderSync : LoaderSync(ModLoaderType.FORGE) {
 
     override val mavenUrl: Url =
         buildUrl("maven.minecraftforge.net") {

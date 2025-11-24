@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.babric
 
-import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
+import io.github.diskria.gradle.utils.extensions.common.artifact
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
@@ -23,10 +23,10 @@ object BabricAdapter : FabricFamilyAdapter(ModLoaderType.BABRIC) {
     }
 
     override fun getLoaderDependency(mod: Mod): String =
-        buildArtifactCoordinates("babric", "fabric-loader", mod.loaderMetadata.loaderVersion)
+        artifact("babric", "fabric-loader", mod.loaderMetadata.loaderVersion)
 
     override fun getMappingsDependency(project: Project, mod: Mod): String =
-        buildArtifactCoordinates("babric", "barn", mod.loaderMetadata.mappingsVersion.orEmpty(), "v2")
+        artifact("babric", "barn", mod.loaderMetadata.mappingsVersion.orEmpty(), "v2")
 
     override fun getCustomMinecraftMetadataUrl(minecraftVersion: MinecraftVersion): Url =
         buildUrl("babric.github.io") {

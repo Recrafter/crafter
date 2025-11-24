@@ -20,7 +20,7 @@ data class FabricModEntryPointsConfig(
     val serverEntryPoints: List<String>? = null,
 ) {
     companion object {
-        fun of(mod: Mod ): FabricModEntryPointsConfig {
+        fun of(mod: Mod): FabricModEntryPointsConfig {
             val clientEntryPoints = FabricModEntryPointsConfig(
                 clientEntryPoints = listOf(buildPackageName(mod, ModSide.CLIENT))
             )
@@ -35,15 +35,16 @@ data class FabricModEntryPointsConfig(
 
                 ModEnvironment.CLIENT_ONLY -> clientEntryPoints
                 ModEnvironment.SERVER_ONLY -> FabricModEntryPointsConfig(
-                serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
-            )
+                    serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
+                )
 
                 ModEnvironment.DEDICATED_SERVER_ONLY -> serverEntryPoints
             }
         }
 
         private fun buildPackageName(mod: Mod, side: ModSide): String =
-            mod.packageName
+            mod
+                .packageName
                 .appendPackageName(side.getName())
                 .appendPackageName(mod.getEntryPointName(side))
     }

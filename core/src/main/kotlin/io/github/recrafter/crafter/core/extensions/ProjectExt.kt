@@ -6,8 +6,8 @@ import io.github.diskria.gradle.utils.extensions.getGeneratedResourcesDirectory
 import io.github.diskria.gradle.utils.extensions.getGeneratedSourcesDirectory
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
+import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.loaders.ModLoaderType
-import io.github.recrafter.crafter.core.CrafterConstants
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.plugins.ide.idea.model.IdeaModel
@@ -49,7 +49,7 @@ fun Project.groupMatchingTasks(name: String, vararg keywords: String) {
     }
 }
 
-fun Project.kotlinApply(block: Project.() -> Unit): Project {
+fun Project.kotlinApply(block: Project.() -> Unit = {}): Project {
     block(this)
     return this
 }

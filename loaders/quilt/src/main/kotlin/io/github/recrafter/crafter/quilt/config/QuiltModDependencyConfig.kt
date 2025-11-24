@@ -26,7 +26,7 @@ data class QuiltModDependencyConfig(
         fun createJavaDependency(mod: Mod): QuiltModDependencyConfig =
             of(
                 id = "java",
-                version = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
+                version = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt())),
             )
 
         fun createMinecraftDependency(mod: Mod): QuiltModDependencyConfig =

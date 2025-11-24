@@ -1,10 +1,11 @@
 package io.github.recrafter.crafter.core.sync.common
 
-import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.gradle.utils.extensions.rootDirectory
 import io.github.diskria.gradle.utils.helpers.GradleDirectories
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.Semver
+import io.github.diskria.kotlin.utils.extensions.asFileOrNull
 import io.github.diskria.kotlin.utils.extensions.common.fileName
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.common.nowMillis
@@ -13,13 +14,12 @@ import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.serialization.deserializeJsonFromFile
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFile
 import io.github.diskria.kotlin.utils.extensions.toSemver
-import io.github.diskria.kotlin.utils.extensions.wrapWithSingleQuote
+import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.bedrock.versions.contains
-import io.github.recrafter.crafter.core.CrafterConstants
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
@@ -48,13 +48,11 @@ abstract class ComponentSync {
 
     private fun getLatestComponent(project: Project, minecraftVersion: MinecraftVersion): MinecraftComponent {
         val cacheFile = getCacheFile(project)
-        val cache = cacheFile.takeIf { it.exists() }?.deserializeJsonFromFile<MinecraftComponents>()
+        val cache = cacheFile.asFileOrNull()?.deserializeJsonFromFile<MinecraftComponents>()
         val components = cache?.takeIf { nowMillis() - it.lastSyncMillis < cacheDurationMillis } ?: runBlocking {
             val versions = fetchComponents()
                 .groupBy { it.minecraftVersion }
-                .filterKeys { minecraftVersion ->
-                    loader?.supportedVersionRange?.contains(minecraftVersion) ?: true
-                }
+                .filterKeys { minecraftVersion -> loader?.supportedVersionRange?.contains(minecraftVersion) ?: true }
                 .mapValues {
                     val version = it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }
                     version.copy(latestVersion = mapLatestVersion(version.latestVersion))
@@ -63,13 +61,13 @@ abstract class ComponentSync {
                 .sortedWith(compareBy(MinecraftVersion.COMPARATOR) { it.minecraftVersion })
             MinecraftComponents(versions, nowMillis()).also { it.serializeJsonToFile(cacheFile.ensureFileExists()) }
         }
-        return components.versions
+        val latestComponent = components.versions
             .filter { it.minecraftVersion <= minecraftVersion }
             .maxWithOrNull(compareBy(MinecraftVersion.COMPARATOR) { it.minecraftVersion })
-            ?: gradleError(
-                "Latest version of ${componentName.wrapWithSingleQuote()} component " +
-                        "not found for Minecraft ${minecraftVersion.asString()}"
-            )
+        return requireGradleNotNull(latestComponent) {
+            "Latest component for Minecraft ${minecraftVersion.asString()}" +
+                    "not found in cache file: ${cacheFile.relativeTo(project.rootDirectory)}"
+        }
     }
 
     private fun getCacheFile(project: Project): File {

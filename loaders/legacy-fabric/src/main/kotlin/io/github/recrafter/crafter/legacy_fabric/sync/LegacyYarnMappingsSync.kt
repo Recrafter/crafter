@@ -5,15 +5,11 @@ import io.github.diskria.kotlin.utils.Semver
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
+import io.github.recrafter.crafter.core.sync.common.MappingsSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-object LegacyYarnMappingsSync : MavenComponentSync() {
-
-    override val loader: ModLoaderType = ModLoaderType.LEGACY_FABRIC
-
-    override val componentName: String = "mappings"
+object LegacyYarnMappingsSync : MappingsSync(ModLoaderType.LEGACY_FABRIC) {
 
     override val mavenUrl: Url =
         buildUrl("repo.legacyfabric.net") {

@@ -1,14 +1,16 @@
 package io.github.recrafter.crafter
 
 import io.github.diskria.gradle.utils.extensions.*
-import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.common.requireGradle
+import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
 import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.generics.addIfNotNull
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnum
-import io.github.diskria.kotlin.utils.extensions.toBooleanOrNull
+import io.github.recrafter.bedrock.crafter.CrafterConstants
+import io.github.recrafter.bedrock.crafter.CrafterFlow
 import io.github.recrafter.bedrock.extensions.getModRecipe
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
@@ -16,8 +18,7 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
 import io.github.recrafter.crafter.babric.sync.BarnMappingsSync
-import io.github.recrafter.crafter.cli.shell.ShellHelper
-import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.core.LoaderMetadata
 import io.github.recrafter.crafter.core.ModMetadata
 import io.github.recrafter.crafter.core.extensions.family
@@ -37,7 +38,7 @@ import io.github.recrafter.crafter.forge.sync.ForgeLoaderSync
 import io.github.recrafter.crafter.legacy_fabric.sync.LegacyYarnMappingsSync
 import io.github.recrafter.crafter.neoforge.sync.NeoForgeLoaderSync
 import io.github.recrafter.crafter.ornithe.sync.FeatherMappingsSync
-import io.github.recrafter.crafter.tasks.internal.CraftModConfigTask
+import io.github.recrafter.crafter.tasks.internal.CraftLoaderConfigTask
 import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -49,8 +50,8 @@ import org.gradle.util.GradleVersion
 class CrafterGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
-        if (!project.isRootProject()) {
-            gradleError("The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project")
+        requireGradle(project.isRootProject()) {
+            "The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project."
         }
         tasks {
             named<Wrapper>("wrapper") {
@@ -67,21 +68,31 @@ class CrafterGradlePlugin : Plugin<Project> {
                 this.modMetadata.set(modMetadata)
             }
             InstallCrafterCLITask.saveGradleFingerprint(project, modMetadata)
+            InstallCrafterCLITask.ensureScriptExists(project, modMetadata)
 
-            val isBisectFlowRunning = System.getProperty("bisect")?.toBooleanOrNull() == true
             val loaderProjects = children.filter { it.isLoaderProject() }
-            if (isBisectFlowRunning) {
-                val bisectTarget: MinecraftVersion by extra
-                val loaderProject = loaderProjects.single()
-                val modProject = loaderProject.children.single()
-                configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(bisectTarget))
-            } else {
-                loaderProjects.forEach { loaderProject ->
-                    loaderProject.children
-                        .associateWith { MinecraftVersionRange.parse(it.name, PROJECT_NAME_SEPARATOR) }
-                        .forEach { (modProject, versionRange) ->
-                            configureModProject(loaderProject, modProject, modMetadata, versionRange)
-                        }
+            when (val flow = CrafterFlow.detect()) {
+                is CrafterFlow.Normal -> {
+                    loaderProjects.forEach { loaderProject ->
+                        loaderProject.children
+                            .associateWith { MinecraftVersionRange.parse(it.name, RANGE_SEPARATOR) }
+                            .forEach { (modProject, versionRange) ->
+                                configureModProject(loaderProject, modProject, modMetadata, versionRange)
+                            }
+                    }
+                }
+
+                is CrafterFlow.Single -> {
+                    val loaderProject = loaderProjects.single()
+                    val modProject = loaderProject.children.single()
+                    configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(flow.version))
+                }
+
+                is CrafterFlow.Bisect -> {
+                    val bisectTarget: MinecraftVersion by extra
+                    val loaderProject = loaderProjects.single()
+                    val modProject = loaderProject.children.single()
+                    configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(bisectTarget))
                 }
             }
         }
@@ -116,7 +127,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 val loaderVersion = when (loader) {
                     ModLoaderType.FORGE -> ForgeLoaderSync.getLatestVersion(project, version)
                     ModLoaderType.NEOFORGE -> NeoForgeLoaderSync.getLatestVersion(project, version)
-                    else -> TODO()
+                    else -> failWithInvalidValue(loader)
                 }
                 LoaderMetadata(
                     loaderVersion = loaderVersion,
@@ -173,11 +184,11 @@ class CrafterGradlePlugin : Plugin<Project> {
                 }
             }
         }
-        val craftModConfigTask = modProject.registerTask<CraftModConfigTask> {
+        val craftLoaderConfigTask = modProject.registerTask<CraftLoaderConfigTask> {
             this.mod.set(mod)
             outputFile = getTempFile(mod.loaderConfigPath)
         }
-        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects, craftModConfigTask)
+        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects, craftLoaderConfigTask)
         ModSide.values().forEach { side ->
             when (side) {
                 ModSide.CLIENT -> modProject.registerTask<CraftClientTask>()
@@ -204,7 +215,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                                 "with ${CrafterConstants.PLUGIN_NAME}."
                     )
                     appendLine("Recommended Gradle version: $RECOMMENDED_GRADLE_VERSION")
-                    append("To update, run: ${ShellHelper.gradleTaskCommand("wrapper")}")
+                    append("To update, run: ${Cmd.gradleTask("wrapper")}")
                 }
             )
         }
@@ -212,7 +223,6 @@ class CrafterGradlePlugin : Plugin<Project> {
 
     companion object {
         private const val RECOMMENDED_GRADLE_VERSION: String = "8.14.3"
-        private const val PROJECT_NAME_SEPARATOR: String = "--"
-        private const val BISECT_FLOW_FLAG = "bisect"
+        private const val RANGE_SEPARATOR: String = "--"
     }
 }

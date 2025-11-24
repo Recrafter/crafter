@@ -1,6 +1,7 @@
 package io.github.recrafter.crafter.extensions.gradle
 
-import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.common.requireGradle
+import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.gradle.utils.extensions.gradle.GradleExtension
 import io.github.recrafter.bedrock.recipes.ModRecipe
 import io.github.recrafter.crafter.core.ModMetadata
@@ -40,19 +41,13 @@ abstract class CrafterExtension @Inject constructor(protected val objects: Objec
     }
 
     fun requireConfiguration(): ModConfiguration =
-        configuration ?: notConfiguredError()
+        requireGradleNotNull(configuration) { "Mod not configured." }
 
-    fun mod(configure: ModConfiguration.() -> Unit) {
-        if (configuration != null) {
-            alreadyConfiguredError()
+    fun mod(configure: ModConfiguration.() -> Unit = {}) {
+        requireGradle(configuration == null) {
+            "Mod already configured."
         }
         configuration = ModConfiguration(objects).apply(configure)
         onConfigurationReadyCallback?.invoke()
     }
-
-    private fun notConfiguredError(): Nothing =
-        gradleError("Mod not configured")
-
-    private fun alreadyConfiguredError(): Nothing =
-        gradleError("Mod already configured")
 }

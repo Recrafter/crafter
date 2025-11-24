@@ -11,6 +11,7 @@ import io.github.recrafter.crafter.core.helpers.server.operators.Operators
 object ServerOperatorsHelper : PresetHelper() {
 
     const val MAX_LEVEL: Int = 4
+
     val FILE_NAME: String = fileName("ops", Constants.File.Extension.JSON)
 
     override fun buildPreset(mod: Mod): String =

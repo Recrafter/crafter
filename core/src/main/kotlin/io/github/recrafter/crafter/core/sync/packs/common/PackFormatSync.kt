@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.core.sync.packs.common
 
-import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.Semver
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
@@ -16,7 +16,7 @@ import org.jsoup.Jsoup
 
 abstract class PackFormatSync : ComponentSync() {
 
-    abstract val wikiTableCaption: String
+    protected abstract val wikiTableCaption: String
 
     override suspend fun fetchComponents(): List<MinecraftComponent> =
         HttpClient(CIO).use { client ->
@@ -24,7 +24,7 @@ abstract class PackFormatSync : ComponentSync() {
                 path("w", "Pack_format")
             }
             val wikiHtml = client.get(wikiUrl).bodyAsText()
-            Jsoup.parse(wikiHtml)
+            val formatComponents = Jsoup.parse(wikiHtml)
                 .select("caption")
                 .firstOrNull { it.ownText().trim() == wikiTableCaption }
                 ?.parent()
@@ -35,7 +35,9 @@ abstract class PackFormatSync : ComponentSync() {
                     val minecraftVersion = parseMinecraftVersion(versionRange) ?: return@mapNotNull null
                     MinecraftComponent(minecraftVersion, format)
                 }
-                ?: gradleError("Failed to parse formats")
+            requireGradleNotNull(formatComponents) {
+                "Failed to parse formats."
+            }
         }
 
     private fun parseMinecraftVersion(version: String): MinecraftVersion? =

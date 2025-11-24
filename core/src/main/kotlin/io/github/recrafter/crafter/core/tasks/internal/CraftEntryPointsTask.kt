@@ -4,14 +4,14 @@ import com.palantir.javapoet.*
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
-import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
+import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.properties.ModProperty
@@ -36,7 +36,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
     abstract val outputDirectory: DirectoryProperty
 
     init {
-        group = CrafterConstants.INTERNAL_TASKS_GROUP
+        group = CrafterTasks.INTERNAL_TASKS_GROUP
     }
 
     @TaskAction
@@ -101,7 +101,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                 val modAnnotationPackageName = when (mod.loader) {
                     ModLoaderType.FORGE -> "net.minecraftforge.fml.common"
                     ModLoaderType.NEOFORGE -> "net.neoforged.fml.common"
-                    else -> TODO()
+                    else -> failWithInvalidValue(mod.loader)
                 }
                 val modAnnotation = AnnotationSpec.builder(ClassName.get(modAnnotationPackageName, "Mod")).run {
                     addMember("value", "\$S", mod.id)

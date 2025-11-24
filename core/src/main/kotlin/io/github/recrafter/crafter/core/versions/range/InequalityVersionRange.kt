@@ -11,19 +11,19 @@ object InequalityVersionRange : VersionRange() {
         val min = minVersion?.let {
             buildString {
                 append(Constants.Char.CLOSING_ANGLE_BRACKET)
-                if (minVersion.isInclusive()) {
+                if (it.isInclusive()) {
                     append(Constants.Char.EQUAL_SIGN)
                 }
-                append(minVersion.toString())
+                append(it)
             }
         }
         val max = maxVersion?.let {
             buildString {
                 append(Constants.Char.OPENING_ANGLE_BRACKET)
-                if (maxVersion.isInclusive()) {
+                if (it.isInclusive()) {
                     append(Constants.Char.EQUAL_SIGN)
                 }
-                append(maxVersion.toString())
+                append(it)
             }
         }
         return when {

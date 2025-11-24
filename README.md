@@ -15,13 +15,13 @@ Choose your mod environment (one of **four** types):
 
 ```kotlin
 plugins {
-    id("io.github.recrafter.recipe") version "0.2.0"
+  id("io.github.recrafter.recipe") version "0.2.0"
 }
 
 recipe {
-    crafter {
-        serverOnly()
-    }
+  crafter {
+    serverOnly()
+  }
 }
 ```
 
@@ -42,19 +42,19 @@ Define your mod metadata:
 
 ```kotlin
 plugins {
-    id("io.github.recrafter.crafter") version "0.3.0"
+  id("io.github.recrafter.crafter") version "0.3.0"
 }
 
 crafter {
-    mod {
-        name = "Example mod"
-        version = "0.1.0"
+  mod {
+    name = "Example mod"
+    version = "0.1.0"
 
-        developer {
-            name = "diskria"
-            namespace = "io.github.diskria"
-        }
+    developer {
+      name = "diskria"
+      namespace = "io.github.diskria"
     }
+  }
 }
 ```
 
@@ -114,8 +114,7 @@ Crafter organizes Gradle tasks into categories to keep the IDE panel clean:
 → Generate / clean IDE configs and run configurations.
 
 ### Mod Loader Tasks
-For each loader (`Fabric`, `Quilt`, `Forge`, `NeoForge`, `Babric`, `LegacyFabric`, `Ornithe`),  
-Crafter automatically groups build and run tasks under:
+For each loader Crafter automatically groups build and run tasks under:
 
 ```
 Mod Loader/<Loader Name> tasks
@@ -138,7 +137,7 @@ All loader tasks are cleanly separated and logically ordered.
 
 ## 🧠 Supported Loaders and Versions
 
-Crafter supports all major loader families:
+Crafter supports all major loaders:
 
 | Loader | Supported Version Range |
 |--------|-------------------------|
@@ -168,7 +167,7 @@ Future versions may introduce a neutral entry-point interface, isolated from any
 ## 🧰 IDE Integration — *Enderpearl* (Coming Soon)
 
 Crafter disables auto-generated run configs in IDEA, as it will integrate with the upcoming **Enderpearl** plugin —  
-a modern, interactive IDE tool for testing mixins and launching Minecraft directly from IntelliJ IDEA.  
+a modern, interactive IDE tool for launching Minecraft directly from IntelliJ IDEA.  
 (Adaptations for Eclipse/VSCode are **not** planned.)
 
 ---
@@ -180,15 +179,15 @@ Focus: finalize the current **loader-based orchestration**.
 
 **Key goals:**
 - Complete `CLI` support
-    - Installable via `./gradlew installCrafterCli`
-    - Create new mod projects directly:
-      ```bash
-      ./crafter init fabric 1.21.10
-      ```
-    - Automatically scaffolds correct folder trees and defaults.
+  - Installable via `./gradlew installCrafterCli`
+  - Create new mod projects directly:
+    ```bash
+    ./crafter init fabric 1.21.10
+    ```
+  - Automatically scaffolds correct folder trees and defaults.
 - Add **`bisect`** command
-    - Automatically finds the earliest Minecraft version where the mod breaks.
-    - Optionally launches the game for semi-automatic testing.
+  - Automatically finds the earliest Minecraft version.
+  - Optionally launches the game for semi-automatic testing.
 - Refine Gradle task grouping and internal metadata generation.
 
 ---
@@ -211,11 +210,22 @@ minecraft/
 Developers will:
 - Write all code on the **Fabric base** using **Mojang mappings + Access Wideners**.
 - Crafter will:
-    - Transpile `AW` → `AT` automatically.
-    - Generate mods for Fabric, Quilt, Forge, and NeoForge from one unified source.
-    - Eliminate visible loader folders completely.
+  - Transpile `AW` → `AT` automatically.
+  - Generate mods for Fabric, Quilt, Forge, and NeoForge from one unified source.
+  - Eliminate visible loader folders completely.
 
 The 2.0 architecture will make Crafter a **cross-loader, mapping-centric SDK** for Minecraft modding.
+
+---
+
+## 🧩 Why Crafter Exists
+
+Over the years, Minecraft modding has fragmented into multiple competing loaders — each born from good intentions, but all chasing the same goal: to replace the previous one. NeoForge split from Forge to “fix” its legacy. Quilt forked from Fabric to “do things right”. None of them truly failed — but none unified anything either. Instead, they divided the community.
+
+Now mod developers face a strange reality: to reach all players, they must build and maintain versions of their mods for every loader. Each with its own mappings, Gradle quirks, config formats, and forum drama. You don’t just write a mod — you navigate political borders.
+
+Crafter was created to end that.
+It doesn’t take sides. It doesn’t try to be another loader or API. Instead, it treats Minecraft itself as the platform — not the loaders around it. Crafter automates builds, mixins, and configs for every environment, so modders can focus on what actually matters: making mods, not maintaining them.
 
 ---
 

@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.core
 
-import io.github.diskria.gradle.utils.extensions.common.gradleError
+import io.github.diskria.gradle.utils.extensions.common.requireGradle
 import io.github.diskria.gradle.utils.extensions.log
 import io.github.diskria.gradle.utils.helpers.JarConstants
 import io.github.diskria.kotlin.utils.BracketsType
@@ -13,6 +13,7 @@ import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.MinecraftConstants
+import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.era.Release
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
@@ -87,11 +88,11 @@ data class Mod(
         get() = fileName("pack", "mcmeta")
 
     val refmapFileName: String
-        get() = when (loader.family) {
-            ModLoaderFamily.FABRIC -> fileName(id + "_refmap", Constants.File.Extension.JSON)
-            ModLoaderFamily.FORGE -> gradleError(
-                "Invalid configuration: refmap generation attempted for Forge, but it is only supported on Fabric"
-            )
+        get() {
+            requireGradle(loader.family == ModLoaderFamily.FABRIC) {
+                "Invalid configuration: refmap generation attempted for Forge, but it is only supported on Fabric."
+            }
+            return fileName(id + "_refmap", Constants.File.Extension.JSON)
         }
 
     val loaderConfigPath: String
@@ -135,8 +136,8 @@ data class Mod(
         get() {
             val minJvmTarget = minMinecraftVersion.minJavaVersion.toJvmTarget()
             val maxJvmTarget = maxMinecraftVersion.minJavaVersion.toJvmTarget()
-            if (minJvmTarget != maxJvmTarget) {
-                gradleError("Minecraft version range crosses Java compatibility: $minJvmTarget -> $maxJvmTarget")
+            requireGradle(minJvmTarget == maxJvmTarget) {
+                "Minecraft version range crosses Java compatibility: $minJvmTarget -> $maxJvmTarget."
             }
             return maxJvmTarget
         }
@@ -168,8 +169,19 @@ data class Mod(
 
     fun log(project: Project, title: String, message: String? = null) {
         project.log(buildString {
-            append("${CrafterConstants.PLUGIN_NAME.wrapWithBrackets(BracketsType.SQUARE)} ")
-            append("[${loader.displayName} / ${versionRange.asString()}] $title")
+            append(CrafterConstants.PLUGIN_NAME.wrapWithBrackets(BracketsType.SQUARE))
+            append(Constants.Char.SPACE)
+            append(
+                buildString {
+                    append(loader.displayName)
+                    append(Constants.Char.SPACE)
+                    append(Constants.Char.SLASH)
+                    append(Constants.Char.SPACE)
+                    append(versionRange.asString(Constants.Char.HYPHEN.toString()))
+                }.wrapWithBrackets(BracketsType.SQUARE)
+            )
+            append(Constants.Char.SPACE)
+            append(title)
             message?.let {
                 appendLine()
                 append(it)

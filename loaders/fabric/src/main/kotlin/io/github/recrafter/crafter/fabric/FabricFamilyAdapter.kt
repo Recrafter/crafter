@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.fabric
 
-import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
+import io.github.diskria.gradle.utils.extensions.common.artifact
 import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.extensions.restoreDependencyResolutionRepositories
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
@@ -36,13 +36,16 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
     }
 
     open fun getLoaderDependency(mod: Mod): String =
-        buildArtifactCoordinates("net.fabricmc", "fabric-loader", mod.loaderMetadata.loaderVersion)
+        artifact("net.fabricmc", "fabric-loader", mod.loaderMetadata.loaderVersion)
 
     open fun getCustomMinecraftMetadataUrl(minecraftVersion: MinecraftVersion): Url? = null
 
     open fun getCustomIntermediaryUrl(placeholder: String = "%1\$s"): String? = null
 
-    abstract fun getMappingsDependency(project: Project, mod: Mod): Any
+    open fun getMappingsDependency(project: Project, mod: Mod): Any = with(project) {
+        @Suppress("UnstableApiUsage")
+        quilt.layered { officialMojangMappings() }
+    }
 
     override fun getAccessConfigPreset(): String = AccessConfigHelper.WIDENER_PRESET
 
@@ -114,7 +117,7 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
         }
         restoreDependencyResolutionRepositories()
         dependencies {
-            val minecraftDependency = buildArtifactCoordinates(
+            val minecraftDependency = artifact(
                 "com.mojang",
                 "minecraft",
                 mod.minecraftVersion.asString()

@@ -1,7 +1,7 @@
 package io.github.recrafter.crafter.core.extensions
 
 import io.github.diskria.gradle.utils.extensions.add
-import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
+import io.github.diskria.gradle.utils.extensions.common.artifact
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
@@ -14,7 +14,7 @@ fun DependencyHandler.minecraft(
     version: String,
     classifier: String? = null
 ): Dependency? =
-    minecraft(buildArtifactCoordinates(groupId, artefactId, version, classifier))
+    minecraft(artifact(groupId, artefactId, version, classifier))
 
 fun DependencyHandler.mappings(dependencyNotation: Any): Dependency? =
     add("mappings", dependencyNotation)
@@ -25,7 +25,7 @@ fun DependencyHandler.mappings(
     version: String,
     classifier: String? = null
 ): Dependency? =
-    mappings(buildArtifactCoordinates(groupId, artefactId, version, classifier))
+    mappings(artifact(groupId, artefactId, version, classifier))
 
 fun DependencyHandler.modImplementation(dependencyNotation: Any): Dependency? =
     add("modImplementation", dependencyNotation)

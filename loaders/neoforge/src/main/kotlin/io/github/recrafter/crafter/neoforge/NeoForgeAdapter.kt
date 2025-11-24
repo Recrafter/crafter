@@ -12,7 +12,6 @@ import io.github.recrafter.crafter.core.extensions.groupLoaderTasks
 import io.github.recrafter.crafter.neoforge.extensions.neoforge
 import net.neoforged.moddevgradle.internal.Branding
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.assign
 import java.io.File
 
 object NeoForgeAdapter : ModLoaderAdapter() {
@@ -31,9 +30,9 @@ object NeoForgeAdapter : ModLoaderAdapter() {
                 ModSide.values().forEach { side ->
                     create(side.getName()) {
                         if (isRunConfigurationsDisabled) {
-                            ideName = Constants.Char.EMPTY
+                            ideName.set(Constants.Char.EMPTY)
                         }
-                        gameDirectory = runDirectory
+                        gameDirectory.set(runDirectory)
                         val memoryRange = when (side) {
                             ModSide.CLIENT -> 2..4
                             ModSide.SERVER -> 4..8

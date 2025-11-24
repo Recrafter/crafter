@@ -1,4 +1,4 @@
-import io.github.diskria.gradle.utils.extensions.common.buildGradleProjectPath
+import io.github.diskria.gradle.utils.extensions.common.gradleProjectPath
 import io.github.diskria.gradle.utils.extensions.rootDirectory
 import io.github.diskria.kotlin.utils.extensions.listDirectories
 import io.github.diskria.projektor.common.licenses.LicenseType.MIT
@@ -32,11 +32,11 @@ pluginManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "0.2.0"
+    id("io.github.recrafter.recipe") version "0.2.4"
 }
 
 projekt {
-    version = "0.2.5"
+    version = "0.3.0"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,
@@ -55,5 +55,5 @@ include(":core")
 include(":cli")
 val loadersDirectoryName = "loaders"
 rootDirectory.resolve(loadersDirectoryName).listDirectories().forEach {
-    include(buildGradleProjectPath(loadersDirectoryName, it.name))
+    include(gradleProjectPath(loadersDirectoryName, it.name))
 }

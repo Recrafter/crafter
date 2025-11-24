@@ -12,7 +12,13 @@ interface VersionBound {
         fun inclusive(version: String): InclusiveVersion =
             InclusiveVersion(version)
 
+        fun inclusive(version: Int): InclusiveVersion =
+            inclusive(version.toString())
+
         fun exclusive(version: String): ExclusiveVersion =
             ExclusiveVersion(version)
+
+        fun exclusive(version: Int): ExclusiveVersion =
+            exclusive(version.toString())
     }
 }

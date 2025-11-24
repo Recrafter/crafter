@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(kotlin("gradle-plugin"))
+    compileOnly(kotlin("gradle-plugin"))
 
     compileOnly(project(":core"))
     compileOnly(project(":loaders:fabric"))

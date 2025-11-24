@@ -1,11 +1,9 @@
 plugins {
-    `kotlin-dsl`
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
-    implementation(kotlin("gradle-plugin"))
-
     compileOnly(project(":core"))
     compileOnly(project(":loaders:fabric"))
     compileOnly(libs.babric.plugin)

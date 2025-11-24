@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.forge
 
-import io.github.diskria.gradle.utils.extensions.common.buildArtifactCoordinates
+import io.github.diskria.gradle.utils.extensions.common.artifact
 import io.github.diskria.gradle.utils.extensions.getTaskOrNull
 import io.github.diskria.gradle.utils.extensions.jar
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
@@ -75,7 +75,7 @@ object ForgeAdapter : ModLoaderAdapter() {
         }
         dependencies {
             val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.loaderMetadata.loaderVersion}"
-            val minecraftArtifact = buildArtifactCoordinates("net.minecraftforge", "forge", forgeVersion)
+            val minecraftArtifact = artifact("net.minecraftforge", "forge", forgeVersion)
             mod.log(project, "Minecraft: $minecraftArtifact")
             minecraft(minecraftArtifact)
         }

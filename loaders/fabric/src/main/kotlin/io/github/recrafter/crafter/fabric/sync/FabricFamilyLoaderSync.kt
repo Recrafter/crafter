@@ -3,18 +3,16 @@ package io.github.recrafter.crafter.fabric.sync
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.Semver
 import io.github.diskria.kotlin.utils.extensions.common.buildUrl
-import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
+import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.toSemverOrNull
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
+import io.github.recrafter.crafter.core.sync.common.LoaderSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-class FabricFamilyLoaderSync(override val loader: ModLoaderType) : MavenComponentSync() {
-
-    override val componentName: String = "loader"
+class FabricFamilyLoaderSync(override val loader: ModLoaderType) : LoaderSync(loader) {
 
     override val mavenUrl: Url
         get() = when (loader) {
@@ -36,7 +34,7 @@ class FabricFamilyLoaderSync(override val loader: ModLoaderType) : MavenComponen
                 }
             }
 
-            else -> TODO()
+            else -> failWithInvalidValue(loader)
         }
 
     override fun parseMinecraftVersion(version: String): MinecraftVersion =

@@ -31,7 +31,6 @@ import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.withType
 import java.io.File
 
@@ -97,7 +96,7 @@ abstract class ModLoaderAdapter {
                     val implementationTimestamp by nowDate().format(DateFormat.ISO_DATE_TIME)
                         .autoNamedProperty(`Train-Case`)
 
-                    val crafterVersion by CrafterConstants.pluginVersion.autoNamedProperty(`Train-Case`)
+                    val crafterVersion by CrafterTasks.pluginVersion.autoNamedProperty(`Train-Case`)
 
                     attributes(
                         listOf(

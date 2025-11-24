@@ -2,6 +2,7 @@ package io.github.recrafter.crafter.core.versions.range
 
 import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.recrafter.crafter.core.versions.VersionBound
 
@@ -19,15 +20,14 @@ object IntervalVersionRange : VersionRange() {
             else -> buildString {
                 val bracketsType = getBracketsType(minVersion.isInclusive())
                 append(bracketsType.openingChar)
-                append(minVersion.toString())
+                append(minVersion)
             }
         }
         val max = when (maxVersion) {
-            null -> EXCLUSIVE_BRACKETS_TYPE.closingChar.toString()
+            null -> buildString(EXCLUSIVE_BRACKETS_TYPE.closingChar)
             else -> buildString {
-                val bracketsType = getBracketsType(maxVersion.isInclusive())
                 append(maxVersion.toString())
-                append(bracketsType.closingChar)
+                append(getBracketsType(maxVersion.isInclusive()).closingChar)
             }
         }
         return min + SEPARATOR + max

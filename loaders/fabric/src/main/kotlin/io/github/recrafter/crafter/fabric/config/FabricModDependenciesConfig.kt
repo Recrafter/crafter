@@ -21,7 +21,7 @@ data class FabricModDependenciesConfig(
     companion object {
         fun of(mod: Mod): FabricModDependenciesConfig =
             FabricModDependenciesConfig(
-                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt().toString())),
+                javaVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.jvmTarget.toInt())),
                 minecraftVersion = InequalityVersionRange.min(
                     VersionBound.inclusive(mod.minecraftVersion.normalizedSemver)
                 ),

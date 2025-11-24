@@ -4,8 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(kotlin("gradle-plugin"))
-
     compileOnly(project(":core"))
     compileOnly(libs.forge.plugin)
 

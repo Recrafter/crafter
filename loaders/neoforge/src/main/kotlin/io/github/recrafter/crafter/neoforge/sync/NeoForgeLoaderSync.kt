@@ -6,15 +6,11 @@ import io.github.diskria.kotlin.utils.extensions.common.buildUrl
 import io.github.diskria.kotlin.utils.extensions.toSemverOrNull
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
+import io.github.recrafter.crafter.core.sync.common.LoaderSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
 
-object NeoForgeLoaderSync : MavenComponentSync() {
-
-    override val loader: ModLoaderType = ModLoaderType.NEOFORGE
-
-    override val componentName: String = "loader"
+object NeoForgeLoaderSync : LoaderSync(ModLoaderType.NEOFORGE) {
 
     override val mavenUrl: Url =
         buildUrl("maven.neoforged.net") {

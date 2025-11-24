@@ -1,7 +1,7 @@
 package io.github.recrafter.crafter.core.extensions
 
 import io.github.diskria.gradle.utils.extensions.disable
-import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.core.CrafterTasks
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.compile.JavaCompile
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Task.isCrafterTask(): Boolean =
-    group == CrafterConstants.PUBLIC_TASKS_GROUP || group == CrafterConstants.INTERNAL_TASKS_GROUP
+    group == CrafterTasks.PUBLIC_TASKS_GROUP || group == CrafterTasks.INTERNAL_TASKS_GROUP
 
 inline fun <reified T : Task> TaskContainer.lazyDisableTyped(taskName: String) {
     matching { it.name == taskName && T::class.isInstance(it) }.configureEach { (this as T).disable() }
@@ -31,6 +31,6 @@ fun TaskContainer.configureJvmTarget(target: JvmTarget) {
     }
 }
 
-inline fun <reified T : Task> TaskContainer.lazyConfigure(taskName: String, crossinline configure: T.() -> Unit) {
+inline fun <reified T : Task> TaskContainer.lazyConfigure(taskName: String, crossinline configure: T.() -> Unit = {}) {
     matching { it.name == taskName && T::class.isInstance(it) }.configureEach { (this as T).configure() }
 }

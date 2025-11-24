@@ -7,7 +7,7 @@ import io.github.diskria.kotlin.utils.extensions.common.`path∕case`
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeJsonToFile
 import io.github.diskria.kotlin.utils.extensions.serialization.serializeToJson
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.crafter.core.CrafterConstants
+import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.configs.mixins.MixinsConfig
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import io.github.recrafter.crafter.core.properties.ModProperty
@@ -32,7 +32,7 @@ abstract class CraftMixinsConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterConstants.INTERNAL_TASKS_GROUP
+        group = CrafterTasks.INTERNAL_TASKS_GROUP
     }
 
     @TaskAction
