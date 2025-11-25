@@ -114,8 +114,7 @@ Crafter organizes Gradle tasks into categories to keep the IDE panel clean:
 → Generate / clean IDE configs and run configurations.
 
 ### Mod Loader Tasks
-For each loader (`Fabric`, `Quilt`, `Forge`, `NeoForge`, `Babric`, `LegacyFabric`, `Ornithe`),  
-Crafter automatically groups build and run tasks under:
+For each loader Crafter automatically groups build and run tasks under:
 
 ```
 Mod Loader/<Loader Name> tasks
@@ -138,7 +137,7 @@ All loader tasks are cleanly separated and logically ordered.
 
 ## 🧠 Supported Loaders and Versions
 
-Crafter supports all major loader families:
+Crafter supports all major loaders:
 
 | Loader | Supported Version Range |
 |--------|-------------------------|
@@ -168,7 +167,7 @@ Future versions may introduce a neutral entry-point interface, isolated from any
 ## 🧰 IDE Integration — *Enderpearl* (Coming Soon)
 
 Crafter disables auto-generated run configs in IDEA, as it will integrate with the upcoming **Enderpearl** plugin —  
-a modern, interactive IDE tool for testing mixins and launching Minecraft directly from IntelliJ IDEA.  
+a modern, interactive IDE tool for launching Minecraft directly from IntelliJ IDEA.  
 (Adaptations for Eclipse/VSCode are **not** planned.)
 
 ---
@@ -187,7 +186,7 @@ Focus: finalize the current **loader-based orchestration**.
       ```
     - Automatically scaffolds correct folder trees and defaults.
 - Add **`bisect`** command
-    - Automatically finds the earliest Minecraft version where the mod breaks.
+    - Automatically finds the earliest Minecraft version.
     - Optionally launches the game for semi-automatic testing.
 - Refine Gradle task grouping and internal metadata generation.
 
