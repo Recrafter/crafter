@@ -218,6 +218,17 @@ The 2.0 architecture will make Crafter a **cross-loader, mapping-centric SDK** f
 
 ---
 
+## 🧩 Why Crafter Exists
+
+Over the years, Minecraft modding has fragmented into multiple competing loaders — each born from good intentions, but all chasing the same goal: to replace the previous one. NeoForge split from Forge to “fix” its legacy. Quilt forked from Fabric to “do things right”. None of them truly failed — but none unified anything either. Instead, they divided the community.
+
+Now mod developers face a strange reality: to reach all players, they must build and maintain versions of their mods for every loader. Each with its own mappings, Gradle quirks, config formats, and forum drama. You don’t just write a mod — you navigate political borders.
+
+Crafter was created to end that.
+It doesn’t take sides. It doesn’t try to be another loader or API. Instead, it treats Minecraft itself as the platform — not the loaders around it. Crafter automates builds, mixins, and configs for every environment, so modders can focus on what actually matters: making mods, not maintaining them.
+
+---
+
 ## 💬 Philosophy
 
 > **Everything should be generated.  
