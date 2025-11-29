@@ -176,7 +176,7 @@ Focus: finalize the current **loader-based orchestration**.
     ./crafter init fabric 1.21.10
     ```
   - Automatically scaffolds correct folder trees and defaults.
-- Add **`bisect`** command
+- Add **`port`** command
   - Automatically finds the earliest Minecraft version.
   - Optionally launches the game for semi-automatic testing.
 - Refine Gradle task grouping and internal metadata generation.

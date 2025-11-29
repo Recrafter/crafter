@@ -32,7 +32,7 @@ pluginManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "0.2.4"
+    id("io.github.recrafter.recipe") version "0.2.6"
 }
 
 projekt {
