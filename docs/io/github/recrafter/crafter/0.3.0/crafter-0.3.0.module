@@ -1,0 +1,203 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.recrafter",
+    "module": "crafter",
+    "version": "0.3.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "crafter-0.3.0.jar",
+          "url": "crafter-0.3.0.jar",
+          "size": 910560,
+          "sha512": "1a0e471aab3143c908afa25b6b246d6716e581ba45529248747417f4242aafc15fb7c4d01f035a92efffca1b4b13e7cd1bb3de26529951c616e7be594f9012df",
+          "sha256": "5f33774e6248714886e2076c995171a98076cbc9c49e7b7cd832d43fad3120ff",
+          "sha1": "d654f8e3921f2f3d04ab8aad1cf2ad875b8d9cfb",
+          "md5": "9b3ebe94796242cdd1f88df4fee7f36f"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-gradle-plugin"
+        },
+        {
+          "group": "org.quiltmc.loom",
+          "module": "org.quiltmc.loom.gradle.plugin",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "legacy-looming",
+          "module": "legacy-looming.gradle.plugin",
+          "version": {
+            "requires": "1.12.1"
+          }
+        },
+        {
+          "group": "ploceus",
+          "module": "ploceus.gradle.plugin",
+          "version": {
+            "requires": "1.11.6"
+          }
+        },
+        {
+          "group": "babric-loom-extension",
+          "module": "babric-loom-extension.gradle.plugin",
+          "version": {
+            "requires": "1.13.2"
+          }
+        },
+        {
+          "group": "net.minecraftforge.gradle",
+          "module": "net.minecraftforge.gradle.gradle.plugin",
+          "version": {
+            "requires": "6.0.46"
+          }
+        },
+        {
+          "group": "net.neoforged.moddev",
+          "module": "net.neoforged.moddev.gradle.plugin",
+          "version": {
+            "requires": "2.0.116"
+          }
+        },
+        {
+          "group": "io.github.recrafter",
+          "module": "bedrock",
+          "version": {
+            "requires": "0.2.6"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json-jvm",
+          "version": {
+            "requires": "1.7.3"
+          }
+        },
+        {
+          "group": "com.palantir.javapoet",
+          "module": "javapoet",
+          "version": {
+            "requires": "0.7.0"
+          }
+        },
+        {
+          "group": "org.jsoup",
+          "module": "jsoup",
+          "version": {
+            "requires": "1.21.2"
+          }
+        },
+        {
+          "group": "io.github.diskria",
+          "module": "kotlin-utils",
+          "version": {
+            "requires": "0.9.0"
+          }
+        },
+        {
+          "group": "io.github.diskria",
+          "module": "gradle-utils",
+          "version": {
+            "requires": "0.9.0"
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-gradle-plugin",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "crafter-0.3.0.jar",
+          "url": "crafter-0.3.0.jar",
+          "size": 910560,
+          "sha512": "1a0e471aab3143c908afa25b6b246d6716e581ba45529248747417f4242aafc15fb7c4d01f035a92efffca1b4b13e7cd1bb3de26529951c616e7be594f9012df",
+          "sha256": "5f33774e6248714886e2076c995171a98076cbc9c49e7b7cd832d43fad3120ff",
+          "sha1": "d654f8e3921f2f3d04ab8aad1cf2ad875b8d9cfb",
+          "md5": "9b3ebe94796242cdd1f88df4fee7f36f"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "crafter-0.3.0-sources.jar",
+          "url": "crafter-0.3.0-sources.jar",
+          "size": 7865,
+          "sha512": "ad90fc7506f10519e96df8cc7682d8d0609623640579bb21cbce22aef05dfd4750708e774c906e8cfbba394fe5544a78a9738705ba408453ccaa18bc0dc7e61b",
+          "sha256": "1e23c3b5b68c0c8699b79f58a2fe9874f4065be8faf278c0b8039c7fcd42bd92",
+          "sha1": "0b0317a40ca99fe72d44734f7ccf572a783319fc",
+          "md5": "0a7a191d865dd7c14d0e3f1756510a28"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "crafter-0.3.0-javadoc.jar",
+          "url": "crafter-0.3.0-javadoc.jar",
+          "size": 261,
+          "sha512": "b0d783ef44815ade727139eb34d1d73e36b2661cca96613f935ebab265b3096170305edda18789efd1277d8704463cc9951ee8d7248c316063af0370a719a547",
+          "sha256": "e2fa0899bc969adcf514ec2674eae470f3f4a571cf728f40b140152b2f6242c1",
+          "sha1": "dd2d4f8cfd32e3fc5de58f30e4cead667bd1f9e2",
+          "md5": "6ac1f725da8dc2ed5c27aa67bb86d36b"
+        }
+      ]
+    }
+  ]
+}
