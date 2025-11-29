@@ -15,13 +15,13 @@ Choose your mod environment (one of **four** types):
 
 ```kotlin
 plugins {
-  id("io.github.recrafter.recipe") version "0.2.0"
+    id("io.github.recrafter.recipe") version "0.2.0"
 }
 
 recipe {
-  crafter {
-    serverOnly()
-  }
+    crafter {
+        serverOnly()
+    }
 }
 ```
 
@@ -42,19 +42,19 @@ Define your mod metadata:
 
 ```kotlin
 plugins {
-  id("io.github.recrafter.crafter") version "0.3.0"
+    id("io.github.recrafter.crafter") version "0.3.0"
 }
 
 crafter {
-  mod {
-    name = "Example mod"
-    version = "0.1.0"
+    mod {
+        name = "Example mod"
+        version = "0.1.0"
 
-    developer {
-      name = "diskria"
-      namespace = "io.github.diskria"
+        developer {
+            name = "diskria"
+            namespace = "io.github.diskria"
+        }
     }
-  }
 }
 ```
 
@@ -179,15 +179,15 @@ Focus: finalize the current **loader-based orchestration**.
 
 **Key goals:**
 - Complete `CLI` support
-  - Installable via `./gradlew installCrafterCli`
-  - Create new mod projects directly:
-    ```bash
-    ./crafter init fabric 1.21.10
-    ```
-  - Automatically scaffolds correct folder trees and defaults.
+    - Installable via `./gradlew installCrafterCli`
+    - Create new mod projects directly:
+      ```bash
+      ./crafter init fabric 1.21.10
+      ```
+    - Automatically scaffolds correct folder trees and defaults.
 - Add **`bisect`** command
-  - Automatically finds the earliest Minecraft version.
-  - Optionally launches the game for semi-automatic testing.
+    - Automatically finds the earliest Minecraft version.
+    - Optionally launches the game for semi-automatic testing.
 - Refine Gradle task grouping and internal metadata generation.
 
 ---
@@ -210,9 +210,9 @@ minecraft/
 Developers will:
 - Write all code on the **Fabric base** using **Mojang mappings + Access Wideners**.
 - Crafter will:
-  - Transpile `AW` → `AT` automatically.
-  - Generate mods for Fabric, Quilt, Forge, and NeoForge from one unified source.
-  - Eliminate visible loader folders completely.
+    - Transpile `AW` → `AT` automatically.
+    - Generate mods for Fabric, Quilt, Forge, and NeoForge from one unified source.
+    - Eliminate visible loader folders completely.
 
 The 2.0 architecture will make Crafter a **cross-loader, mapping-centric SDK** for Minecraft modding.
 
