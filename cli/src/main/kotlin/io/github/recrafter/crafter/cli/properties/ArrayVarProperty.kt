@@ -6,13 +6,12 @@ import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.properties.common.AbstractAutoNamedProperty
 import io.github.recrafter.crafter.cli.bash.builder.ArrayVar
 import io.github.recrafter.crafter.cli.bash.builder.BashScriptBuilder
-import io.github.recrafter.crafter.cli.bash.builder.StringVar
 
-class ArrayVarProperty(val builder: BashScriptBuilder, val value: String) : AbstractAutoNamedProperty<ArrayVar>() {
+class ArrayVarProperty(val builder: BashScriptBuilder, val value: String?) : AbstractAutoNamedProperty<ArrayVar>() {
 
     override fun mapToValue(propertyName: String): ArrayVar =
         builder.initArrayVar(propertyName.setCase(camelCase, SCREAMING_SNAKE_CASE), value)
 }
 
-fun BashScriptBuilder.arrayVar(value: String): ArrayVarProperty =
+fun BashScriptBuilder.arrayVar(value: String? = null): ArrayVarProperty =
     ArrayVarProperty(this, value)

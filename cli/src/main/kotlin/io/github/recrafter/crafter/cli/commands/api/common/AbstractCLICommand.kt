@@ -10,19 +10,15 @@ import io.github.diskria.kotlin.utils.extensions.common.className
 import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
 import io.github.diskria.kotlin.utils.extensions.common.fileName
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
+import io.github.diskria.kotlin.utils.extensions.generics.joinToString
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
 import io.github.recrafter.bedrock.crafter.CrafterFlow
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.bash.arguments.CLIArguments
 import io.github.recrafter.crafter.cli.bash.arguments.CLICommandArgumentReference
-import io.github.recrafter.crafter.cli.bash.builder.BashScriptBuilder
-import io.github.recrafter.crafter.cli.bash.builder.Conditions.isPidAlive
+import io.github.recrafter.crafter.cli.bash.builder.*
 import io.github.recrafter.crafter.cli.bash.builder.Conditions.isVarEmpty
-import io.github.recrafter.crafter.cli.bash.builder.IntVar
-import io.github.recrafter.crafter.cli.bash.builder.StringVar
-import io.github.recrafter.crafter.cli.bash.builder.equals_
-import io.github.recrafter.crafter.cli.bash.builder.value
 import io.github.recrafter.crafter.cli.bash.syntax.BashOperator
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.commands.api.annotations.CLICommand
@@ -33,13 +29,8 @@ import io.github.recrafter.crafter.cli.commands.api.arguments.EnumArgument
 import io.github.recrafter.crafter.cli.commands.api.arguments.EnumArgumentOption
 import io.github.recrafter.crafter.cli.commands.api.arguments.StringArgument
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
-import io.github.recrafter.crafter.cli.extensions.atName
+import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.bashScript
-import io.github.recrafter.crafter.cli.extensions.elementAnnotations
-import io.github.recrafter.crafter.cli.extensions.quoted
-import io.github.recrafter.crafter.cli.extensions.singleQuoted
-import io.github.recrafter.crafter.cli.extensions.unquoted
-import io.github.recrafter.crafter.cli.properties.arrayVar
 import io.github.recrafter.crafter.cli.properties.intVar
 import io.github.recrafter.crafter.cli.properties.stringVar
 import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
@@ -119,10 +110,10 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                     printError("Incorrect ${name.singleQuoted()} command usage.")
                     println_("Usage:")
                     withPadding {
-                        println_(Cmd.of(fingerprint.scriptName, signature))
+                        println_(Cmd.of(fingerprint.scriptName, signature), color = AnsiColor.CYAN)
                     }
                     val helpCmd = Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted()
-                    println_("Tip: run $helpCmd to see commands, arguments and more.")
+                    println_("Tip: run $helpCmd to see commands, arguments and more.", color = AnsiColor.GRAY)
                     throw_()
                 }
             }
@@ -143,7 +134,27 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                 }
                 ifBlock {
                     if_(found.equals_(0)) {
-                        throw_("Unknown value '${argument.reference}' for argument '${argument.name}'.")
+                        print_("Invalid value ", color = AnsiColor.RED)
+                        print_(
+                            argument.reference.toString().singleQuoted(),
+                            color = AnsiColor.RED,
+                            style = AnsiStyle.BOLD
+                        )
+                        print_(" provided for argument ", color = AnsiColor.RED)
+                        print_(argument.name.singleQuoted(), color = AnsiColor.RED, style = AnsiStyle.BOLD)
+                        print_(".", color = AnsiColor.RED)
+                        println_()
+                        print_("Allowed values: ")
+                        print_(completions.quoted().squared(), color = AnsiColor.WHITE, style = AnsiStyle.BOLD)
+                        println_()
+                        print_("Tip: Press ", color = AnsiColor.GRAY)
+                        print_(
+                            "TAB".wrapWithBrackets(BracketsType.ANGLE),
+                            color = AnsiColor.GRAY,
+                            style = AnsiStyle.BOLD
+                        )
+                        println_(" to auto-complete available options.", color = AnsiColor.GRAY)
+                        throw_()
                     }
                 }
             }
@@ -182,13 +193,13 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         return@bashScript this
     }
 
-    protected fun BashScriptBuilder.runGradleTask(
+    protected fun BashScriptBuilder.runGradleTaskInBackground(
         taskName: String,
         loader: String,
         version: String,
-        wait: (BashScriptBuilder.(StringVar) -> BashScriptBuilder)? = null
-    ): Pair<IntVar, StringVar> {
-        val command = Cmd.gradleTask(taskName, gradleProjectPath(loader, version)) {
+        pid: StringVar,
+    ): StringVar {
+        val command = Cmd.gradleTask(taskName, gradleProjectPath(loader, version), listOf("--no-daemon")) {
             mapOf(
                 "crafter.flow" to CrafterFlow.Single.name,
                 "crafter.loader" to loader,
@@ -197,17 +208,14 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         }
         val outputDirectoryPath by stringVar(InstallCrafterCLITask.CLI_CACHE_DIRECTORY_PATH.appendPath("gradle-output"))
         createDirectory(outputDirectoryPath.value, recursive = true)
-        val logFileName = fileName("${taskName}_${loader}_${version}_${bash.nowDate()}", "log")
-        val logPath by stringVar("$outputDirectoryPath/$logFileName")
+        val logName = listOf(taskName, loader, version, bash.nowDate()).joinToString(Constants.Char.UNDERSCORE)
+        val logPath by stringVar(outputDirectoryPath.toString().appendPath(fileName(logName, "log")))
         code { "$command > $logPath 2>&1 &" }
-        val pid by stringVar("$!")
-        wait?.let {
-            while_(bash.conditions.isPidAlive(pid)) {
-                it.invoke(this, logPath)
-            }
-        }
-        run_("wait", pid.value)
-        val status by intVar("$?")
-        return status to logPath
+        setStringVarValue(pid, "$!")
+        return logPath
+    }
+
+    companion object {
+        protected const val LOG_HISTORY_SIZE: Int = 7
     }
 }

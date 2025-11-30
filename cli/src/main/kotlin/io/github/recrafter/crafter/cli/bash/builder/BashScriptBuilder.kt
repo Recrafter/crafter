@@ -14,6 +14,8 @@ import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.rounded
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
 import io.github.recrafter.crafter.cli.extensions.squared
+import io.github.recrafter.crafter.cli.properties.stringVar
+import org.gradle.internal.impldep.org.bouncycastle.asn1.BERBitString
 import kotlin.math.max
 
 @Suppress("unused", "FunctionName", "UnusedReceiverParameter", "LocalVariableName")
@@ -127,7 +129,7 @@ class BashScriptBuilder {
         return IntVar(name)
     }
 
-    fun initArrayVar(name: String, value: String): ArrayVar {
+    fun initArrayVar(name: String, value: String? = null): ArrayVar {
         code { bash.initArrayVar(name, value) }
         return ArrayVar(name)
     }
@@ -148,6 +150,15 @@ class BashScriptBuilder {
 
     fun BashScriptBuilder.setIntVarValue(intVar: IntVar, value: Int): BashScriptBuilder =
         setIntVarValue(intVar, value.toString())
+
+    fun BashScriptBuilder.setArrayVarValue(arrayVar: ArrayVar, value: String): BashScriptBuilder =
+        code { bash.initArrayVar(arrayVar.name, value, quote = true) }
+
+    fun BashScriptBuilder.addToArrayVar(arrayVar: ArrayVar, element: StringVar): BashScriptBuilder =
+        code { arrayVar.add(element.quotedValue) }
+
+    fun BashScriptBuilder.incrementIntVarValue(intVar: IntVar): BashScriptBuilder =
+        code { intVar.increment() }
 
     fun BashScriptBuilder.putToMap(name: String, key: String, value: String): BashScriptBuilder =
         code { name + key.squared() + Constants.Char.EQUAL_SIGN + value }
@@ -202,6 +213,9 @@ class BashScriptBuilder {
     fun BashScriptBuilder.run_(command: String, arguments: String): BashScriptBuilder =
         code { bash.run(command, arguments) }
 
+    fun BashScriptBuilder.run_(command: String, argument: StringVar): BashScriptBuilder =
+        code { bash.run(command, argument.toString()) }
+
     fun BashScriptBuilder.run_(commands: List<String>): BashScriptBuilder =
         code { bash.run_(commands) }
 
@@ -223,6 +237,13 @@ class BashScriptBuilder {
     ): BashScriptBuilder =
         code { bash.print(text, color, style, addNewLine = true) }
 
+    fun BashScriptBuilder.println_(
+        text: StringVar,
+        color: AnsiColor? = null,
+        style: AnsiStyle? = null,
+    ): BashScriptBuilder =
+        println_(text.toString(), color, style)
+
     fun BashScriptBuilder.print_(
         text: String = Constants.Char.EMPTY,
         color: AnsiColor? = null,
@@ -241,11 +262,11 @@ class BashScriptBuilder {
         return this
     }
 
-    fun BashScriptBuilder.printWarning(message: String): BashScriptBuilder =
-        println_(message, color = AnsiColor.YELLOW)
+    fun BashScriptBuilder.printWarning(message: String, style: AnsiStyle? = null): BashScriptBuilder =
+        println_(message, color = AnsiColor.YELLOW, style = style)
 
-    fun BashScriptBuilder.printError(message: String): BashScriptBuilder =
-        println_(message, color = AnsiColor.RED)
+    fun BashScriptBuilder.printError(message: String, style: AnsiStyle? = null): BashScriptBuilder =
+        println_(message, color = AnsiColor.RED, style = style)
 
     fun BashScriptBuilder.sleep(time: Float): BashScriptBuilder =
         run_("sleep", time.toString())
@@ -256,6 +277,42 @@ class BashScriptBuilder {
     fun BashScriptBuilder.throw_(exceptionMessage: String? = null): BashScriptBuilder {
         exceptionMessage?.let { printError(it) }
         exit(ERROR_CODE)
+        return this
+    }
+
+    fun BashScriptBuilder.onInterrupt(callback: Builder<BashScriptBuilder>): BashScriptBuilder {
+        val trapFunction = fun_("interrupt") {
+            callback()
+            exit(130)
+        }
+        run_("trap", "$trapFunction SIGINT")
+        return this
+    }
+
+    fun BashScriptBuilder.deleteRecursively(path: String): BashScriptBuilder {
+        run_(Commands.RM, "-r ${path.quoted()}")
+        return this
+    }
+
+    fun BashScriptBuilder.watchFileLines(
+        path: StringVar,
+        pid: StringVar? = null,
+        action: BashScriptBuilder.(StringVar) -> BashScriptBuilder
+    ): BashScriptBuilder {
+        val line by stringVar()
+        code { "while IFS= read -r ${line.name}; do" }
+        withIndent {
+            action(line)
+        }
+        code {
+            buildString {
+                append("done < <(tail -F ${path.quotedValue} ")
+                pid?.let {
+                    append("--pid=${it.quotedValue} ")
+                }
+                append("-n 0)")
+            }
+        }
         return this
     }
 
@@ -282,11 +339,11 @@ class BashScriptBuilder {
     fun Bash.initIntVar(name: String, value: Int): String =
         name + Constants.Char.EQUAL_SIGN + value.toString()
 
-    fun Bash.initArrayVar(name: String, contents: String, quote: Boolean = false): String =
+    fun Bash.initArrayVar(name: String, contents: String? = null, quote: Boolean = false): String =
         initStringVar(
             name,
-            if (quote) contents.quoted().rounded()
-            else contents.rounded(),
+            if (quote) contents.orEmpty().quoted().rounded()
+            else contents.orEmpty().rounded(),
             quote = false
         )
 

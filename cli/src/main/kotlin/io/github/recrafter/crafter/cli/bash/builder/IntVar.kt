@@ -3,8 +3,10 @@
 package io.github.recrafter.crafter.cli.bash.builder
 
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.extensions.curled
 import io.github.recrafter.crafter.cli.extensions.rounded
+import io.github.recrafter.crafter.cli.extensions.squared
 
 @JvmInline
 value class IntVar(val name: String) {
@@ -27,7 +29,10 @@ fun IntVar.minus(other: Int): String =
     arithmetic("$name-$other")
 
 fun IntVar.equals_(other: Int): Condition =
-    Condition("$value -eq $other")
+    Condition("$value -eq $other".wrapWithSpace().squared(2))
+
+fun IntVar.isGreaterThen(other: Int): Condition =
+    Condition("$value -gt $other".wrapWithSpace().squared(2))
 
 fun String.toIntVar(): IntVar =
     IntVar(this)

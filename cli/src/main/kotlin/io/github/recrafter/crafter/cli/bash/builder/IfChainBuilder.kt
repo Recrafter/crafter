@@ -30,7 +30,7 @@ class IfChainBuilder {
                             )
                             append(Constants.Char.SPACE)
                             append(branch.conditions.joinToString(branch.operator.token) {
-                                it.expression.wrapWithSpace().squared(2)
+                                it.expression.wrapWithSpace()
                             })
                             append(Constants.Char.SEMICOLON)
                             append(Constants.Char.SPACE)

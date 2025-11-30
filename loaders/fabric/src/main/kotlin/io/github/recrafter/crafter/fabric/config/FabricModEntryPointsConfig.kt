@@ -35,7 +35,7 @@ data class FabricModEntryPointsConfig(
 
                 ModEnvironment.CLIENT_ONLY -> clientEntryPoints
                 ModEnvironment.SERVER_ONLY -> FabricModEntryPointsConfig(
-                    serverEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
+                    mainEntryPoints = listOf(buildPackageName(mod, ModSide.SERVER))
                 )
 
                 ModEnvironment.DEDICATED_SERVER_ONLY -> serverEntryPoints

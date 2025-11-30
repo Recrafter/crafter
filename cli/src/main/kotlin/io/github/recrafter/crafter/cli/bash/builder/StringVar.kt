@@ -3,8 +3,10 @@
 package io.github.recrafter.crafter.cli.bash.builder
 
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.extensions.curled
 import io.github.recrafter.crafter.cli.extensions.quoted
+import io.github.recrafter.crafter.cli.extensions.squared
 
 @JvmInline
 value class StringVar(val name: String) {
@@ -35,7 +37,7 @@ fun StringVar.getQuotedValue(default: String? = null): String =
     getValue(default).quoted()
 
 fun StringVar.equals_(other: String): Condition =
-    Condition("$quotedValue == $other")
+    Condition("$quotedValue == $other".wrapWithSpace().squared(2))
 
 fun StringVar.equals_(other: StringVar): Condition =
     equals_(other.value)
@@ -47,7 +49,7 @@ fun StringVar.substring(startIndex: Int, endIndex: String): String =
     buildValue("${name}:$startIndex:$endIndex")
 
 fun StringVar.isVarNotEmpty(): Condition =
-    Condition("-n $quotedValue")
+    Condition("-n $quotedValue".wrapWithSpace().squared(2))
 
 private fun buildValue(text: String): String =
     buildString {

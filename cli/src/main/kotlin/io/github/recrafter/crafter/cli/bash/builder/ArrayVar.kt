@@ -18,6 +18,15 @@ fun ArrayVar.getElement(index: Int): String =
 fun ArrayVar.iterator_(): String =
     buildValue(name + Constants.Char.AT_SIGN.toString().squared())
 
+fun ArrayVar.add(element: String): String =
+    "$name+=($element)"
+
+val ArrayVar.size: IntVar
+    get() = IntVar("#${name}[@]")
+
+fun ArrayVar.takeLast(count: Int): String =
+    "\${$name[@]: -$count}"
+
 private fun buildValue(text: String): String =
     buildString {
         append(Constants.Char.DOLLAR)

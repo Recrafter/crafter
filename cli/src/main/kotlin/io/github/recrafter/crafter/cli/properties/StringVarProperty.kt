@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.cli.properties
 
+import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
 import io.github.diskria.kotlin.utils.extensions.common.camelCase
 import io.github.diskria.kotlin.utils.extensions.setCase
@@ -15,3 +16,6 @@ class StringVarProperty(val builder: BashScriptBuilder, val value: String) : Abs
 
 fun BashScriptBuilder.stringVar(value: String): StringVarProperty =
     StringVarProperty(this, value)
+
+fun BashScriptBuilder.stringVar(): StringVarProperty =
+    stringVar(Constants.Char.EMPTY)
