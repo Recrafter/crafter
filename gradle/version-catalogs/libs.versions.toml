@@ -12,7 +12,7 @@ jsoup = "1.21.2"
 kotlin-utils = "0.9.0"
 gradle-utils = "0.9.0"
 
-bedrock = "0.2.6"
+bedrock = "0.2.8"
 
 quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"

@@ -3,13 +3,11 @@ package io.github.recrafter.crafter.cli.bash.builder
 import io.github.diskria.gradle.utils.extensions.common.requireGradle
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.generics.joinByNewLine
-import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.bash.syntax.BashKeyword
 import io.github.recrafter.crafter.cli.bash.syntax.BashOperator
 import io.github.recrafter.crafter.cli.extensions.common.Builder
 import io.github.recrafter.crafter.cli.extensions.common.bashScript
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
-import io.github.recrafter.crafter.cli.extensions.squared
 
 @Suppress("FunctionName")
 class IfChainBuilder {
@@ -30,7 +28,7 @@ class IfChainBuilder {
                             )
                             append(Constants.Char.SPACE)
                             append(branch.conditions.joinToString(branch.operator.token) {
-                                it.expression.wrapWithSpace()
+                                it.expression
                             })
                             append(Constants.Char.SEMICOLON)
                             append(Constants.Char.SPACE)

@@ -1,11 +1,17 @@
 package io.github.recrafter.crafter.neoforge.config
 
 import io.github.recrafter.crafter.core.Mod
+import io.github.recrafter.crafter.core.versions.VersionBound
+import io.github.recrafter.crafter.core.versions.range.IntervalVersionRange
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class NeoForgeModConfig(
+    val modLoader: String,
+
+    val loaderVersion: String,
+
     @SerialName("license")
     val licenseId: String,
 
@@ -20,6 +26,8 @@ data class NeoForgeModConfig(
     companion object {
         fun of(mod: Mod): NeoForgeModConfig =
             NeoForgeModConfig(
+                modLoader = "javafml",
+                loaderVersion = IntervalVersionRange.min(VersionBound.inclusive(1)),
                 licenseId = mod.licenseId,
                 issuesUrl = mod.issuesUrl,
                 mods = listOf(

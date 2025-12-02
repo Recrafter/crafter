@@ -21,5 +21,8 @@ fun String.squared(count: Int = 1): String =
 fun String.rounded(count: Int = 1): String =
     wrapWithBrackets(BracketsType.ROUND, count)
 
+fun String.angled(count: Int = 1): String =
+    wrapWithBrackets(BracketsType.ANGLE, count)
+
 fun String.curled(): String =
     wrapWithBrackets(BracketsType.CURLY)

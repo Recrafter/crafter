@@ -48,8 +48,20 @@ fun StringVar.getCharAt(index: String): String =
 fun StringVar.substring(startIndex: Int, endIndex: String): String =
     buildValue("${name}:$startIndex:$endIndex")
 
-fun StringVar.isVarNotEmpty(): Condition =
+fun StringVar.substringAfterLast(delimeter: Char): String =
+    buildValue("$name##*$delimeter")
+
+fun StringVar.isEmpty(): Condition =
+    Condition("-z $quotedValue".wrapWithSpace().squared(2))
+
+fun StringVar.isNotEmpty(): Condition =
     Condition("-n $quotedValue".wrapWithSpace().squared(2))
+
+fun StringVar.contains(other: String): Condition =
+    Condition("echo $quotedValue | grep -Fq ${other.quoted()}")
+
+fun StringVar.matches(regex: String): Condition =
+    Condition("$quotedValue =~ $regex".wrapWithSpace().squared(2))
 
 private fun buildValue(text: String): String =
     buildString {

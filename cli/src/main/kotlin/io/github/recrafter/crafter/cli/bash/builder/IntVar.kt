@@ -28,11 +28,26 @@ fun IntVar.mod(other: IntVar): String =
 fun IntVar.minus(other: Int): String =
     arithmetic("$name-$other")
 
-fun IntVar.equals_(other: Int): Condition =
+fun IntVar.equals_(other: String): Condition =
     Condition("$value -eq $other".wrapWithSpace().squared(2))
+
+fun IntVar.equals_(other: Int): Condition =
+    equals_(other.toString())
+
+fun IntVar.equals_(other: IntVar): Condition =
+    equals_(other.value)
 
 fun IntVar.isGreaterThen(other: Int): Condition =
     Condition("$value -gt $other".wrapWithSpace().squared(2))
+
+fun IntVar.isEmpty(): Condition =
+    Condition("-z $value".wrapWithSpace().squared(2))
+
+fun IntVar.isNotEmpty(): Condition =
+    Condition("-n $value".wrapWithSpace().squared(2))
+
+fun IntVar.isLessOrEqual(other: IntVar): Condition =
+    Condition("$value -le $other".wrapWithSpace().squared(2))
 
 fun String.toIntVar(): IntVar =
     IntVar(this)

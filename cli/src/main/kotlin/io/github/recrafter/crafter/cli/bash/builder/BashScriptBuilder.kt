@@ -14,8 +14,8 @@ import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.rounded
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
 import io.github.recrafter.crafter.cli.extensions.squared
+import io.github.recrafter.crafter.cli.properties.intVar
 import io.github.recrafter.crafter.cli.properties.stringVar
-import org.gradle.internal.impldep.org.bouncycastle.asn1.BERBitString
 import kotlin.math.max
 
 @Suppress("unused", "FunctionName", "UnusedReceiverParameter", "LocalVariableName")
@@ -129,6 +129,11 @@ class BashScriptBuilder {
         return IntVar(name)
     }
 
+    fun initBooleanVar(name: String, value: Boolean = false): BooleanVar {
+        code { bash.initBooleanVar(name, value) }
+        return BooleanVar(name)
+    }
+
     fun initArrayVar(name: String, value: String? = null): ArrayVar {
         code { bash.initArrayVar(name, value) }
         return ArrayVar(name)
@@ -142,6 +147,17 @@ class BashScriptBuilder {
         return MapVar(name)
     }
 
+    fun initArrayIndicesMap(arrayVar: ArrayVar): MapVar {
+        val name = arrayVar.name + "_INDICES"
+        code { "declare -A $name" }
+        val index by intVar()
+        foreach_(arrayVar) {
+            putToMap(name, it.quotedValue, index.value)
+            incrementIntVarValue(index)
+        }
+        return MapVar(name)
+    }
+
     fun BashScriptBuilder.setStringVarValue(stringVar: StringVar, value: String): BashScriptBuilder =
         code { bash.initStringVar(stringVar.name, value) }
 
@@ -150,6 +166,9 @@ class BashScriptBuilder {
 
     fun BashScriptBuilder.setIntVarValue(intVar: IntVar, value: Int): BashScriptBuilder =
         setIntVarValue(intVar, value.toString())
+
+    fun BashScriptBuilder.setBooleanVarValue(booleanVar: BooleanVar, value: Boolean): BashScriptBuilder =
+        code { bash.initBooleanVar(booleanVar.name, value) }
 
     fun BashScriptBuilder.setArrayVarValue(arrayVar: ArrayVar, value: String): BashScriptBuilder =
         code { bash.initArrayVar(arrayVar.name, value, quote = true) }
@@ -210,6 +229,9 @@ class BashScriptBuilder {
     fun BashScriptBuilder.break_(): BashScriptBuilder =
         code { BashKeyword.BREAK.token }
 
+    fun BashScriptBuilder.continue_(): BashScriptBuilder =
+        code { BashKeyword.CONTINUE.token }
+
     fun BashScriptBuilder.run_(command: String, arguments: String): BashScriptBuilder =
         code { bash.run(command, arguments) }
 
@@ -219,7 +241,7 @@ class BashScriptBuilder {
     fun BashScriptBuilder.run_(commands: List<String>): BashScriptBuilder =
         code { bash.run_(commands) }
 
-    fun BashScriptBuilder.createDirectory(path: String, recursive: Boolean = false): BashScriptBuilder =
+    fun BashScriptBuilder.createDirectory(path: String, recursive: Boolean = true): BashScriptBuilder =
         run_(Commands.MKDIR, buildString {
             if (recursive) {
                 append("-p ")
@@ -251,8 +273,21 @@ class BashScriptBuilder {
     ): BashScriptBuilder =
         code { bash.print(text, color, style, addNewLine = false) }
 
-    fun BashScriptBuilder.clearLastLine(): BashScriptBuilder =
-        code { listOf(Commands.ECHO, "-e -n", "\\r${ESC}K".quoted()).joinBySpace() }
+    fun BashScriptBuilder.print_(
+        text: StringVar,
+        color: AnsiColor? = null,
+        style: AnsiStyle? = null,
+    ): BashScriptBuilder =
+        print_(text.toString(), color, style)
+
+    fun BashScriptBuilder.clearLine(): BashScriptBuilder =
+        code { listOf(Commands.ECHO, "-e -n", "\\r${ESC}2K".quoted()).joinBySpace() }
+
+    fun BashScriptBuilder.moveCursorUp(step: Int = 1): BashScriptBuilder =
+        code { listOf(Commands.ECHO, "-e -n", "${ESC}${step}A".quoted()).joinBySpace() }
+
+    fun BashScriptBuilder.moveCursorDown(step: Int = 1): BashScriptBuilder =
+        code { listOf(Commands.ECHO, "-e -n", "${ESC}${step}B".quoted()).joinBySpace() }
 
     fun BashScriptBuilder.setCursorVisible(isVisible: Boolean): BashScriptBuilder {
         code { bash.print(bash.getCursorVisibilityCode(isVisible)) }
@@ -263,13 +298,22 @@ class BashScriptBuilder {
     }
 
     fun BashScriptBuilder.printWarning(message: String, style: AnsiStyle? = null): BashScriptBuilder =
-        println_(message, color = AnsiColor.YELLOW, style = style)
+        println_(message, AnsiColor.YELLOW, style)
 
     fun BashScriptBuilder.printError(message: String, style: AnsiStyle? = null): BashScriptBuilder =
-        println_(message, color = AnsiColor.RED, style = style)
+        println_(message, AnsiColor.RED, style)
 
     fun BashScriptBuilder.sleep(time: Float): BashScriptBuilder =
         run_("sleep", time.toString())
+
+    fun BashScriptBuilder.kill(pid: StringVar): BashScriptBuilder =
+        run_("kill", pid.toString())
+
+    fun BashScriptBuilder.wait(pid: StringVar): IntVar {
+        run_("wait", pid.toString())
+        val status by intVar("$?")
+        return status
+    }
 
     fun BashScriptBuilder.exit(code: Int): BashScriptBuilder =
         code { "exit $code" }
@@ -338,6 +382,9 @@ class BashScriptBuilder {
 
     fun Bash.initIntVar(name: String, value: Int): String =
         name + Constants.Char.EQUAL_SIGN + value.toString()
+
+    fun Bash.initBooleanVar(name: String, value: Boolean): String =
+        initIntVar(name, BooleanVar.from(value))
 
     fun Bash.initArrayVar(name: String, contents: String? = null, quote: Boolean = false): String =
         initStringVar(
@@ -440,7 +487,7 @@ class BashScriptBuilder {
         lambda(Commands.DIRNAME, path.quoted())
 
     fun Bash.getAbsolutePath(relativePath: String): Lambda =
-        lambda(Commands.CD, run_(relativePath.quoted(), Commands.PWD))
+        lambda(Commands.REALPATH, relativePath.quoted())
 
     fun Bash.readFile(path: String): Lambda =
         lambda(Commands.CAT, path.quoted())

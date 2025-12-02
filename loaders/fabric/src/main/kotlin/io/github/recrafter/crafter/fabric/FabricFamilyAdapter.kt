@@ -13,7 +13,6 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
-import io.github.recrafter.bedrock.versions.isIntegratedServer
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.*
@@ -110,9 +109,6 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
         tasks {
             if (isRunConfigurationsDisabled) {
                 lazyDisable("ideaSyncTask")
-            }
-            if (!mod.minecraftVersion.isIntegratedServer) {
-                lazyDisable("extractNatives")
             }
         }
         restoreDependencyResolutionRepositories()

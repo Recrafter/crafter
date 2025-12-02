@@ -2,7 +2,6 @@ package io.github.recrafter.crafter.cli.commands.api.common
 
 import io.github.diskria.gradle.utils.extensions.common.gradleProjectPath
 import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
-import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
@@ -11,7 +10,6 @@ import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
 import io.github.diskria.kotlin.utils.extensions.common.fileName
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.generics.joinToString
-import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
 import io.github.recrafter.bedrock.crafter.CrafterFlow
 import io.github.recrafter.crafter.cli.Fingerprint
@@ -31,7 +29,6 @@ import io.github.recrafter.crafter.cli.commands.api.arguments.StringArgument
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
 import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.bashScript
-import io.github.recrafter.crafter.cli.properties.intVar
 import io.github.recrafter.crafter.cli.properties.stringVar
 import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import kotlinx.serialization.json.Json
@@ -72,7 +69,7 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
     }
 
     val signature: String
-        get() = name + Constants.Char.SPACE + arguments.joinBySpace { it.name.wrapWithBrackets(BracketsType.ANGLE) }
+        get() = name + Constants.Char.SPACE + arguments.joinBySpace { it.name.angled() }
 
     private val referenceArguments: T by lazy {
         Json.decodeFromJsonElement(serializer, buildJsonObject {
@@ -110,10 +107,10 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                     printError("Incorrect ${name.singleQuoted()} command usage.")
                     println_("Usage:")
                     withPadding {
-                        println_(Cmd.of(fingerprint.scriptName, signature), color = AnsiColor.CYAN)
+                        println_(Cmd.of(fingerprint.scriptName, signature), AnsiColor.CYAN)
                     }
                     val helpCmd = Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted()
-                    println_("Tip: run $helpCmd to see commands, arguments and more.", color = AnsiColor.GRAY)
+                    println_("Tip: run $helpCmd to see commands, arguments and more.", AnsiColor.GRAY)
                     throw_()
                 }
             }
@@ -123,37 +120,29 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                     is EnumArgument -> argument.options.joinBySpace { it.name }
                 }
                 val argumentValues = initArrayVar(argument.name.uppercase() + "_VALUES", completions.unquoted())
-                val found by intVar(0)
+                val isFound = initBooleanVar("IS_${argument.name.uppercase()}_FOUND")
                 foreach_(argumentValues) {
                     ifBlock {
                         if_(it.equals_(argument.reference.toString())) {
-                            setIntVarValue(found, 1)
+                            setBooleanVarValue(isFound, true)
                             break_()
                         }
                     }
                 }
                 ifBlock {
-                    if_(found.equals_(0)) {
-                        print_("Invalid value ", color = AnsiColor.RED)
-                        print_(
-                            argument.reference.toString().singleQuoted(),
-                            color = AnsiColor.RED,
-                            style = AnsiStyle.BOLD
-                        )
-                        print_(" provided for argument ", color = AnsiColor.RED)
-                        print_(argument.name.singleQuoted(), color = AnsiColor.RED, style = AnsiStyle.BOLD)
-                        print_(".", color = AnsiColor.RED)
+                    if_(isFound.equals_(false)) {
+                        print_("Invalid value ", AnsiColor.RED)
+                        print_(argument.reference.toString().singleQuoted(), AnsiColor.RED, AnsiStyle.BOLD)
+                        print_(" provided for argument ", AnsiColor.RED)
+                        print_(argument.name.singleQuoted(), AnsiColor.RED, AnsiStyle.BOLD)
+                        print_(".", AnsiColor.RED)
                         println_()
                         print_("Allowed values: ")
-                        print_(completions.quoted().squared(), color = AnsiColor.WHITE, style = AnsiStyle.BOLD)
+                        print_(completions.quoted().squared(), AnsiColor.WHITE, AnsiStyle.BOLD)
                         println_()
-                        print_("Tip: Press ", color = AnsiColor.GRAY)
-                        print_(
-                            "TAB".wrapWithBrackets(BracketsType.ANGLE),
-                            color = AnsiColor.GRAY,
-                            style = AnsiStyle.BOLD
-                        )
-                        println_(" to auto-complete available options.", color = AnsiColor.GRAY)
+                        print_("Tip: Press ", AnsiColor.GRAY)
+                        print_(SHOW_COMPLETIONS_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
+                        println_(" to auto-complete available options.", AnsiColor.GRAY)
                         throw_()
                     }
                 }
@@ -197,17 +186,22 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         taskName: String,
         loader: String,
         version: String,
+        modProjectName: StringVar,
         pid: StringVar,
     ): StringVar {
-        val command = Cmd.gradleTask(taskName, gradleProjectPath(loader, version), listOf("--no-daemon")) {
+        val command = Cmd.gradleTask(
+            taskName,
+            gradleProjectPath(loader, modProjectName.toString()),
+            listOf("--no-daemon", "--stacktrace"),
             mapOf(
                 "crafter.flow" to CrafterFlow.Single.name,
                 "crafter.loader" to loader,
                 "crafter.version" to version,
+                "crafter.modProjectName" to modProjectName.toString(),
             )
-        }
+        )
         val outputDirectoryPath by stringVar(InstallCrafterCLITask.CLI_CACHE_DIRECTORY_PATH.appendPath("gradle-output"))
-        createDirectory(outputDirectoryPath.value, recursive = true)
+        createDirectory(outputDirectoryPath.value)
         val logName = listOf(taskName, loader, version, bash.nowDate()).joinToString(Constants.Char.UNDERSCORE)
         val logPath by stringVar(outputDirectoryPath.toString().appendPath(fileName(logName, "log")))
         code { "$command > $logPath 2>&1 &" }
@@ -216,6 +210,7 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
     }
 
     companion object {
-        protected const val LOG_HISTORY_SIZE: Int = 7
+        private const val SHOW_COMPLETIONS_KEY: String = "TAB"
+        protected const val INTERRUPT_KEY: String = "Ctrl+C"
     }
 }

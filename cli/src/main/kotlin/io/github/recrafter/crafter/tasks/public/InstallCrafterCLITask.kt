@@ -14,20 +14,15 @@ import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.bash.builder.AnsiColor
-import io.github.recrafter.crafter.cli.bash.builder.BashScriptBuilder
+import io.github.recrafter.crafter.cli.bash.builder.*
 import io.github.recrafter.crafter.cli.bash.builder.Conditions.isFileExists
-import io.github.recrafter.crafter.cli.bash.builder.equals_
-import io.github.recrafter.crafter.cli.bash.builder.isVarNotEmpty
-import io.github.recrafter.crafter.cli.bash.builder.not_
-import io.github.recrafter.crafter.cli.bash.builder.quotedValue
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.utils.ShellType
 import io.github.recrafter.crafter.cli.commands.api.common.AbstractCLICommand
-import io.github.recrafter.crafter.cli.commands.port.PortCommand
 import io.github.recrafter.crafter.cli.commands.craft.CraftCommand
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
 import io.github.recrafter.crafter.cli.commands.init.InitCommand
+import io.github.recrafter.crafter.cli.commands.port.PortCommand
 import io.github.recrafter.crafter.cli.extensions.common.bashScript
 import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
@@ -108,7 +103,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                 printError("Please re-run the CLI install task to sync it with the plugin:")
                 println_()
                 withPadding {
-                    println_(Cmd.gradleTask(fingerprint.gradleTaskName), color = AnsiColor.CYAN)
+                    println_(Cmd.gradleTask(fingerprint.gradleTaskName), AnsiColor.CYAN)
                 }
                 println_()
                 throw_()
@@ -124,7 +119,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
             else_ {
                 printError("Unknown command: ${runningCommand.singleQuoted()}")
                 val helpCmd = Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted()
-                println_("Tip: run $helpCmd to see available commands.", color = AnsiColor.GRAY)
+                println_("Tip: run $helpCmd to see available commands.", AnsiColor.GRAY)
                 throw_()
             }
             return@when_ this
@@ -153,7 +148,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
         }
         run_("complete", "-F $completeFunction ${CrafterConstants.PLUGIN_LOWER_NAME}")
         ifBlock {
-            if_(bash.getStringVar("ZSH_VERSION").isVarNotEmpty()) {
+            if_(bash.getStringVar("ZSH_VERSION").isNotEmpty()) {
                 code { bash.completion.enableZshSupport() }
             }
         }
@@ -240,7 +235,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
             println_("${CrafterConstants.PLUGIN_NAME} CLI is not installed.")
             println_("Run the following command to install it:")
             withPadding {
-                println_(Cmd.gradleTask(fingerprint.gradleTaskName), color = AnsiColor.CYAN)
+                println_(Cmd.gradleTask(fingerprint.gradleTaskName), AnsiColor.CYAN)
             }
             println_()
             throw_()

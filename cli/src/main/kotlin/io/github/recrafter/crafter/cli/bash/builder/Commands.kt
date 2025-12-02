@@ -6,6 +6,7 @@ object Commands {
     const val CAT: String = "cat"
     const val RM: String = "rm"
     const val CD: String = "cd"
+    const val REALPATH: String = "realpath"
     const val PWD: String = "pwd"
     const val DIRNAME: String = "dirname"
     const val SOURCE: String = "source"

@@ -65,7 +65,7 @@ abstract class ComponentSync {
             .filter { it.minecraftVersion <= minecraftVersion }
             .maxWithOrNull(compareBy(MinecraftVersion.COMPARATOR) { it.minecraftVersion })
         return requireGradleNotNull(latestComponent) {
-            "Latest component for Minecraft ${minecraftVersion.asString()}" +
+            "Latest component for Minecraft ${minecraftVersion.asString()} " +
                     "not found in cache file: ${cacheFile.relativeTo(project.rootDirectory)}"
         }
     }

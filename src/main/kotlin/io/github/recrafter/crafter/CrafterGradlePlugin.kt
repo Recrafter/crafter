@@ -17,14 +17,12 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
+import io.github.recrafter.bedrock.versions.contains
 import io.github.recrafter.crafter.babric.sync.BarnMappingsSync
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.core.LoaderMetadata
 import io.github.recrafter.crafter.core.ModMetadata
-import io.github.recrafter.crafter.core.extensions.family
-import io.github.recrafter.crafter.core.extensions.getRunTaskName
-import io.github.recrafter.crafter.core.extensions.isLoaderProject
-import io.github.recrafter.crafter.core.extensions.kotlinApply
+import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import io.github.recrafter.crafter.core.helpers.server.EulaHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
@@ -43,7 +41,10 @@ import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.wrapper.Wrapper
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.extra
+import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.named
 import org.gradle.util.GradleVersion
 
 @Suppress("unused")
@@ -53,6 +54,7 @@ class CrafterGradlePlugin : Plugin<Project> {
         requireGradle(project.isRootProject()) {
             "The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project."
         }
+        extra["fabric.loom.disableMinecraftVerification"] = "true"
         tasks {
             named<Wrapper>("wrapper") {
                 gradleVersion = RECOMMENDED_GRADLE_VERSION
@@ -70,29 +72,28 @@ class CrafterGradlePlugin : Plugin<Project> {
             InstallCrafterCLITask.saveGradleFingerprint(project, modMetadata)
             InstallCrafterCLITask.ensureScriptExists(project, modMetadata)
 
-            val loaderProjects = children.filter { it.isLoaderProject() }
             when (val flow = CrafterFlow.detect()) {
                 is CrafterFlow.Normal -> {
-                    loaderProjects.forEach { loaderProject ->
-                        loaderProject.children
-                            .associateWith { MinecraftVersionRange.parse(it.name, RANGE_SEPARATOR) }
-                            .forEach { (modProject, versionRange) ->
-                                configureModProject(loaderProject, modProject, modMetadata, versionRange)
-                            }
-                    }
+                    children
+                        .filter { it.isLoaderProject() }
+                        .forEach { loaderProject ->
+                            loaderProject.children
+                                .associateWith {
+                                    MinecraftVersionRange.parse(
+                                        it.name,
+                                        MinecraftVersionRange.MOD_PROJECT_NAME_SEPARATOR
+                                    )
+                                }
+                                .forEach { (modProject, versionRange) ->
+                                    configureModProject(loaderProject, modProject, modMetadata, versionRange)
+                                }
+                        }
                 }
 
                 is CrafterFlow.Single -> {
-                    val loaderProject = loaderProjects.single()
-                    val modProject = loaderProject.children.single()
+                    val loaderProject = children.single { it.name == flow.loader.getName(`kebab-case`) }
+                    val modProject = loaderProject.children.single { it.name == flow.modProjectName }
                     configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(flow.version))
-                }
-
-                is CrafterFlow.Bisect -> {
-                    val bisectTarget: MinecraftVersion by extra
-                    val loaderProject = loaderProjects.single()
-                    val modProject = loaderProject.children.single()
-                    configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(bisectTarget))
                 }
             }
         }
@@ -145,6 +146,12 @@ class CrafterGradlePlugin : Plugin<Project> {
         val minVersion = versionRange.min
         val maxVersion = versionRange.max
         val loader = loaderProject.name.toEnum<ModLoaderType>(`kebab-case`)
+        val supportedVersionRange = loader.supportedVersionRange
+        requireGradle(supportedVersionRange.contains(minVersion) && supportedVersionRange.contains(maxVersion)) {
+            "Mod project ${modProject.path} uses Minecraft versions outside the supported range " +
+                    "for loader ${loader.displayName}: required ${supportedVersionRange.asString("-")}, " +
+                    "but found ${versionRange.asString("-")}."
+        }
         val loaderAdapter = loader.mapToAdapter()
         val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)
         val mod = modMetadata.toMod(loader, minVersion, maxVersion, loaderMetadata)
@@ -170,11 +177,11 @@ class CrafterGradlePlugin : Plugin<Project> {
                 writeText(ServerOperatorsHelper.buildPreset(mod))
             }
         }
+        val modMainSourceSet = modProject.sourceSets.main
         sideProjects.values.forEach { sideProject ->
-            val pluginMainSourceSet = modProject.sourceSets.main
-            sideProject.sourceSets.main.addToClasspath(pluginMainSourceSet, withOutput = true)
+            sideProject.sourceSets.main.addToClasspath(modMainSourceSet, withOutput = true)
             val mixins = sideProject.sourceSets.create(MixinsHelper.MIXINS_NAME).apply {
-                addToClasspath(pluginMainSourceSet, withOutput = true)
+                addToClasspath(modMainSourceSet, withOutput = true)
             }
             with(sideProject) {
                 tasks {
@@ -223,6 +230,5 @@ class CrafterGradlePlugin : Plugin<Project> {
 
     companion object {
         private const val RECOMMENDED_GRADLE_VERSION: String = "8.14.3"
-        private const val RANGE_SEPARATOR: String = "--"
     }
 }

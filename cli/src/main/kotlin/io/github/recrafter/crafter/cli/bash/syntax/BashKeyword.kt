@@ -11,6 +11,7 @@ enum class BashKeyword {
     ELIF,
     ELSE,
     BREAK,
+    CONTINUE,
     RETURN;
 
     val token: String

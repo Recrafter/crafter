@@ -3,7 +3,6 @@ package io.github.recrafter.crafter.core
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.bedrock.versions.isInternalServer
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -44,7 +43,7 @@ data class ModMetadata(
             namespace = namespace,
             repoUrl = repoUrl,
             issuesUrl = issuesUrl,
-            environment = if (minMinecraftVersion.isInternalServer) ModEnvironment.CLIENT_ONLY else environment,
+            environment = environment,
             loader = loader,
             loaderMetadata = loaderMetadata,
             minMinecraftVersion = minMinecraftVersion,

@@ -1,10 +1,8 @@
 package io.github.recrafter.crafter.cli.commands.help
 
-import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
-import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.ascii.BoxDraw
 import io.github.recrafter.crafter.cli.ascii.logo.ASCIILogo
@@ -15,6 +13,7 @@ import io.github.recrafter.crafter.cli.commands.api.arguments.EnumArgument
 import io.github.recrafter.crafter.cli.commands.api.arguments.StringArgument
 import io.github.recrafter.crafter.cli.commands.api.common.AbstractCLICommand
 import io.github.recrafter.crafter.cli.commands.api.common.NoArgumentsCommand
+import io.github.recrafter.crafter.cli.extensions.angled
 import io.github.recrafter.crafter.cli.extensions.common.bashScript
 import io.github.recrafter.crafter.cli.extensions.common.withBashScript
 import io.github.recrafter.crafter.cli.extensions.squared
@@ -37,7 +36,7 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
         }
         println_()
         val exampleSignature = buildString {
-            append("command".wrapWithBrackets(BracketsType.ANGLE))
+            append("command".angled())
             append(spaces(1))
             append("arguments".squared())
         }

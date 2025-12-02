@@ -11,7 +11,6 @@ import io.github.diskria.kotlin.utils.extensions.format
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.bedrock.versions.isIntegratedServer
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
@@ -139,7 +138,7 @@ abstract class ModLoaderAdapter {
                     if (mod.loader == ModLoaderType.NEOFORGE) {
                         addToClasspath(jar.get().archiveFile)
                     }
-                    if (mod.minecraftVersion.isIntegratedServer) {
+                    if (mod.loader != ModLoaderType.BABRIC) {
                         javaLauncher = project.getExtension<JavaToolchainService>().launcherFor {
                             configureJavaVendor(
                                 mod.minecraftVersion.minJavaVersion,
@@ -163,8 +162,9 @@ abstract class ModLoaderAdapter {
             }
             val craftMixinsConfigTask = registerTask<CraftMixinsConfigTask> {
                 this.mod.set(mod)
-                sideSourceSetDirectories = sideProjects.mapValues { it.value.sourceSets.mixins.java.srcDirs.first() }
-                outputFile = getTempFile(mod.mixinsConfigName)
+                sourceSetDirectories = sideProjects.mapValues { it.value.sourceSets.mixins.java.srcDirs.single() }
+                configureInputFiles()
+                outputFile.set(getTempFile(mod.mixinsConfigName))
             }
             processResources {
                 copyTaskOutput(craftMixinsConfigTask, mod.mixinsConfigPath)

@@ -19,5 +19,5 @@ class IntVarProperty(
 fun BashScriptBuilder.intVar(value: String): IntVarProperty =
     IntVarProperty(this, value)
 
-fun BashScriptBuilder.intVar(value: Int): IntVarProperty =
+fun BashScriptBuilder.intVar(value: Int = 0): IntVarProperty =
     intVar(value.toString())

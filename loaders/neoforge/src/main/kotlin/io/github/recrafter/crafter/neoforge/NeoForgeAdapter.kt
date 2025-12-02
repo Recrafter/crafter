@@ -32,7 +32,7 @@ object NeoForgeAdapter : ModLoaderAdapter() {
                         if (isRunConfigurationsDisabled) {
                             ideName.set(Constants.Char.EMPTY)
                         }
-                        gameDirectory.set(runDirectory)
+                        gameDirectory.set(runDirectory.resolve(side.getName()))
                         val memoryRange = when (side) {
                             ModSide.CLIENT -> 2..4
                             ModSide.SERVER -> 4..8

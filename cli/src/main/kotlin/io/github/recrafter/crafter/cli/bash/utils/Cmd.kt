@@ -21,7 +21,7 @@ object Cmd {
         taskName: String,
         projectPath: String? = null,
         flags: List<String>? = null,
-        argumentsProvider: (() -> Map<String, String>)? = null,
+        arguments: Map<String, String>? = null,
     ): String =
         of("gradlew", buildString {
             if (projectPath != null) {
@@ -29,7 +29,7 @@ object Cmd {
             } else {
                 append(taskName)
             }
-            argumentsProvider?.invoke()?.toNullIfEmpty()?.let { arguments ->
+            arguments?.toNullIfEmpty()?.let { arguments ->
                 append(Constants.Char.SPACE)
                 append(arguments.toList().joinBySpace { (name, value) ->
                     JvmArguments.property(name, value)

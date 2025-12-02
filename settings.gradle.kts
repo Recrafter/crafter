@@ -32,11 +32,11 @@ pluginManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "0.2.6"
+    id("io.github.recrafter.recipe") version "0.2.8"
 }
 
 projekt {
-    version = "0.3.1"
+    version = "0.3.2"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,

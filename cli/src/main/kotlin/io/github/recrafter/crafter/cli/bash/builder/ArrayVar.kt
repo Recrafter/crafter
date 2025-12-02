@@ -9,11 +9,14 @@ import io.github.recrafter.crafter.cli.extensions.squared
 @JvmInline
 value class ArrayVar(val name: String)
 
+val ArrayVar.value: String
+    get() = buildValue(name)
+
 fun ArrayVar.getElement(index: String): String =
     name + index.squared()
 
 fun ArrayVar.getElement(index: Int): String =
-    getElement(index.toString())
+    buildValue(getElement(index.toString()))
 
 fun ArrayVar.iterator_(): String =
     buildValue(name + Constants.Char.AT_SIGN.toString().squared())
@@ -32,4 +35,3 @@ private fun buildValue(text: String): String =
         append(Constants.Char.DOLLAR)
         append(text.curled())
     }
-
