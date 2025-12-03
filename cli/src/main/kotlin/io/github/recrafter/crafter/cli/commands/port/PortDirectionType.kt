@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.cli.commands.port
 
-import io.github.recrafter.crafter.cli.commands.api.common.CLIArgumentEnum
+import io.github.recrafter.crafter.cli.bash.api.commands.arguments.enums.CLIArgumentEnum
 
 enum class PortDirectionType(override val description: String) : CLIArgumentEnum<PortDirectionType> {
 

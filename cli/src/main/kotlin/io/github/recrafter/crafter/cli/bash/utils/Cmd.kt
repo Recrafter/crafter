@@ -20,8 +20,8 @@ object Cmd {
     fun gradleTask(
         taskName: String,
         projectPath: String? = null,
-        flags: List<String>? = null,
         arguments: Map<String, String>? = null,
+        vararg flags: String,
     ): String =
         of("gradlew", buildString {
             if (projectPath != null) {
@@ -35,9 +35,10 @@ object Cmd {
                     JvmArguments.property(name, value)
                 })
             }
-            flags?.let {
+            val flagsList = flags.toList()
+            flagsList.toNullIfEmpty()?.let {
                 append(Constants.Char.SPACE)
-                append(flags.joinBySpace())
+                append(flagsList.joinBySpace())
             }
         })
 }

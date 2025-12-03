@@ -4,32 +4,32 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.ascii.BoxDraw
-import io.github.recrafter.crafter.cli.ascii.logo.ASCIILogo
-import io.github.recrafter.crafter.cli.bash.builder.ColumnLine
+import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
+import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
+import io.github.recrafter.crafter.cli.bash.api.commands.NoArgumentsCommand
+import io.github.recrafter.crafter.cli.bash.api.commands.arguments.EnumArgument
+import io.github.recrafter.crafter.cli.bash.api.commands.arguments.StringArgument
+import io.github.recrafter.crafter.cli.bash.ascii.BoxDraw
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
-import io.github.recrafter.crafter.cli.commands.api.annotations.CLICommand
-import io.github.recrafter.crafter.cli.commands.api.arguments.EnumArgument
-import io.github.recrafter.crafter.cli.commands.api.arguments.StringArgument
-import io.github.recrafter.crafter.cli.commands.api.common.AbstractCLICommand
-import io.github.recrafter.crafter.cli.commands.api.common.NoArgumentsCommand
+import io.github.recrafter.crafter.cli.bash.utils.ColumnLine
 import io.github.recrafter.crafter.cli.extensions.angled
-import io.github.recrafter.crafter.cli.extensions.common.bashScript
-import io.github.recrafter.crafter.cli.extensions.common.withBashScript
+import io.github.recrafter.crafter.cli.extensions.common.script
+import io.github.recrafter.crafter.cli.extensions.common.withScript
 import io.github.recrafter.crafter.cli.extensions.squared
+import io.github.recrafter.crafter.cli.logo.Logo
 
 @CLICommand(name = HelpCommand.COMMAND_NAME, description = "Show this message")
 class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoArgumentsCommand() {
 
     private val descriptionPrefix: String = buildString(Constants.Char.EM_DASH, Constants.Char.SPACE)
 
-    override fun run(fingerprint: Fingerprint): String = bashScript {
+    override fun run(fingerprint: Fingerprint): String = script {
         println_()
-        ASCIILogo.generate().lines().forEach { line ->
-            println_(line + spaces(1))
+        Logo.generate().lines().forEach { line ->
+            println_(line + Constants.Char.SPACE)
         }
         println_()
-        withCentering(currentLineIndex - 2) {
+        withCentering(cursorLine - 2) {
             val versionInfo = "CLI v${fingerprint.pluginVersion}"
             println_(versionInfo)
             println_(BoxDraw.HORIZONTAL.repeat(versionInfo.length))
@@ -37,15 +37,14 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
         println_()
         val exampleSignature = buildString {
             append("command".angled())
-            append(spaces(1))
+            append(Constants.Char.SPACE)
             append("arguments".squared())
         }
         println_("Usage: ${Cmd.of(fingerprint.scriptName, exampleSignature)}")
         println_()
         println_("Commands:")
-        val commands = commandsProvider()
         withPadding {
-            printColumns(commands.map { columnLine(it.signature, descriptionPrefix + it.description) })
+            printColumns(commandsProvider().map { columnLine(it.signature, descriptionPrefix + it.description) })
         }
         println_()
         println_("Arguments:")
@@ -63,7 +62,7 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
         }
     }
 
-    private fun buildArgumentsSection(): List<ColumnLine> = withBashScript {
+    private fun buildArgumentsSection(): List<ColumnLine> = withScript {
         val commands = commandsProvider()
         val allArguments = commands.flatMap { it.arguments }
         val uniqueArguments = allArguments.distinctBy { it.name }
@@ -75,7 +74,7 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
                 is StringArgument -> listOf(columnLine(argument.name, descriptionPrefix + argument.description))
 
                 is EnumArgument -> buildList {
-                    val optionOffset = spaces(1)
+                    val optionOffset = Constants.Char.SPACE.toString()
                     val optionDescriptionPrefix = optionOffset + Constants.Char.CLOSING_ANGLE_BRACKET + optionOffset
                     add(columnLine())
                     add(columnLine(argument.name, descriptionPrefix + argument.description))
@@ -106,6 +105,7 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
         const val COMMAND_NAME: String = "help"
         private val DEFAULT_OPTION_MARKER: String = marker(1)
 
+        @Suppress("SameParameterValue")
         private fun marker(level: Int): String =
             Constants.Char.ASTERISK.repeat(level)
     }

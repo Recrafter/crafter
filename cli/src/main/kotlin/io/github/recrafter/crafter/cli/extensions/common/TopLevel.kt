@@ -1,11 +1,13 @@
+@file:Suppress("UnusedReceiverParameter")
+
 package io.github.recrafter.crafter.cli.extensions.common
 
-import io.github.recrafter.crafter.cli.bash.builder.BashScriptBuilder
+import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
 
 typealias Builder<T> = T.() -> T
 
-fun <T> withBashScript(builder: BashScriptBuilder.() -> T): T =
-    builder(BashScriptBuilder())
+fun <T> Any.withScript(builder: ScriptBuilder.() -> T): T =
+    builder(ScriptBuilder())
 
-fun bashScript(builder: BashScriptBuilder.() -> BashScriptBuilder): String =
-    builder(BashScriptBuilder()).toString()
+fun Any.script(builder: ScriptBuilder.() -> ScriptBuilder): String =
+    builder(ScriptBuilder()).toString()

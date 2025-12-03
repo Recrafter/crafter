@@ -14,20 +14,27 @@ import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.bash.builder.*
-import io.github.recrafter.crafter.cli.bash.builder.Conditions.isFileExists
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiStyle
+import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
+import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
+import io.github.recrafter.crafter.cli.bash.completion.BashCompletion
+import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isFileExists
+import io.github.recrafter.crafter.cli.bash.conditions.not_
+import io.github.recrafter.crafter.cli.bash.properties.function
+import io.github.recrafter.crafter.cli.bash.properties.mapVar
+import io.github.recrafter.crafter.cli.bash.properties.stringVar
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.utils.ShellType
-import io.github.recrafter.crafter.cli.commands.api.common.AbstractCLICommand
+import io.github.recrafter.crafter.cli.bash.variables.equals_
+import io.github.recrafter.crafter.cli.bash.variables.isNotEmpty
 import io.github.recrafter.crafter.cli.commands.craft.CraftCommand
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
 import io.github.recrafter.crafter.cli.commands.init.InitCommand
 import io.github.recrafter.crafter.cli.commands.port.PortCommand
-import io.github.recrafter.crafter.cli.extensions.common.bashScript
+import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
-import io.github.recrafter.crafter.cli.properties.mapVar
-import io.github.recrafter.crafter.cli.properties.stringVar
 import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.ModMetadata
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
@@ -83,8 +90,8 @@ abstract class InstallCrafterCLITask : DefaultTask() {
         installCompletionScript(completionScriptFile, fingerprint)
     }
 
-    private fun generateScript(fingerprint: Fingerprint): String = bashScript {
-        shebang()
+    private fun generateScript(fingerprint: Fingerprint): String = script {
+        bashShebang()
         disclaimer(fingerprint, ScriptType.MAIN)
         setWorkingDirectory(bash.getScriptLocation())
         loaders(fingerprint)
@@ -94,13 +101,13 @@ abstract class InstallCrafterCLITask : DefaultTask() {
         val gradleFingerprint by stringVar(Constants.Char.EMPTY)
         ifBlock {
             if_(bash.conditions.isFileExists(GRADLE_FINGERPRINT_FILE_PATH)) {
-                setStringVarValue(gradleFingerprint, bash.readFile(GRADLE_FINGERPRINT_FILE_PATH).command)
+                setStringValue(gradleFingerprint, bash.readFile(GRADLE_FINGERPRINT_FILE_PATH).command)
             }
         }
         ifBlock {
-            if_(cliFingerprint.equals_(gradleFingerprint.quotedValue).not_()) {
-                printError("Some project data has changed since this CLI was installed.")
-                printError("Please re-run the CLI install task to sync it with the plugin:")
+            if_(cliFingerprint.equals_(gradleFingerprint).not_()) {
+                println_("Some project data has changed since this CLI was installed.", AnsiColor.RED)
+                println_("Please re-run the CLI install task to sync it with the plugin:")
                 println_()
                 withPadding {
                     println_(Cmd.gradleTask(fingerprint.gradleTaskName), AnsiColor.CYAN)
@@ -117,18 +124,25 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                 }
             }
             else_ {
-                printError("Unknown command: ${runningCommand.singleQuoted()}")
-                val helpCmd = Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted()
-                println_("Tip: run $helpCmd to see available commands.", AnsiColor.GRAY)
+                print_("Unknown command: ", AnsiColor.RED)
+                print_(runningCommand.singleQuoted(), AnsiColor.RED, AnsiStyle.BOLD)
+                println_()
+                print_("Tip: run ", AnsiColor.GRAY)
+                print_(
+                    Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted(),
+                    AnsiColor.GRAY,
+                    AnsiStyle.BOLD
+                )
+                print_(" to see available commands.", AnsiColor.GRAY)
+                println_()
                 throw_()
             }
-            return@when_ this
         }
     }
 
-    private fun generateCompletionScript(fingerprint: Fingerprint): String = bashScript {
+    private fun generateCompletionScript(fingerprint: Fingerprint): String = script {
         disclaimer(fingerprint, ScriptType.COMPLETION)
-        val completeFunction = fun_("_${CrafterConstants.PLUGIN_LOWER_NAME}_complete") {
+        val crafterCompleteFunction by function(isPrivate = true) {
             loaders(fingerprint)
             versions(fingerprint)
             ifBlock {
@@ -146,19 +160,19 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                 return@when_ this
             }
         }
-        run_("complete", "-F $completeFunction ${CrafterConstants.PLUGIN_LOWER_NAME}")
+        run_(BashCompletion.COMPLETE_COMMAND, "-F $crafterCompleteFunction ${CrafterConstants.PLUGIN_LOWER_NAME}")
         ifBlock {
-            if_(bash.getStringVar("ZSH_VERSION").isNotEmpty()) {
-                code { bash.completion.enableZshSupport() }
+            if_(bash.getString("ZSH_VERSION").isNotEmpty()) {
+                code { zsh.completion.enableBashCompatibility() }
             }
         }
     }
 
-    private fun BashScriptBuilder.loaders(fingerprint: Fingerprint) {
+    private fun ScriptBuilder.loaders(fingerprint: Fingerprint) {
         val loaders by stringVar(fingerprint.loaders.joinBySpace { it.name })
     }
 
-    private fun BashScriptBuilder.versions(fingerprint: Fingerprint) {
+    private fun ScriptBuilder.versions(fingerprint: Fingerprint) {
         val versions by mapVar(fingerprint.loaders.associate {
             it.name to it.supportedVersions.joinBySpace { version -> version.asString() }
         })
@@ -172,11 +186,11 @@ abstract class InstallCrafterCLITask : DefaultTask() {
             .ensureFileExists { setExecutable(true) }
         sourceFile.copyTo(targetFile, overwrite = true)
         userHomeDirectory.resolve(shell.rcFileName).asFileOrNull()?.let { rcFile ->
-            val rcLine = bashScript {
-                run_(
+            val rcLine = script {
+                this.runSequentially(
                     buildList {
                         if (shell == ShellType.ZSH) {
-                            add(bash.completion.enableZshSupport())
+                            add(zsh.completion.enableBashCompatibility())
                         }
                         add(bash.source(targetFile.absolutePath))
                     }
@@ -214,10 +228,10 @@ abstract class InstallCrafterCLITask : DefaultTask() {
             }
         }
 
-        private fun BashScriptBuilder.disclaimer(
+        private fun ScriptBuilder.disclaimer(
             fingerprint: Fingerprint,
             scriptType: ScriptType
-        ): BashScriptBuilder {
+        ): ScriptBuilder {
             comment("This ${scriptType.getName()} script was generated by the ${CrafterConstants.PLUGIN_NAME}.")
             val installCommand = Cmd.gradleTask(fingerprint.gradleTaskName).singleQuoted()
             if (scriptType == ScriptType.STUB) {
@@ -228,8 +242,8 @@ abstract class InstallCrafterCLITask : DefaultTask() {
             return this
         }
 
-        private fun generateStubScript(fingerprint: Fingerprint): String = bashScript {
-            shebang()
+        private fun generateStubScript(fingerprint: Fingerprint): String = script {
+            bashShebang()
             disclaimer(fingerprint, ScriptType.STUB)
             errorOptions()
             println_("${CrafterConstants.PLUGIN_NAME} CLI is not installed.")

@@ -72,12 +72,13 @@ abstract class CraftMixinsConfigTask : DefaultTask() {
                 val className = javaFile.nameWithoutExtension
                 val directory = javaFile.parentFile
                 if (directory == mixinsRoot) {
-                    return@map className
+                    className
+                } else {
+                    directory
+                        .relativeTo(mixinsRoot).path
+                        .setCase(`path∕case`, `dot․case`)
+                        .appendPackageName(className)
                 }
-                return@map directory
-                    .relativeTo(mixinsRoot).path
-                    .setCase(`path∕case`, `dot․case`)
-                    .appendPackageName(className)
             }.sorted()
         }.filterValues { it.isNotEmpty() }
 

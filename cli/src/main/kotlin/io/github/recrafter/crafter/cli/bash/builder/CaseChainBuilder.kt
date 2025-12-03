@@ -5,9 +5,9 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.generics.joinByNewLine
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
-import io.github.recrafter.crafter.cli.bash.syntax.BashKeyword
+import io.github.recrafter.crafter.cli.bash.BashKeyword
 import io.github.recrafter.crafter.cli.extensions.common.Builder
-import io.github.recrafter.crafter.cli.extensions.common.bashScript
+import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
 
 @Suppress("FunctionName")
@@ -17,48 +17,44 @@ class CaseChainBuilder(val by: String) {
 
     fun CaseChainBuilder.case_(
         match: String,
-        isFallback: Boolean = false,
-        builder: Builder<BashScriptBuilder>
+        isElse: Boolean = false,
+        builder: Builder<ScriptBuilder>
     ): CaseChainBuilder {
-        requireGradle(isFallback || match != ELSE_MATCH) {
+        requireGradle(isElse || match != ELSE_MATCH) {
             "Do not pass $ELSE_MATCH to case_() — use else_() instead."
         }
-        chain += Case(match, bashScript(builder = builder))
+        chain += Case(match, script(builder = builder))
         return this
     }
 
-    fun CaseChainBuilder.case_(
-        match: Int,
-        isFallback: Boolean = false,
-        builder: Builder<BashScriptBuilder>
-    ): CaseChainBuilder =
-        case_(match.toString(), isFallback = isFallback, builder = builder)
+    fun CaseChainBuilder.case_(match: Int, builder: Builder<ScriptBuilder>): CaseChainBuilder =
+        case_(match.toString(), builder = builder)
 
-    fun CaseChainBuilder.else_(builder: Builder<BashScriptBuilder>): CaseChainBuilder {
+    fun CaseChainBuilder.else_(builder: Builder<ScriptBuilder>): CaseChainBuilder {
         requireGradle(chain.isNotEmpty()) {
             "else_() called before case() — " +
                     "add at least one ${BashKeyword.CASE.token.singleQuoted()} first."
         }
-        requireGradle(chain.lastOrNull()?.isFallback == false) {
+        requireGradle(chain.lastOrNull()?.isElse == false) {
             "else_() can only be called once — " +
                     "another ${BashKeyword.CASE.token.singleQuoted()} already exists."
         }
-        return case_(ELSE_MATCH, isFallback = true, builder = builder)
+        return case_(ELSE_MATCH, isElse = true, builder = builder)
     }
 
-    fun build(): String = bashScript {
+    fun build(): String = script {
         code { listOf(BashKeyword.CASE.token, by, BashKeyword.IN.token).joinBySpace() }
         withIndent {
             code { chain.joinByNewLine { it.script } }
         }
-        code { BashKeyword.CASE.closingToken }
+        code { BashKeyword.ESAC.token }
     }
 
     data class Case(val match: String, val body: String) {
 
-        val isFallback: Boolean = match == ELSE_MATCH
+        val isElse: Boolean = match == ELSE_MATCH
 
-        val script: String = bashScript {
+        val script: String = script {
             code { match + Constants.Char.CLOSING_ROUND_BRACKET }
             withIndent {
                 code { body }
@@ -66,8 +62,7 @@ class CaseChainBuilder(val by: String) {
             code { Constants.Char.SEMICOLON.repeat(2) }
         }
 
-        override fun toString(): String =
-            script
+        override fun toString(): String = script
     }
 
     companion object {

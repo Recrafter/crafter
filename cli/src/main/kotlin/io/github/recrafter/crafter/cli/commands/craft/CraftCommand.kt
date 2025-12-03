@@ -1,502 +1,501 @@
 package io.github.recrafter.crafter.cli.commands.craft
 
-import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.gradle.utils.extensions.common.gradleError
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.MinecraftConstants
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.bedrock.versions.MinecraftVersionRange
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.ascii.Spinners
-import io.github.recrafter.crafter.cli.bash.builder.*
-import io.github.recrafter.crafter.cli.bash.builder.Conditions.isDirectoryExists
-import io.github.recrafter.crafter.cli.bash.builder.Conditions.isPidAlive
-import io.github.recrafter.crafter.cli.bash.syntax.BashOperator
+import io.github.recrafter.crafter.cli.bash.ExitCode.SUCCESS
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor.*
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiStyle.BOLD
+import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
+import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
+import io.github.recrafter.crafter.cli.bash.ascii.Spinners
+import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
+import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isPidAlive
+import io.github.recrafter.crafter.cli.bash.conditions.not_
+import io.github.recrafter.crafter.cli.bash.properties.enumVar
+import io.github.recrafter.crafter.cli.bash.properties.function
+import io.github.recrafter.crafter.cli.bash.properties.intVar
+import io.github.recrafter.crafter.cli.bash.properties.stringVar
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
-import io.github.recrafter.crafter.cli.commands.api.annotations.CLICommand
-import io.github.recrafter.crafter.cli.commands.api.common.AbstractCLICommand
+import io.github.recrafter.crafter.cli.bash.variables.*
+import io.github.recrafter.crafter.cli.commands.craft.CraftCommand.CraftingStatus.*
 import io.github.recrafter.crafter.cli.commands.init.InitCommand
 import io.github.recrafter.crafter.cli.extensions.angled
-import io.github.recrafter.crafter.cli.extensions.common.bashScript
-import io.github.recrafter.crafter.cli.extensions.common.withBashScript
+import io.github.recrafter.crafter.cli.extensions.common.script
+import io.github.recrafter.crafter.cli.extensions.common.withScript
 import io.github.recrafter.crafter.cli.extensions.rounded
-import io.github.recrafter.crafter.cli.extensions.unquoted
-import io.github.recrafter.crafter.cli.properties.arrayVar
-import io.github.recrafter.crafter.cli.properties.booleanVar
-import io.github.recrafter.crafter.cli.properties.intVar
-import io.github.recrafter.crafter.cli.properties.stringVar
+import io.github.recrafter.crafter.cli.extensions.squared
+import io.github.recrafter.crafter.core.tasks.public.CraftClientTask
+import io.github.recrafter.crafter.core.tasks.public.CraftServerTask
+import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 
-@CLICommand(name = "craft", description = "Build the mod and launch the selected Minecraft side for development")
+@CLICommand(name = "craft", description = "Build the mod and launch the selected Minecraft side")
 object CraftCommand : AbstractCLICommand<CraftArguments>(CraftArguments.serializer()) {
 
-    override fun getCompletions(argumentName: String, arguments: CraftArguments): String = withBashScript {
+    override fun getCompletions(argumentName: String, arguments: CraftArguments): String = withScript {
         when (argumentName) {
-            arguments::loader.name -> bash.getStringVar("LOADERS").quotedValue
-            arguments::version.name -> bash.getMapVar("VERSIONS").getValue(arguments.loader)
+            arguments::loader.name -> bash.getString("LOADERS").value
+            arguments::version.name -> bash.getMap("VERSIONS").getValue(arguments.loader)
             else -> failWithInvalidValue(argumentName)
         }
     }
 
-    override fun run(fingerprint: Fingerprint, arguments: CraftArguments): String = bashScript {
-        val unquotedLoader = arguments.loader.unquoted()
-        val unquotedVersion = arguments.version.unquoted()
-        val loaderDisplayName = bash.getMapVar("LOADER_DISPLAY_NAMES").getValue(arguments.loader)
-        val displayedVersion = loaderDisplayName + Constants.Char.SPACE + arguments.version
+    override fun run(fingerprint: Fingerprint, arguments: CraftArguments): String = script {
+        val loader = arguments.loader
+        val version = arguments.version
         val modProjectName by stringVar()
-        ifBlock {
-            if_(bash.conditions.isDirectoryExists(unquotedLoader.appendPath(unquotedVersion))) {
-                setStringVarValue(modProjectName, unquotedVersion)
-            }.else_ {
-                val versionsString by stringVar(bash.getMapVar("VERSIONS").getValue(arguments.loader))
-                val versionsArray by arrayVar(versionsString.toString())
-                val versionIndices = initArrayIndicesMap(versionsArray)
-                val versionIndex by intVar(versionIndices.getValue(arguments.version))
-                val versionFiles by arrayVar("${arguments.loader}/*")
-                foreach_(versionFiles) {
-                    ifBlock {
-                        if_(bash.conditions.isDirectoryExists(it.toString()).not_()) {
-                            continue_()
-                        }
-                    }
-                    val directoryName by stringVar(it.substringAfterLast(Constants.Char.SLASH))
-                    ifBlock {
-                        if_(directoryName.matches("^(.+)${MinecraftVersionRange.MOD_PROJECT_NAME_SEPARATOR}(.+)$")) {
-                            val min by stringVar(bash.getArrayVar("BASH_REMATCH").getElement(1))
-                            val max by stringVar(bash.getArrayVar("BASH_REMATCH").getElement(2))
-                            val minIndex by intVar(versionIndices.getValue(min.value))
-                            val maxIndex by intVar(versionIndices.getValue(max.value))
-                            ifBlock {
-                                if_(
-                                    listOf(
-                                        minIndex.isNotEmpty(),
-                                        maxIndex.isNotEmpty(),
-                                        minIndex.isLessOrEqual(versionIndex),
-                                        versionIndex.isLessOrEqual(maxIndex),
-                                    )
-                                ) {
-                                    ifBlock {
-                                        if_(versionIndex.equals_(minIndex).not_()) {
-                                            print_("Requested version ", AnsiColor.YELLOW)
-                                            print_(unquotedVersion, AnsiColor.YELLOW, AnsiStyle.BOLD)
-                                            print_(" does not exist as a standalone mod project. ", AnsiColor.YELLOW)
-                                            println_()
-                                            print_("Automatically using version range ", AnsiColor.YELLOW)
-                                            print_(directoryName, AnsiColor.YELLOW, AnsiStyle.BOLD)
-                                            print_(" that includes it.", AnsiColor.YELLOW)
-                                            println_()
-                                            initStringVar("VERSION", min.toString())
-                                            return@if_ this
-                                        }
-                                    }
-                                    setStringVarValue(modProjectName, directoryName.toString())
-                                    break_()
-                                }
-                            }
-                        }
-                    }
-                }
+        findModProject(loader, version, allowRangeSwitch = true) { projectName, isRange ->
+            setStringValue(modProjectName, projectName)
+            if (isRange) {
+                break_()
             }
+            return@findModProject this
         }
         ifBlock {
             if_(modProjectName.isEmpty()) {
-                print_("The mod for ", AnsiColor.RED)
-                print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
-                print_(" is not initialized yet.", AnsiColor.RED)
+                print_("The mod for ", RED)
+                print_(getVersionToDisplay(arguments), RED, BOLD)
+                print_(" is not initialized yet.", RED)
                 println_()
                 println_("You need to initialize it before crafting.")
                 println_("Run the following command:")
                 println_()
                 withPadding {
                     println_(
-                        Cmd.of(fingerprint.scriptName, "${InitCommand.name} $unquotedLoader $unquotedVersion"),
-                        AnsiColor.CYAN
+                        Cmd.of(fingerprint.scriptName, spaced(InitCommand.name, loader, version)),
+                        CYAN
                     )
                 }
                 println_()
                 throw_()
             }
         }
-        val spinner by stringVar(Spinners.DOTS)
+        val logsDirectoryPath by stringVar(InstallCrafterCLITask.CLI_CACHE_DIRECTORY_PATH.appendPath("gradle-output"))
+        createDirectory(logsDirectoryPath.value)
+
+        val spinnerSequence by stringVar(Spinners.DOTS)
         val spinnerProgress by intVar()
-        val spinnerLength by intVar(spinner.length)
-        when_(arguments.side) {
+        val spinnerLength by intVar(spinnerSequence.length)
+        val spinner = Spinner(spinnerSequence, spinnerLength, spinnerProgress)
+
+        val serverPid by stringVar()
+        val serverStatus by enumVar(PREPARING)
+        val serverLogPath by stringVar()
+        val serverStatusSync = initVarSync(serverStatus)
+        val serverLogLine by stringVar()
+        val serverLogQueue = initVarSync(serverLogLine, VarSyncStrategy.QUEUE)
+        val serverExitCode by intVar()
+
+        val clientPid by stringVar()
+        val clientStatus by enumVar(PREPARING)
+        val clientLogPath by stringVar()
+        val clientStatusSync = initVarSync(clientStatus)
+        val clientLogLine by stringVar()
+        val clientLogQueue = initVarSync(clientLogLine, VarSyncStrategy.QUEUE)
+        val clientExitCode by intVar()
+
+        cursor.hide()
+        when_(arguments.side.value) {
             case_(CraftSideType.CLIENT.getName()) {
-                val clientPid by stringVar()
-                val isClientRunning by booleanVar()
-                val isClientStopping by booleanVar()
                 onInterrupt {
                     ifBlock {
                         if_(bash.conditions.isPidAlive(clientPid)) {
                             ifBlock {
-                                if_(isClientRunning.equals_(true)) {
+                                if_(clientStatus.equals_(RUNNING)) {
+                                    setEnumValue(clientStatus, STOPPING)
                                     clearLine()
-                                    print_("Stopping ", AnsiColor.GRAY)
-                                    printSide(ModSide.CLIENT, AnsiColor.GRAY)
-                                    print_(" ${INTERRUPT_KEY.rounded()}...", AnsiColor.GRAY)
-                                    setBooleanVarValue(isClientStopping, true)
+                                    printSideStatus(ModSide.CLIENT, STOPPING, arguments)
+                                    println_()
                                 }
                             }
                             kill(clientPid)
                             wait(clientPid)
-                            ifBlock {
-                                if_(isClientStopping.equals_(true)) {
-                                    print_(" Done.", AnsiColor.GRAY)
-                                    println_()
-                                }
-                            }
+                            return@if_ this
                         }
                     }
                     clearLine()
                     ifBlock {
-                        if_(isClientRunning.equals_(false)) {
-                            printError("Interrupted by user.")
+                        if_(clientStatus.equals_(PREPARING)) {
+                            printSideStatus(ModSide.CLIENT, INTERRUPTED, arguments)
+                            println_()
                         }
                     }
-                    return@onInterrupt this
                 }
-                val clientLogPath = runGradleTaskInBackground(
-                    "craftClient",
-                    unquotedLoader,
-                    unquotedVersion,
-                    modProjectName,
-                    clientPid,
-                )
-                watchFileLines(clientLogPath, clientPid) { line ->
+                runGradleTask(CraftClientTask::class, loader, version, modProjectName, clientPid, clientLogPath)
+                watchFileLines(clientLogPath, clientPid, background = true) { clientLine ->
                     ifBlock {
-                        if_(listOf(isClientRunning.equals_(false), isClientStopping.equals_(false))) {
+                        if_(clientStatus.equals_(PREPARING)) {
                             ifBlock {
-                                if_(
-                                    listOf(
-                                        line.contains("[Render thread/"),
-                                        line.contains("[LWJGL]"),
-                                        line.contains("fps,"),
-                                    ),
-                                    BashOperator.OR
+                                ifAny(
+                                    clientLine.contains("[Render thread/"),
+                                    clientLine.contains("[LWJGL]"),
+                                    clientLine.contains("fps,")
                                 ) {
-                                    setBooleanVarValue(isClientRunning, true)
+                                    setEnumValue(clientStatus, RUNNING)
+                                    notifyVarChanged(clientStatusSync)
                                 }
                             }
                         }
                     }
-                    clearLine()
-                    println_(line)
+                    notifyVarChanged(clientLogQueue, clientLine.value)
+                }
+                while_(bash.conditions.isPidAlive(clientPid)) {
                     ifBlock {
-                        if_(isClientRunning.equals_(false)) {
-                            val currentSpinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
-                            incrementIntVarValue(spinnerProgress)
-                            print_(currentSpinnerChar, AnsiColor.CYAN)
-                            print_(" Crafting ", AnsiColor.CYAN)
-                            printSide(ModSide.CLIENT, AnsiColor.CYAN)
-                            print_(" for ", AnsiColor.CYAN)
-                            print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
-                            print_("...", AnsiColor.CYAN)
-                        }.if_(isClientStopping.equals_(false)) {
-                            printSide(ModSide.CLIENT, AnsiColor.GREEN)
-                            print_(" for ", AnsiColor.GREEN)
-                            print_(displayedVersion, AnsiColor.GREEN, AnsiStyle.BOLD)
-                            print_(" is running...", AnsiColor.GREEN)
-                            print_(" (Press ", AnsiColor.GRAY)
-                            print_(INTERRUPT_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
-                            print_(" to stop)", AnsiColor.GRAY)
+                        if_(clientStatus.equals_(PREPARING)) {
+                            checkVarUpdate(clientStatusSync)
+                        }
+                    }
+                    onNextVar(clientLogQueue) {
+                        clearLine()
+                        println_(clientLogLine)
+                    }
+                    ifBlock {
+                        if_(clientStatus.equals_(PREPARING)) {
+                            clearLine()
+                            printSidePreparing(ModSide.CLIENT, arguments, spinner)
+                        }.if_(clientStatus.equals_(RUNNING)) {
+                            clearLine()
+                            printSideStatus(ModSide.CLIENT, RUNNING, arguments)
                         }
                     }
                 }
-                val clientStatus = wait(clientPid)
+                setIntValue(clientExitCode, wait(clientPid))
                 clearLine()
                 ifBlock {
-                    if_(clientStatus.equals_(0)) {
-                        printSide(ModSide.CLIENT, AnsiColor.GRAY)
-                        print_(" closed.", AnsiColor.GRAY)
+                    if_(clientExitCode.equals_(SUCCESS)) {
+                        printSideClosed(ModSide.CLIENT)
                         println_()
                     }.else_ {
-                        printSide(ModSide.CLIENT, AnsiColor.RED)
-                        print_(" crashed. ", AnsiColor.RED)
-                        print_("See full log at ${bash.getAbsolutePath(clientLogPath.value)}", AnsiColor.GRAY)
+                        printSideCrashed(ModSide.CLIENT, clientLogPath)
                         println_()
                         throw_()
                     }
                 }
             }.case_(CraftSideType.SERVER.getName()) {
-                val serverPid by stringVar()
-                val isServerRunning by booleanVar()
-                val isServerStopping by booleanVar()
                 onInterrupt {
                     ifBlock {
                         if_(bash.conditions.isPidAlive(serverPid)) {
                             ifBlock {
-                                if_(isServerRunning.equals_(true)) {
+                                if_(serverStatus.equals_(RUNNING)) {
+                                    setEnumValue(serverStatus, STOPPING)
                                     clearLine()
-                                    print_("Stopping ", AnsiColor.GRAY)
-                                    printSide(ModSide.SERVER, AnsiColor.GRAY)
-                                    print_(" ${INTERRUPT_KEY.rounded()}...", AnsiColor.GRAY)
-                                    setBooleanVarValue(isServerStopping, true)
+                                    printSideStatus(ModSide.SERVER, STOPPING, arguments)
+                                    println_()
                                 }
                             }
                             kill(serverPid)
                             wait(serverPid)
-                            ifBlock {
-                                if_(isServerStopping.equals_(true)) {
-                                    print_(" Done.", AnsiColor.GRAY)
-                                    println_()
-                                }
-                            }
+                            return@if_ this
                         }
                     }
                     clearLine()
                     ifBlock {
-                        if_(isServerRunning.equals_(false)) {
-                            printError("Interrupted by user.")
-                        }
-                    }
-                    return@onInterrupt this
-                }
-                val serverLogPath = runGradleTaskInBackground(
-                    "craftServer",
-                    unquotedLoader,
-                    unquotedVersion,
-                    modProjectName,
-                    serverPid,
-                )
-                watchFileLines(serverLogPath, serverPid) { line ->
-                    ifBlock {
-                        if_(listOf(isServerRunning.equals_(false), isServerStopping.equals_(false))) {
-                            ifBlock {
-                                if_(line.contains("Done")) {
-                                    setBooleanVarValue(isServerRunning, true)
-                                }
-                            }
-                        }
-                    }
-                    clearLine()
-                    println_(line)
-                    ifBlock {
-                        if_(isServerRunning.equals_(false)) {
-                            val currentSpinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
-                            incrementIntVarValue(spinnerProgress)
-                            print_(currentSpinnerChar, AnsiColor.CYAN)
-                            print_(" Crafting ", AnsiColor.CYAN)
-                            printSide(ModSide.SERVER, AnsiColor.CYAN)
-                            print_(" for ", AnsiColor.CYAN)
-                            print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
-                            print_("...", AnsiColor.CYAN)
-                        }.if_(isServerStopping.equals_(false)) {
-                            printSide(ModSide.SERVER, AnsiColor.GREEN)
-                            print_(" for ", AnsiColor.GREEN)
-                            print_(displayedVersion, AnsiColor.GREEN, AnsiStyle.BOLD)
-                            print_(" is running...", AnsiColor.GREEN)
-                            print_(" (Press ", AnsiColor.GRAY)
-                            print_(INTERRUPT_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
-                            print_(" to stop)", AnsiColor.GRAY)
+                        if_(serverStatus.equals_(PREPARING)) {
+                            printSideStatus(ModSide.SERVER, INTERRUPTED, arguments)
+                            println_()
                         }
                     }
                 }
-                val serverStatus = wait(serverPid)
+                runGradleTask(CraftServerTask::class, loader, version, modProjectName, serverPid, serverLogPath)
+                watchFileLines(serverLogPath, serverPid, background = true) { serverLine ->
+                    ifBlock {
+                        ifAll(serverStatus.equals_(PREPARING), serverLine.contains("Done")) {
+                            setEnumValue(serverStatus, RUNNING)
+                            notifyVarChanged(serverStatusSync)
+                        }
+                    }
+                    notifyVarChanged(serverLogQueue, serverLine.value)
+                }
+                while_(bash.conditions.isPidAlive(serverPid)) {
+                    ifBlock {
+                        if_(serverStatus.equals_(PREPARING)) {
+                            checkVarUpdate(serverStatusSync)
+                        }
+                    }
+                    onNextVar(serverLogQueue) {
+                        clearLine()
+                        println_(serverLogLine)
+                    }
+                    ifBlock {
+                        if_(serverStatus.equals_(PREPARING)) {
+                            clearLine()
+                            printSidePreparing(ModSide.SERVER, arguments, spinner)
+                        }.if_(serverStatus.equals_(RUNNING)) {
+                            clearLine()
+                            printSideStatus(ModSide.SERVER, RUNNING, arguments)
+                        }
+                    }
+                }
+                setIntValue(serverExitCode, wait(serverPid))
                 clearLine()
                 ifBlock {
-                    if_(serverStatus.equals_(0)) {
-                        printSide(ModSide.SERVER, AnsiColor.GRAY)
-                        print_(" stopped.", AnsiColor.GRAY)
-                        println_()
-                    }.else_ {
-                        printSide(ModSide.SERVER, AnsiColor.RED)
-                        print_(" crashed. ", AnsiColor.RED)
-                        print_("See full log at ${bash.getAbsolutePath(serverLogPath.value)}", AnsiColor.GRAY)
+                    if_(serverExitCode.equals_(SUCCESS).not_()) {
+                        printSideCrashed(ModSide.SERVER, serverLogPath)
                         println_()
                         throw_()
                     }
                 }
-            }.case_(CraftSideType.BOTH.getName()) {
-                val serverPid by stringVar()
-                val isServerRunning by booleanVar()
-                val isServerStopping by booleanVar()
-                val clientPid by stringVar()
-                val isClientRunning by booleanVar()
-                val isClientStopping by booleanVar()
+            }.case_(CraftSideType.MERGED.getName()) {
                 onInterrupt {
                     ifBlock {
                         if_(bash.conditions.isPidAlive(clientPid)) {
                             ifBlock {
-                                if_(isClientRunning.equals_(true)) {
+                                if_(clientStatus.equals_(RUNNING)) {
+                                    cursor.moveDown()
+                                    setEnumValue(clientStatus, STOPPING)
                                     clearLine()
-                                    print_("Stopping ", AnsiColor.GRAY)
-                                    printSide(ModSide.CLIENT, AnsiColor.GRAY)
-                                    print_(" ${INTERRUPT_KEY.rounded()}...", AnsiColor.GRAY)
-                                    setBooleanVarValue(isClientStopping, true)
+                                    printSideStatus(ModSide.CLIENT, STOPPING, arguments)
+                                    cursor.moveUp()
                                 }
                             }
                             kill(clientPid)
                             wait(clientPid)
-                            ifBlock {
-                                if_(isClientStopping.equals_(true)) {
-                                    print_(" Done.", AnsiColor.GRAY)
-                                }
-                            }
+                            return@if_ this
                         }
                     }
                     ifBlock {
                         if_(bash.conditions.isPidAlive(serverPid)) {
                             ifBlock {
-                                if_(isServerRunning.equals_(true)) {
-                                    moveCursorUp()
+                                if_(serverStatus.equals_(RUNNING)) {
+                                    setEnumValue(serverStatus, STOPPING)
                                     clearLine()
-                                    print_("Stopping ", AnsiColor.GRAY)
-                                    printSide(ModSide.SERVER, AnsiColor.GRAY)
-                                    print_(" ${INTERRUPT_KEY.rounded()}...", AnsiColor.GRAY)
-                                    setBooleanVarValue(isServerStopping, true)
+                                    printSideStatus(ModSide.SERVER, STOPPING, arguments)
+                                    println_()
                                 }
                             }
                             kill(serverPid)
                             wait(serverPid)
-                            ifBlock {
-                                if_(isServerStopping.equals_(true)) {
-                                    print_(" Done.", AnsiColor.GRAY)
-                                    moveCursorDown()
-                                    println_()
+                            return@if_ this
+                        }
+                    }
+                    ifBlock {
+                        if_(serverStatus.equals_(PREPARING)) {
+                            clearLine()
+                            printSideStatus(ModSide.SERVER, INTERRUPTED, arguments)
+                        }.if_(clientStatus.equals_(PREPARING)) {
+                            clearLine()
+                            printSideStatus(ModSide.CLIENT, INTERRUPTED, arguments)
+                        }
+                    }
+                }
+                runGradleTask(CraftServerTask::class, loader, version, modProjectName, serverPid, serverLogPath)
+                watchFileLines(serverLogPath, serverPid, background = true) { serverLine ->
+                    ifBlock {
+                        ifAll(clientStatus.equals_(PREPARING), serverLine.contains("Done")) {
+                            setEnumValue(serverStatus, RUNNING)
+                            notifyVarChanged(serverStatusSync)
+                        }
+                    }
+                    notifyVarChanged(serverLogQueue, serverLine.value)
+                }
+                val runClientFunction by function {
+                    runGradleTask(CraftClientTask::class, loader, version, modProjectName, clientPid, clientLogPath)
+                    watchFileLines(clientLogPath, clientPid, background = true) { clientLine ->
+                        ifBlock {
+                            if_(clientStatus.equals_(PREPARING)) {
+                                ifBlock {
+                                    ifAny(
+                                        clientLine.contains("[Render thread/"),
+                                        clientLine.contains("[LWJGL]"),
+                                        clientLine.contains("fps,"),
+                                    ) {
+                                        setEnumValue(clientStatus, RUNNING)
+                                        notifyVarChanged(clientStatusSync)
+                                    }
                                 }
                             }
                         }
+                        notifyVarChanged(clientLogQueue, clientLine.value)
                     }
-                    ifBlock {
-                        if_(isServerRunning.equals_(false)) {
-                            clearLine()
-                            print_("Crafting ", AnsiColor.RED)
-                            printSide(ModSide.SERVER, AnsiColor.RED)
-                            print_(" for ", AnsiColor.RED)
-                            print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
-                            print_(" was interrupted by user.", AnsiColor.RED)
-                            println_()
-                        }
-                        if_(isClientRunning.equals_(false)) {
-                            clearLine()
-                            print_("Crafting ", AnsiColor.RED)
-                            printSide(ModSide.CLIENT, AnsiColor.RED)
-                            print_(" for ", AnsiColor.RED)
-                            print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
-                            print_(" was interrupted by user.", AnsiColor.RED)
-                            println_()
-                        }
-                    }
-                    return@onInterrupt this
                 }
-                val serverLogPath = runGradleTaskInBackground(
-                    "craftServer",
-                    unquotedLoader,
-                    unquotedVersion,
-                    modProjectName,
-                    serverPid,
-                )
-                watchFileLines(serverLogPath, serverPid) { line ->
+                while_(bash.conditions.isPidAlive(serverPid)) {
                     ifBlock {
-                        if_(line.contains("Done")) {
-                            setBooleanVarValue(isServerRunning, true)
+                        ifAny(serverStatus.equals_(STOPPING), clientStatus.equals_(STOPPING)) {
                             break_()
                         }
                     }
-                    clearLine()
-                    println_(line)
-                    val currentSpinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
-                    incrementIntVarValue(spinnerProgress)
-                    print_(currentSpinnerChar, AnsiColor.CYAN)
-                    print_(" Crafting ", AnsiColor.CYAN)
-                    printSide(ModSide.SERVER, AnsiColor.CYAN)
-                    print_(" for ", AnsiColor.CYAN)
-                    print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
-                    print_("...", AnsiColor.CYAN)
-                }
-                val clientLogPath = runGradleTaskInBackground(
-                    "craftClient",
-                    unquotedLoader,
-                    unquotedVersion,
-                    modProjectName,
-                    clientPid,
-                )
-                watchFileLines(clientLogPath, clientPid) { line ->
                     ifBlock {
-                        if_(listOf(isClientRunning.equals_(false), isClientStopping.equals_(false))) {
+                        if_(serverStatus.equals_(PREPARING)) {
+                            checkVarUpdate(serverStatusSync)
                             ifBlock {
-                                if_(
-                                    listOf(
-                                        line.contains("[Render thread/"),
-                                        line.contains("[LWJGL]"),
-                                        line.contains("fps,"),
-                                    ),
-                                    BashOperator.OR
-                                ) {
-                                    setBooleanVarValue(isClientRunning, true)
+                                if_(serverStatus.equals_(RUNNING)) {
+                                    callFunction(runClientFunction)
+                                }
+                            }
+                        }.if_(clientStatus.equals_(PREPARING)) {
+                            checkVarUpdate(clientStatusSync)
+                        }
+                    }
+                    ifBlock {
+                        if_(serverStatus.equals_(RUNNING)) {
+                            cursor.moveUp()
+                            onNextVar(clientLogQueue) {
+                                clearLine()
+                                print_(ModSide.CLIENT.name.squared(), MAGENTA)
+                                print_(spaces(1))
+                                print_(clientLogLine)
+                                cursor.moveDown()
+                            }
+                        }
+                    }
+                    onNextVar(serverLogQueue) {
+                        clearLine()
+                        print_(ModSide.SERVER.name.squared(), YELLOW)
+                        print_(spaces(1))
+                        print_(serverLogLine)
+                        cursor.moveDown()
+                    }
+                    ifBlock {
+                        if_(serverStatus.equals_(PREPARING)) {
+                            clearLine()
+                            printSidePreparing(ModSide.SERVER, arguments, spinner)
+                        }.else_ {
+                            ifBlock {
+                                if_(serverStatus.equals_(RUNNING)) {
+                                    clearLine()
+                                    printSideStatus(ModSide.SERVER, RUNNING, arguments)
+                                }
+                            }
+                            ifBlock {
+                                if_(bash.conditions.isPidAlive(clientPid)) {
+                                    ifBlock {
+                                        if_(clientStatus.equals_(PREPARING)) {
+                                            println_()
+                                            clearLine()
+                                            printSidePreparing(ModSide.CLIENT, arguments, spinner)
+                                        }.if_(clientStatus.equals_(RUNNING)) {
+                                            println_()
+                                            clearLine()
+                                            printSideStatus(ModSide.CLIENT, RUNNING, arguments)
+                                        }
+                                    }
+                                }.else_ {
+                                    ifBlock {
+                                        if_(clientExitCode.isEmpty()) {
+                                            setIntValue(clientExitCode, wait(clientPid))
+                                        }
+                                    }
+                                    println_()
+                                    clearLine()
+                                    ifBlock {
+                                        if_(clientExitCode.equals_(SUCCESS)) {
+                                            printSideClosed(ModSide.CLIENT)
+                                        }.else_ {
+                                            printSideCrashed(ModSide.CLIENT, clientLogPath)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                    clearLine()
-                    moveCursorUp()
-                    clearLine()
-                    println_(line)
-                    printSide(ModSide.SERVER, AnsiColor.GREEN)
-                    print_(" for ", AnsiColor.GREEN)
-                    print_(displayedVersion, AnsiColor.GREEN, AnsiStyle.BOLD)
-                    print_(" is running...", AnsiColor.GREEN)
-                    print_(" (Press ", AnsiColor.GRAY)
-                    print_(INTERRUPT_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
-                    print_(" to stop)", AnsiColor.GRAY)
-                    println_()
-                    ifBlock {
-                        if_(isClientRunning.equals_(false)) {
-                            val currentSpinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
-                            incrementIntVarValue(spinnerProgress)
-                            print_(currentSpinnerChar, AnsiColor.CYAN)
-                            print_(" Crafting ", AnsiColor.CYAN)
-                            printSide(ModSide.CLIENT, AnsiColor.CYAN)
-                            print_(" for ", AnsiColor.CYAN)
-                            print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
-                            print_("...", AnsiColor.CYAN)
-                        }.if_(isClientStopping.equals_(false)) {
-                            printSide(ModSide.CLIENT, AnsiColor.GREEN)
-                            print_(" for ", AnsiColor.GREEN)
-                            print_(displayedVersion, AnsiColor.GREEN, AnsiStyle.BOLD)
-                            print_(" is running...", AnsiColor.GREEN)
-                            print_(" (Press ", AnsiColor.GRAY)
-                            print_(INTERRUPT_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
-                            print_(" to stop)", AnsiColor.GRAY)
-                        }
-                    }
                 }
-                val clientStatus = wait(clientPid)
+                setIntValue(serverExitCode, wait(serverPid))
                 clearLine()
                 ifBlock {
-                    if_(clientStatus.equals_(0)) {
-                        printSide(ModSide.CLIENT, AnsiColor.GRAY)
-                        print_(" closed.", AnsiColor.GRAY)
-                    }.else_ {
-                        printSide(ModSide.CLIENT, AnsiColor.RED)
-                        print_(" crashed. ", AnsiColor.RED)
-                        print_("See full log at ${bash.getAbsolutePath(clientLogPath.value)}", AnsiColor.GRAY)
-                    }
-                }
-                val serverStatus = wait(serverPid)
-                moveCursorUp()
-                clearLine()
-                ifBlock {
-                    if_(serverStatus.equals_(0)) {
-                        printSide(ModSide.SERVER, AnsiColor.GRAY)
-                        print_(" stopped.", AnsiColor.GRAY)
-                        println_()
-                    }.else_ {
-                        printSide(ModSide.SERVER, AnsiColor.RED)
-                        print_(" crashed. ", AnsiColor.RED)
-                        print_("See full log at ${bash.getAbsolutePath(serverLogPath.value)}", AnsiColor.GRAY)
+                    if_(serverExitCode.equals_(SUCCESS).not_()) {
                         println_()
                         throw_()
                     }
                 }
             }
         }
-        return@bashScript this
     }
 
-    private fun BashScriptBuilder.printSide(side: ModSide, color: AnsiColor): BashScriptBuilder {
-        print_(MinecraftConstants.FULL_GAME_NAME, color)
-        print_(" ${side.getName()}", color, AnsiStyle.BOLD)
+    private fun getVersionToDisplay(arguments: CraftArguments): String = withScript {
+        buildString {
+            append(bash.getMap("LOADER_DISPLAY_NAMES").getValue(arguments.loader))
+            append(spaces(1))
+            append(arguments.version)
+        }
+    }
+
+    private fun ScriptBuilder.printSideStatus(
+        side: ModSide,
+        status: CraftingStatus,
+        arguments: CraftArguments,
+    ): ScriptBuilder {
+        val versionToDisplay = getVersionToDisplay(arguments)
+        when (status) {
+            RUNNING -> {
+                printSide(side, GREEN)
+                print_(" for ", GREEN)
+                print_(versionToDisplay, GREEN, BOLD)
+                print_(" is running...", GREEN)
+                print_(" (Press ", GRAY)
+                print_(INTERRUPT_KEY.angled(), GRAY, BOLD)
+                print_(" to stop)", GRAY)
+            }
+
+            STOPPING -> {
+                print_("Stopping ", GRAY)
+                printSide(side, GRAY)
+                print_(" for ", GRAY)
+                print_(versionToDisplay, GRAY, BOLD)
+                print_(" ${INTERRUPT_KEY.rounded()}...", GRAY)
+            }
+
+            INTERRUPTED -> {
+                print_("Crafting ", RED)
+                printSide(side, RED)
+                print_(" for ", RED)
+                print_(versionToDisplay, RED, BOLD)
+                print_(" was interrupted by user.", RED)
+            }
+
+            PREPARING -> gradleError("Use printSidePreparing() instead printSideStatus()")
+            CLOSED -> gradleError("Use printSideClosed() instead printSideStatus()")
+            CRASHED -> gradleError("Use printSideCrashed() instead printSideStatus()")
+        }
         return this
     }
+
+    private fun ScriptBuilder.printSidePreparing(
+        side: ModSide,
+        arguments: CraftArguments,
+        spinner: Spinner
+    ): ScriptBuilder {
+        val spinnerChar by stringVar(spinner.sequence.getCharAt(spinner.progress.mod(spinner.length)))
+        print_(spinnerChar, CYAN)
+        print_(" Preparing ", CYAN)
+        printSide(side, CYAN)
+        print_(" for ", CYAN)
+        print_(getVersionToDisplay(arguments), CYAN, BOLD)
+        print_("...", CYAN)
+        incrementIntValue(spinner.progress)
+        return this
+    }
+
+    private fun ScriptBuilder.printSideClosed(side: ModSide): ScriptBuilder {
+        printSide(side, GRAY)
+        print_(" closed.", GRAY)
+        return this
+    }
+
+    private fun ScriptBuilder.printSideCrashed(side: ModSide, logPath: StringVar): ScriptBuilder {
+        printSide(side, RED)
+        print_(" crashed. ", RED)
+        print_("See full log at ${bash.getAbsolutePath(logPath.value)}", GRAY)
+        return this
+    }
+
+    private fun ScriptBuilder.printSide(side: ModSide, color: AnsiColor): ScriptBuilder {
+        print_(MinecraftConstants.FULL_GAME_NAME, color)
+        print_(" ${side.getName()}", color, BOLD)
+        return this
+    }
+
+    private enum class CraftingStatus {
+        PREPARING, RUNNING, STOPPING, INTERRUPTED, CLOSED, CRASHED,
+    }
+
+    private class Spinner(
+        val sequence: StringVar,
+        val length: IntVar,
+        val progress: IntVar,
+    )
 }
