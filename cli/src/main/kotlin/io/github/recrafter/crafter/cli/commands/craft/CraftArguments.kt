@@ -14,6 +14,6 @@ data class CraftArguments(
     @CLICommandStringArgument(description = "Target Minecraft version")
     val version: StringVar,
 
-    @CLICommandEnumArgument(description = "Game side to build and launch", enumClass = CraftSideType::class)
+    @CLICommandEnumArgument(description = "Game side to build and launch", enumClass = CraftSide::class)
     val side: StringVar,
 ) : CLIArguments()

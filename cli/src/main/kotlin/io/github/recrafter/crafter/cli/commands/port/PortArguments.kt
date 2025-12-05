@@ -11,12 +11,12 @@ data class PortArguments(
     @CLICommandStringArgument(description = "Name of mod loader")
     val loader: StringVar,
 
-    @CLICommandEnumArgument("Porting workflow step", PortStepType::class)
+    @CLICommandEnumArgument("Porting workflow step", PortStep::class)
     val step: StringVar,
 
-    @CLICommandEnumArgument("Version direction", PortDirectionType::class)
+    @CLICommandEnumArgument("Porting direction", PortDirectionType::class)
     val direction: StringVar,
 
-    @CLICommandEnumArgument("Test strategy", PortStrategyType::class)
+    @CLICommandEnumArgument("Porting test strategy", PortStrategy::class)
     val strategy: StringVar,
 ) : CLIArguments()

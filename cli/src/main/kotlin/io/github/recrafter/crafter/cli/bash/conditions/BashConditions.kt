@@ -9,6 +9,9 @@ import io.github.recrafter.crafter.cli.extensions.quoted
 @Suppress("UnusedReceiverParameter")
 object BashConditions {
 
+    val TRUE: BashCondition = BashCondition.from(true.toString(), squared = false)
+    val FALSE: BashCondition = BashCondition.from(false.toString(), squared = false)
+
     fun BashConditions.isVarEmpty(variable: String): BashCondition =
         BashCondition.from("-z $variable")
 

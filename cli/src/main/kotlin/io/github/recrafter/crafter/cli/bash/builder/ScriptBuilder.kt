@@ -22,6 +22,8 @@ import io.github.recrafter.crafter.cli.bash.conditions.BashCondition
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.exists
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isDescriptorReady
+import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isPidAlive
+import io.github.recrafter.crafter.cli.bash.properties.CommandInputReference
 import io.github.recrafter.crafter.cli.bash.properties.function
 import io.github.recrafter.crafter.cli.bash.properties.intVar
 import io.github.recrafter.crafter.cli.bash.properties.stringVar
@@ -33,6 +35,7 @@ import io.github.recrafter.crafter.cli.bash.zsh.completion.ZshCompletion
 import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.Builder
 import io.github.recrafter.crafter.cli.extensions.common.script
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 @Suppress("unused", "FunctionName", "UnusedReceiverParameter")
@@ -176,6 +179,12 @@ class ScriptBuilder {
         initVarSync(string.name, strategy)
 
     fun ScriptBuilder.initVarSync(
+        boolean: BooleanVar,
+        strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
+    ): VarSync =
+        initVarSync(boolean.name, strategy)
+
+    fun ScriptBuilder.initVarSync(
         enum: EnumVar<*>,
         strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
     ): VarSync =
@@ -193,6 +202,9 @@ class ScriptBuilder {
     }
 
     fun ScriptBuilder.checkVarUpdate(varSync: VarSync): ScriptBuilder {
+        requireGradle(varSync.strategy != VarSyncStrategy.INPUT) {
+            "${VarSync::class.className()} with ${VarSyncStrategy.INPUT} strategy doesn't supports checkVarUpdate()"
+        }
         val descriptorData = initString(varSync.descriptorDataVarName)
         ifBlock {
             ifAll(
@@ -206,6 +218,11 @@ class ScriptBuilder {
                 return@ifAll this
             }
         }
+        return this
+    }
+
+    fun ScriptBuilder.sendCommand(input: CommandInputReference, command: String): ScriptBuilder {
+        notifyVarChanged(input.varSync, command)
         return this
     }
 
@@ -269,6 +286,9 @@ class ScriptBuilder {
         return FunctionReference(name)
     }
 
+    fun initCommandInput(name: String): CommandInputReference =
+        CommandInputReference(initVarSync(name, VarSyncStrategy.INPUT))
+
     fun ScriptBuilder.callFunction(function: FunctionReference): ScriptBuilder =
         code { function.name }
 
@@ -325,6 +345,12 @@ class ScriptBuilder {
     ): ScriptBuilder =
         while_(condition.expression, background, builder = builder)
 
+    fun ScriptBuilder.loop(
+        background: Boolean = false,
+        builder: Builder<ScriptBuilder>
+    ): ScriptBuilder =
+        while_(BashConditions.TRUE, background, builder)
+
     fun ScriptBuilder.forEach_(array: ArrayVar, iteration: ScriptBuilder.(StringVar) -> ScriptBuilder): ScriptBuilder {
         val it = StringVar("it")
         val iterator = array.iterator_().quoted().semicoloned()
@@ -354,8 +380,21 @@ class ScriptBuilder {
     fun ScriptBuilder.runSequentially(commands: List<String>): ScriptBuilder =
         code { bash.runSequentially(commands) }
 
-    fun ScriptBuilder.runCommandInBackground(command: String, outputFilePath: StringVar): String {
-        code { spaced(command, ">", outputFilePath, "2>&1", BACKGROUND_FLAG.toString()) }
+    fun ScriptBuilder.runCommandInBackground(
+        command: String,
+        outputFilePath: StringVar,
+        commandInput: CommandInputReference? = null,
+    ): String {
+        code {
+            spaced(
+                command,
+                commandInput?.let { "<&$" + it.varSync.descriptorVarName },
+                ">",
+                outputFilePath,
+                "2>&1",
+                BACKGROUND_FLAG.toString(),
+            )
+        }
         return "$!"
     }
 
@@ -401,11 +440,16 @@ class ScriptBuilder {
     fun ScriptBuilder.clearLine(): ScriptBuilder =
         code { spaced(BashCommand.ECHO, "-en", (ASCIICodes.CARRIAGE_RETURN + AnsiCodes.escape("2K")).quoted()) }
 
-    fun ScriptBuilder.sleep(time: Float): ScriptBuilder =
-        run_(BashCommand.SLEEP, time.toString())
+    fun ScriptBuilder.sleep(count: Int, unit: TimeUnit): ScriptBuilder =
+        run_(BashCommand.SLEEP, unit.toSeconds(count.toLong()).toString())
 
-    fun ScriptBuilder.kill(pid: StringVar): ScriptBuilder =
-        run_(BashCommand.KILL, pid.toString())
+    fun ScriptBuilder.kill(pid: StringVar, force: Boolean = true): ScriptBuilder =
+        run_(
+            BashCommand.KILL, spaced(
+                if (force) null else "-TERM",
+                pid.toString()
+            )
+        )
 
     fun ScriptBuilder.wait(pid: StringVar): IntVar {
         run_(BashCommand.WAIT, pid.toString())
@@ -421,6 +465,20 @@ class ScriptBuilder {
 
     fun ScriptBuilder.trapOnExit(command: String): ScriptBuilder =
         run_(BashCommand.TRAP, spaced(command.quoted(), "EXIT"))
+
+    fun ScriptBuilder.trapOnExit(function: FunctionReference): ScriptBuilder =
+        trapOnExit(function.name)
+
+    fun ScriptBuilder.ensureProcessKilled(pid: StringVar): ScriptBuilder {
+        ifBlock {
+            if_(bash.conditions.isPidAlive(pid)) {
+                kill(pid)
+                wait(pid)
+                return@if_ this
+            }
+        }
+        return this
+    }
 
     fun ScriptBuilder.delete(path: String, recursive: Boolean = false): ScriptBuilder =
         run_(
@@ -439,25 +497,34 @@ class ScriptBuilder {
         exit(ExitCode.ERROR)
 
     fun ScriptBuilder.onInterrupt(callback: Builder<ScriptBuilder>): ScriptBuilder {
-        val interruptFunction by function {
+        val onInterruptFunction by function {
             callback()
             exit(ExitCode.INTERRUPT)
         }
-        trapOnInterrupt(interruptFunction)
+        trapOnInterrupt(onInterruptFunction)
         return this
     }
 
-    fun ScriptBuilder.watchFileLines(
+    fun ScriptBuilder.onExit(callback: Builder<ScriptBuilder>): ScriptBuilder {
+        val onExitFunction by function {
+            callback()
+        }
+        trapOnExit(onExitFunction)
+        return this
+    }
+
+    fun ScriptBuilder.watchFileLinesInBackground(
         path: StringVar,
         pid: StringVar? = null,
-        background: Boolean = false,
         action: ScriptBuilder.(StringVar) -> ScriptBuilder
-    ): ScriptBuilder =
+    ): String {
         readLines(
             spaced(BashCommand.TAIL, "-F", path.quotedValue, pid?.let { "--pid=${it.quotedValue}" }, "-n", 0),
-            background,
+            true,
             action
         )
+        return "$!"
+    }
 
     fun ScriptBuilder.comment(text: String): ScriptBuilder =
         code { spaced(Constants.Char.NUMBER_SIGN, text) }
@@ -560,9 +627,6 @@ class ScriptBuilder {
         style: AnsiStyle? = null,
         addNewLine: Boolean = true,
     ): String {
-        val spacesCount = printCenteringAnchorLength
-            ?.let { max((it - text.length) / 2, 0) }
-            ?: printPadding
         val finalText = if (color != null || style != null) {
             buildString {
                 append(AnsiCodes.ESCAPE)
@@ -579,6 +643,9 @@ class ScriptBuilder {
                 append("m")
             }
         } else text
+        val spacesCount = printCenteringAnchorLength
+            ?.let { max((it - finalText.length) / 2, 0) }
+            ?: printPadding
         val echoFlags = buildString {
             append("-e")
             if (!addNewLine) {
@@ -627,7 +694,7 @@ class ScriptBuilder {
     }
 
     private fun BashCursor.setVisible(isVisible: Boolean) {
-        code { bash.print(getCursorVisibilityCode(isVisible)) }
+        code { bash.print(getCursorVisibilityCode(isVisible), addNewLine = false) }
         if (!isVisible) {
             restoreOnExit()
         }

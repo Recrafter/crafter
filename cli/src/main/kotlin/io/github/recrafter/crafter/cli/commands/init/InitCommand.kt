@@ -22,6 +22,7 @@ import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.common.withScript
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import org.gradle.api.tasks.SourceSet
+import java.util.concurrent.TimeUnit
 
 @CLICommand(name = "init", description = "Create and initialize new mod project")
 object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer()) {
@@ -74,12 +75,34 @@ object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer(
                     .appendPath(sideName)
             )
         }
-        val pid by stringVar()
+        val spinner by stringVar(Spinners.DOTS)
+        val spinnerProgress by intVar()
+        val spinnerLength by intVar(spinner.length)
+        val logPath by stringVar()
+
+        val gradlePid by stringVar()
+        val logWatcherPid by stringVar()
+        onExit {
+            ifBlock {
+                if_(bash.conditions.isPidAlive(logWatcherPid)) {
+                    kill(logWatcherPid)
+                    wait(logWatcherPid)
+                    return@if_ this
+                }
+            }
+            ifBlock {
+                if_(bash.conditions.isPidAlive(gradlePid)) {
+                    kill(gradlePid)
+                    wait(gradlePid)
+                    return@if_ this
+                }
+            }
+        }
         onInterrupt {
             ifBlock {
-                if_(bash.conditions.isPidAlive(pid)) {
-                    kill(pid)
-                    wait(pid)
+                if_(bash.conditions.isPidAlive(gradlePid)) {
+                    kill(gradlePid)
+                    wait(gradlePid)
                     return@if_ this
                 }
             }
@@ -90,16 +113,13 @@ object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer(
             print_(" was interrupted by user.", AnsiColor.RED)
             println_()
         }
-        val spinner by stringVar(Spinners.DOTS)
-        val spinnerProgress by intVar()
-        val spinnerLength by intVar(spinner.length)
-        val logPath by stringVar()
-        runGradleTask("build", arguments.loader, arguments.version, arguments.version, pid, logPath)
-        watchFileLines(logPath, pid, background = true) { line ->
+        runGradleTaskInBackground("build", arguments.loader, arguments.version, arguments.version, gradlePid, logPath)
+        val watcherPid = watchFileLinesInBackground(logPath, gradlePid) { line ->
             clearLine()
             println_(line)
         }
-        while_(bash.conditions.isPidAlive(pid)) {
+        setStringValue(logWatcherPid, watcherPid)
+        while_(bash.conditions.isPidAlive(gradlePid)) {
             val spinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
             incrementIntValue(spinnerProgress)
             clearLine()
@@ -107,9 +127,9 @@ object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer(
             print_(" Initializing mod for ", AnsiColor.CYAN)
             print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
             print_("...", AnsiColor.CYAN)
-            sleep(0.03f)
+            sleep(30, TimeUnit.MILLISECONDS)
         }
-        val exitCode = wait(pid)
+        val exitCode = wait(gradlePid)
         clearLine()
         ifBlock {
             if_(exitCode.equals_(ExitCode.SUCCESS)) {

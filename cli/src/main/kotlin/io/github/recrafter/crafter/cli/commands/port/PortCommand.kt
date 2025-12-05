@@ -19,9 +19,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
     }
 
     override fun run(fingerprint: Fingerprint, arguments: PortArguments): String = script {
-        code {
-            ""
-        }
-        println_(arguments.direction)
+
+        return@script this
     }
 }

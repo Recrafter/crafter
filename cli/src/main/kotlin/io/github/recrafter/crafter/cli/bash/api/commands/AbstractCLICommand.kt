@@ -26,10 +26,7 @@ import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isDirectoryExists
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isVarEmpty
 import io.github.recrafter.crafter.cli.bash.conditions.not_
-import io.github.recrafter.crafter.cli.bash.properties.arrayVar
-import io.github.recrafter.crafter.cli.bash.properties.booleanVar
-import io.github.recrafter.crafter.cli.bash.properties.intVar
-import io.github.recrafter.crafter.cli.bash.properties.stringVar
+import io.github.recrafter.crafter.cli.bash.properties.*
 import io.github.recrafter.crafter.cli.bash.references.VariableReference
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.variables.*
@@ -194,13 +191,14 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         }
     }
 
-    protected fun ScriptBuilder.runGradleTask(
+    protected fun ScriptBuilder.runGradleTaskInBackground(
         taskName: String,
         loader: StringVar,
         version: StringVar,
         modProjectName: StringVar,
         pid: StringVar,
         logPath: StringVar,
+        commandInput: CommandInputReference? = null,
     ) {
         val command = Cmd.gradleTask(
             taskName,
@@ -217,18 +215,19 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         createDirectory(logsDirectoryPath.value)
         val logName = listOf(taskName, loader, version, bash.nowDate()).joinToString(Constants.Char.UNDERSCORE)
         setStringValue(logPath, logsDirectoryPath.toString().appendPath(fileName(logName, "log")))
-        setStringValue(pid, runCommandInBackground(command, logPath))
+        setStringValue(pid, runCommandInBackground(command, logPath, commandInput))
     }
 
-    protected fun <T : Task> ScriptBuilder.runGradleTask(
+    protected fun <T : Task> ScriptBuilder.runGradleTaskInBackground(
         taskClass: KotlinClass<T>,
         loader: StringVar,
         version: StringVar,
         modProjectName: StringVar,
         pid: StringVar,
         logPath: StringVar,
+        commandInput: CommandInputReference? = null,
     ) {
-        runGradleTask(taskClass.taskName, loader, version, modProjectName, pid, logPath)
+        runGradleTaskInBackground(taskClass.taskName, loader, version, modProjectName, pid, logPath, commandInput)
     }
 
     protected fun ScriptBuilder.findModProject(

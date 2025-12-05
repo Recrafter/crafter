@@ -4,6 +4,8 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.recrafter.crafter.cli.Fingerprint
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiStyle
 import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
 import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
 import io.github.recrafter.crafter.cli.bash.api.commands.NoArgumentsCommand
@@ -21,18 +23,21 @@ import io.github.recrafter.crafter.cli.logo.Logo
 @CLICommand(name = HelpCommand.COMMAND_NAME, description = "Show this message")
 class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoArgumentsCommand() {
 
-    private val descriptionPrefix: String = buildString(Constants.Char.EM_DASH, Constants.Char.SPACE)
-
     override fun run(fingerprint: Fingerprint): String = script {
         println_()
-        Logo.generate().lines().forEach { line ->
-            println_(line + Constants.Char.SPACE)
+        val logoLines = Logo.generate().lines()
+        logoLines.forEachIndexed { index, line ->
+            println_(
+                line + Constants.Char.SPACE,
+                AnsiColor.YELLOW,
+                if (index == 0) AnsiStyle.BOLD else null
+            )
         }
         println_()
         withCentering(cursorLine - 2) {
             val versionInfo = "CLI v${fingerprint.pluginVersion}"
-            println_(versionInfo)
-            println_(BoxDraw.HORIZONTAL.repeat(versionInfo.length))
+            println_(versionInfo, AnsiColor.MAGENTA, AnsiStyle.BOLD)
+            println_(BoxDraw.HORIZONTAL.repeat(versionInfo.length), AnsiColor.MAGENTA, AnsiStyle.BOLD)
         }
         println_()
         val exampleSignature = buildString {
@@ -40,23 +45,24 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
             append(Constants.Char.SPACE)
             append("arguments".squared())
         }
-        println_("Usage: ${Cmd.of(fingerprint.scriptName, exampleSignature)}")
+        print_("Usage: ", AnsiColor.GREEN, AnsiStyle.BOLD)
+        println_(Cmd.of(fingerprint.scriptName, exampleSignature))
         println_()
-        println_("Commands:")
+        println_("Commands:", AnsiColor.GREEN, AnsiStyle.BOLD)
         withPadding {
-            printColumns(commandsProvider().map { columnLine(it.signature, descriptionPrefix + it.description) })
+            printColumns(commandsProvider().map { columnLine(it.signature, it.description) })
         }
         println_()
-        println_("Arguments:")
+        println_("Arguments:", AnsiColor.GREEN, AnsiStyle.BOLD)
         withPadding {
             printColumns(buildArgumentsSection())
         }
         println_()
-        println_("Legend:")
+        println_("Legend:", AnsiColor.GRAY, AnsiStyle.BOLD)
         withPadding {
             printColumns(
                 listOf(
-                    columnLine(DEFAULT_OPTION_MARKER, descriptionPrefix + "default option (used when none specified)"),
+                    columnLine(DEFAULT_OPTION_MARKER, "default option (used when none specified)"),
                 )
             )
         }
@@ -71,13 +77,13 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
         val arguments = stringArguments.sortedByDescending { argumentFrequency.getValue(it.name) } + enumArguments
         arguments.flatMap { argument ->
             when (argument) {
-                is StringArgument -> listOf(columnLine(argument.name, descriptionPrefix + argument.description))
+                is StringArgument -> listOf(columnLine(argument.name, argument.description))
 
                 is EnumArgument -> buildList {
                     val optionOffset = Constants.Char.SPACE.toString()
-                    val optionDescriptionPrefix = optionOffset + Constants.Char.CLOSING_ANGLE_BRACKET + optionOffset
+                    val optionDescriptionPrefix = optionOffset + optionOffset
                     add(columnLine())
-                    add(columnLine(argument.name, descriptionPrefix + argument.description))
+                    add(columnLine(argument.name, argument.description))
                     add(columnLine(optionOffset + BoxDraw.VERTICAL))
                     addAll(argument.options.mapIndexed { index, option ->
                         val left = buildString {
