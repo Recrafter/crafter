@@ -1,15 +1,13 @@
 package io.github.recrafter.crafter.cli.bash.api.commands
 
-import io.github.diskria.gradle.utils.extensions.common.gradleProjectPath
 import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
-import io.github.diskria.gradle.utils.extensions.taskName
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
-import io.github.diskria.kotlin.utils.extensions.common.*
+import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
+import io.github.diskria.kotlin.utils.extensions.common.className
+import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
-import io.github.diskria.kotlin.utils.extensions.generics.joinToString
 import io.github.diskria.kotlin.utils.extensions.wrapWithDoubleQuote
-import io.github.recrafter.bedrock.crafter.CrafterFlow
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor
@@ -26,18 +24,19 @@ import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isDirectoryExists
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isVarEmpty
 import io.github.recrafter.crafter.cli.bash.conditions.not_
-import io.github.recrafter.crafter.cli.bash.properties.*
+import io.github.recrafter.crafter.cli.bash.properties.arrayVar
+import io.github.recrafter.crafter.cli.bash.properties.booleanVar
+import io.github.recrafter.crafter.cli.bash.properties.intVar
+import io.github.recrafter.crafter.cli.bash.properties.stringVar
 import io.github.recrafter.crafter.cli.bash.references.VariableReference
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.variables.*
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
 import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.script
-import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import org.gradle.api.Task
 import kotlin.reflect.full.findAnnotation
 
 abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: KotlinSerializer<T>) {
@@ -121,7 +120,7 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                     }
                     val helpCmd = Cmd.of(fingerprint.scriptName, HelpCommand.COMMAND_NAME).singleQuoted()
                     println_("Tip: run $helpCmd to see commands, arguments and more.", AnsiColor.GRAY)
-                    throw_()
+                    error_()
                 }
             }
             arguments.forEach { argument ->
@@ -153,7 +152,7 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                         print_("Tip: Press ", AnsiColor.GRAY)
                         print_(SHOW_COMPLETIONS_KEY.angled(), AnsiColor.GRAY, AnsiStyle.BOLD)
                         println_(" to auto-complete available options.", AnsiColor.GRAY)
-                        throw_()
+                        error_()
                     }
                 }
             }
@@ -191,46 +190,8 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         }
     }
 
-    protected fun ScriptBuilder.runGradleTaskInBackground(
-        taskName: String,
-        loader: StringVar,
-        version: StringVar,
-        modProjectName: StringVar,
-        pid: StringVar,
-        logPath: StringVar,
-        commandInput: CommandInputReference? = null,
-    ) {
-        val command = Cmd.gradleTask(
-            taskName,
-            gradleProjectPath(loader.value, modProjectName.value),
-            mapOf(
-                "crafter.flow" to CrafterFlow.Single.name,
-                "crafter.loader" to loader.value,
-                "crafter.version" to version.value,
-                "crafter.modProjectName" to modProjectName.value,
-            ),
-            "--no-daemon", "--stacktrace",
-        )
-        val logsDirectoryPath by stringVar(InstallCrafterCLITask.CLI_CACHE_DIRECTORY_PATH.appendPath("gradle-output"))
-        createDirectory(logsDirectoryPath.value)
-        val logName = listOf(taskName, loader, version, bash.nowDate()).joinToString(Constants.Char.UNDERSCORE)
-        setStringValue(logPath, logsDirectoryPath.toString().appendPath(fileName(logName, "log")))
-        setStringValue(pid, runCommandInBackground(command, logPath, commandInput))
-    }
 
-    protected fun <T : Task> ScriptBuilder.runGradleTaskInBackground(
-        taskClass: KotlinClass<T>,
-        loader: StringVar,
-        version: StringVar,
-        modProjectName: StringVar,
-        pid: StringVar,
-        logPath: StringVar,
-        commandInput: CommandInputReference? = null,
-    ) {
-        runGradleTaskInBackground(taskClass.taskName, loader, version, modProjectName, pid, logPath, commandInput)
-    }
-
-    protected fun ScriptBuilder.findModProject(
+    protected fun ScriptBuilder.detectModProjectName(
         loader: StringVar,
         version: StringVar,
         allowRangeSwitch: Boolean = false,
@@ -239,20 +200,19 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
         ifBlock {
             if_(bash.conditions.isDirectoryExists(loader.value.appendPath(version.value))) {
                 found(version, false)
-                return@if_ this
             }.else_ {
                 val versionsString by stringVar(bash.getMap("VERSIONS").getValue(loader))
                 val versionsArray by arrayVar(versionsString)
                 val versionIndices = initArrayIndicesMap(versionsArray)
                 val versionIndex by intVar(versionIndices.getValue(version))
-                val modProjectDirectories by arrayVar("$loader/*")
-                forEach_(modProjectDirectories) { modProjectDirectory ->
+                val modProjectPaths by arrayVar("$loader/*")
+                forEach_(modProjectPaths) { modProjectPath ->
                     ifBlock {
-                        if_(bash.conditions.isDirectoryExists(modProjectDirectory).not_()) {
+                        if_(bash.conditions.isDirectoryExists(modProjectPath).not_()) {
                             continue_()
                         }
                     }
-                    val directoryName by stringVar(modProjectDirectory.substringAfterLast(Constants.Char.SLASH))
+                    val directoryName by stringVar(modProjectPath.substringAfterLast(Constants.Char.SLASH))
                     val rangeParts by arrayVar(directoryName.split(MinecraftVersionRange.MOD_PROJECT_NAME_SEPARATOR))
                     val rangeMin by stringVar(rangeParts.getElement(0))
                     val rangeMax by stringVar(rangeParts.getElement(1))
@@ -294,9 +254,6 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
     }
 
     companion object {
-        protected const val INTERRUPT_KEY: String = "Ctrl+C"
-        protected const val LOG_HISTORY_SIZE: Int = 8
-
         private const val SHOW_COMPLETIONS_KEY: String = "TAB"
     }
 }

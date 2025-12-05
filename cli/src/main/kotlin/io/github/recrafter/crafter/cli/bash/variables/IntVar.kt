@@ -17,11 +17,14 @@ val IntVar.value: String
 fun IntVar.increment(): String =
     arithmetic("$name++")
 
+fun IntVar.decrement(): String =
+    arithmetic("$name--")
+
 fun IntVar.mod(other: IntVar): String =
-    arithmetic("$name % ${other.name}")
+    arithmetic("$value % ${other.name}")
 
 fun IntVar.minus(other: Int): String =
-    arithmetic("$name-$other")
+    "$value-$other"
 
 fun IntVar.equals_(other: String): BashCondition =
     BashCondition.from("$value -eq $other")
@@ -35,14 +38,26 @@ fun IntVar.equals_(other: IntVar): BashCondition =
 fun IntVar.isGreaterThen(other: Int): BashCondition =
     BashCondition.from("$value -gt $other")
 
+fun IntVar.isGreaterOrEqual(other: Int): BashCondition =
+    BashCondition.from("$value -ge $other")
+
 fun IntVar.isEmpty(): BashCondition =
     BashCondition.from("-z $value")
 
 fun IntVar.isNotEmpty(): BashCondition =
     BashCondition.from("-n $value")
 
-fun IntVar.isLessOrEqual(other: IntVar): BashCondition =
+fun IntVar.isLessThen(other: IntVar): BashCondition =
+    BashCondition.from("$value -lt $other")
+
+fun IntVar.isLessOrEqual(other: String): BashCondition =
     BashCondition.from("$value -le $other")
+
+fun IntVar.isLessOrEqual(other: IntVar): BashCondition =
+    isLessOrEqual(other.value)
+
+fun IntVar.isLessOrEqual(other: Int): BashCondition =
+    isLessOrEqual(other.toString())
 
 fun String.toIntVar(): IntVar =
     IntVar(this)

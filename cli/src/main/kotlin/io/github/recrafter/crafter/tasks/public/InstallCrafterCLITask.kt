@@ -94,6 +94,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
         bashShebang()
         disclaimer(fingerprint, ScriptType.MAIN)
         setWorkingDirectory(bash.getScriptLocation())
+        enableNullGlobbing()
         loaders(fingerprint)
         versions(fingerprint)
         val loaderDisplayNames by mapVar(fingerprint.loaders.associate { it.name to it.displayName })
@@ -113,7 +114,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                     println_(Cmd.gradleTask(fingerprint.gradleTaskName), AnsiColor.CYAN)
                 }
                 println_()
-                throw_()
+                error_()
             }
         }
         val runningCommand = bash.getScriptArgument(1, Constants.Char.EMPTY)
@@ -135,7 +136,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                 )
                 print_(" to see available commands.", AnsiColor.GRAY)
                 println_()
-                throw_()
+                error_()
             }
         }
     }
@@ -252,7 +253,7 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                 println_(Cmd.gradleTask(fingerprint.gradleTaskName), AnsiColor.CYAN)
             }
             println_()
-            throw_()
+            error_()
         }
 
         private fun calculateFingerprintChecksum(fingerprint: Fingerprint): String =

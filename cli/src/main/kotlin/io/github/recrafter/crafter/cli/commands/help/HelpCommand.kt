@@ -1,7 +1,6 @@
 package io.github.recrafter.crafter.cli.commands.help
 
 import io.github.diskria.kotlin.utils.Constants
-import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor

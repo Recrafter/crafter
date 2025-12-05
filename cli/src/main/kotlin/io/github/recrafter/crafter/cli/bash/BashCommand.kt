@@ -6,9 +6,10 @@ import io.github.diskria.kotlin.utils.extensions.mappers.getName
 enum class BashCommand {
 
     DECLARE,
+    SHOPT,
     ECHO, READ,
     CD, PWD,
-    MKDIR, DIRNAME, REALPATH, CAT, TAIL, RM,
+    MKDIR, DIRNAME, BASENAME, REALPATH, CAT, TAIL, CP, MV, RM,
     SLEEP, KILL, WAIT, EXIT, TRAP,
     SOURCE,
     DATE,

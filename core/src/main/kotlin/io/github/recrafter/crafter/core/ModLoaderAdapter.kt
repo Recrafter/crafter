@@ -14,9 +14,9 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
-import io.github.recrafter.crafter.core.tasks.internal.CraftDataPackConfigTask
-import io.github.recrafter.crafter.core.tasks.internal.CraftEntryPointsTask
-import io.github.recrafter.crafter.core.tasks.internal.CraftMixinsConfigTask
+import io.github.recrafter.crafter.tasks.internal.CraftDataPackConfigTask
+import io.github.recrafter.crafter.tasks.internal.CraftEntryPointsTask
+import io.github.recrafter.crafter.tasks.internal.CraftMixinsConfigTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.Task

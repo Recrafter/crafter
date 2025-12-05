@@ -55,6 +55,30 @@ fun StringVar.substring(startIndex: Int, length: Int): String =
 fun StringVar.getCharAt(index: String): String =
     substring(index, 1)
 
+fun StringVar.startsWith(prefix: String): BashCondition =
+    BashCondition.from("$quotedValue == $prefix*")
+
+fun StringVar.startsWith(prefix: StringVar): BashCondition =
+    startsWith(prefix.value)
+
+fun StringVar.endsWith(suffix: String): BashCondition =
+    BashCondition.from("$quotedValue == *$suffix")
+
+fun StringVar.endsWith(suffix: StringVar): BashCondition =
+    endsWith(suffix.value)
+
+fun StringVar.removePrefix(prefix: String): String =
+    VariableReference.from("$name#$prefix")
+
+fun StringVar.removePrefix(prefix: StringVar): String =
+    removePrefix(prefix.quotedValue)
+
+fun StringVar.removeSuffix(suffix: String): String =
+    VariableReference.from("$name%$suffix")
+
+fun StringVar.removeSuffix(suffix: StringVar): String =
+    removePrefix(suffix.quotedValue)
+
 fun StringVar.substringAfterLast(delimiter: Char): String =
     VariableReference.from("$name##*$delimiter")
 

@@ -5,7 +5,6 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendFollowingIndent
 import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.common.className
-import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.indexOfOrNull
 import io.github.diskria.kotlin.utils.extensions.lastIndexOfOrNull
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
@@ -35,6 +34,7 @@ import io.github.recrafter.crafter.cli.bash.zsh.completion.ZshCompletion
 import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.Builder
 import io.github.recrafter.crafter.cli.extensions.common.script
+import io.github.recrafter.crafter.cli.extensions.common.spaced
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -106,6 +106,10 @@ class ScriptBuilder {
         code { "#!/usr/bin/env ${::bash.name}" }
 
     @Suppress("SpellCheckingInspection")
+    fun ScriptBuilder.enableNullGlobbing(): ScriptBuilder =
+        run_(BashCommand.SHOPT, "-s nullglob")
+
+    @Suppress("SpellCheckingInspection")
     fun ScriptBuilder.errorOptions(
         onExit: Boolean = true,
         onUnset: Boolean = true,
@@ -135,7 +139,7 @@ class ScriptBuilder {
     }
 
     fun <E : Enum<E>> initEnum(name: String, value: E? = null): EnumVar<E> {
-        code { bash.setEnumValue(name, value?.name.orEmpty()) }
+        code { bash.setEnumValue(name, value?.name?.lowercase().orEmpty()) }
         return bash.getEnum(name)
     }
 
@@ -143,6 +147,9 @@ class ScriptBuilder {
         code { bash.setIntValue(name, value) }
         return bash.getInt(name)
     }
+
+    fun initInt(name: String, value: Int = 0): IntVar =
+        initInt(name, value.toString())
 
     fun initBoolean(name: String, value: Boolean = false): BooleanVar {
         code { bash.setBooleanValue(name, value) }
@@ -172,24 +179,6 @@ class ScriptBuilder {
         return mapVar
     }
 
-    fun ScriptBuilder.initVarSync(
-        string: StringVar,
-        strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
-    ): VarSync =
-        initVarSync(string.name, strategy)
-
-    fun ScriptBuilder.initVarSync(
-        boolean: BooleanVar,
-        strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
-    ): VarSync =
-        initVarSync(boolean.name, strategy)
-
-    fun ScriptBuilder.initVarSync(
-        enum: EnumVar<*>,
-        strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
-    ): VarSync =
-        initVarSync(enum.name, strategy)
-
     fun ScriptBuilder.notifyVarChanged(
         varSync: VarSync,
         value: String = bash.getString(varSync.varName).value
@@ -213,7 +202,7 @@ class ScriptBuilder {
             ) {
                 code { bash.setStringValue(varSync.varName, descriptorData.quotedValue) }
                 if (varSync.strategy == VarSyncStrategy.SINGLETON) {
-                    delete(bash.getString(varSync.fifoPathVarName))
+                    deleteDirectory(bash.getString(varSync.fifoPathVarName))
                 }
                 return@ifAll this
             }
@@ -257,16 +246,30 @@ class ScriptBuilder {
         code { bash.setStringValue(string.name, value) }
 
     fun ScriptBuilder.setStringValue(string: StringVar, value: StringVar): ScriptBuilder =
-        setStringValue(string, value.toString())
+        setStringValue(string, value.value)
 
     fun <E : Enum<E>> ScriptBuilder.setEnumValue(enum: EnumVar<E>, value: E): ScriptBuilder =
-        code { bash.setEnumValue(enum.name, value.name) }
+        code { bash.setEnumValue(enum.name, value.name.lowercase()) }
 
     fun ScriptBuilder.setArrayValue(array: ArrayVar, value: String): ScriptBuilder =
-        code { bash.setArrayValue(array.name, value.quoted()) }
+        code { bash.setArrayValue(array.name, value) }
+
+    fun ScriptBuilder.setArrayValue(array: ArrayVar, value: ArrayVar): ScriptBuilder =
+        setArrayValue(array, value.iterator_())
+
+    fun ScriptBuilder.reverseArray(array: ArrayVar): ArrayVar {
+        val reversedArray = initArray(array.name + "_REVERSED")
+        forEachIndexed(array, isReversed = true) { _, it ->
+            addToArray(reversedArray, it)
+        }
+        return reversedArray
+    }
 
     fun ScriptBuilder.incrementIntValue(int: IntVar): ScriptBuilder =
         code { int.increment() }
+
+    fun ScriptBuilder.decrementIntValue(int: IntVar): ScriptBuilder =
+        code { int.decrement() }
 
     fun ScriptBuilder.addToArray(array: ArrayVar, element: StringVar): ScriptBuilder =
         code { array.add(element.quotedValue) }
@@ -301,7 +304,7 @@ class ScriptBuilder {
         source: String? = null,
         builder: Builder<ScriptBuilder>
     ): ScriptBuilder {
-        code { spaced(BashKeyword.WHILE.token, condition.semicoloned(), BashKeyword.DO.token) }
+        code { spaced(BashKeyword.WHILE, condition.semicoloned(), BashKeyword.DO) }
         withIndent(builder = builder)
         code {
             spaced(
@@ -351,14 +354,42 @@ class ScriptBuilder {
     ): ScriptBuilder =
         while_(BashConditions.TRUE, background, builder)
 
-    fun ScriptBuilder.forEach_(array: ArrayVar, iteration: ScriptBuilder.(StringVar) -> ScriptBuilder): ScriptBuilder {
-        val it = StringVar("it")
+    fun ScriptBuilder.forEach_(
+        array: ArrayVar,
+        iteration: ScriptBuilder.(it: StringVar) -> ScriptBuilder
+    ): ScriptBuilder {
+        val it = StringVar(array.name + "_ELEMENT")
         val iterator = array.iterator_().quoted().semicoloned()
-        code { spaced(BashKeyword.FOR.token, it.name, BashKeyword.IN.token, iterator, BashKeyword.DO.token) }
+        code { spaced(BashKeyword.FOR, it.name, BashKeyword.IN, iterator, BashKeyword.DO) }
         withIndent {
             iteration(it)
         }
         code { BashKeyword.DONE.token }
+        return this
+    }
+
+    fun ScriptBuilder.forEachIndexed(
+        array: ArrayVar,
+        isReversed: Boolean = false,
+        iteration: ScriptBuilder.(i: IntVar, it: StringVar) -> ScriptBuilder
+    ): ScriptBuilder {
+        val indexVarName = array.name + "_INDEX"
+        val elementVarName = array.name + "_ELEMENT"
+        if (isReversed) {
+            val i = initInt(indexVarName, array.size.minus(1))
+            while_(i.isGreaterOrEqual(0)) {
+                val it = initString(elementVarName, array.getElement(i))
+                iteration(i, it)
+                decrementIntValue(i)
+            }
+        } else {
+            val i = initInt(indexVarName)
+            while_(i.isLessThen(array.size)) {
+                val it = initString(elementVarName, array.getElement(i))
+                iteration(i, it)
+                incrementIntValue(i)
+            }
+        }
         return this
     }
 
@@ -406,6 +437,15 @@ class ScriptBuilder {
             append(path.quoted())
         })
 
+    fun ScriptBuilder.createDirectory(path: StringVar, recursive: Boolean = true): ScriptBuilder =
+        createDirectory(path.value, recursive)
+
+    fun ScriptBuilder.copyDirectory(sourcePath: String, targetPath: String): ScriptBuilder {
+        createDirectory(bash.getParentDirectoryPath(targetPath).command)
+        run_(BashCommand.CP, spaced("-r", sourcePath.quoted(), targetPath.quoted(),))
+        return this
+    }
+
     fun ScriptBuilder.setWorkingDirectory(path: String): ScriptBuilder =
         run_(BashCommand.CD, path.quoted())
 
@@ -421,7 +461,14 @@ class ScriptBuilder {
         color: AnsiColor? = null,
         style: AnsiStyle? = null,
     ): ScriptBuilder =
-        println_(text.toString(), color, style)
+        println_(text.value, color, style)
+
+    fun ScriptBuilder.println_(
+        array: ArrayVar,
+        color: AnsiColor? = null,
+        style: AnsiStyle? = null,
+    ): ScriptBuilder =
+        println_(array.value, color, style)
 
     fun ScriptBuilder.print_(
         text: String = Constants.Char.EMPTY,
@@ -447,12 +494,12 @@ class ScriptBuilder {
         run_(
             BashCommand.KILL, spaced(
                 if (force) null else "-TERM",
-                pid.toString()
+                pid.value
             )
         )
 
     fun ScriptBuilder.wait(pid: StringVar): IntVar {
-        run_(BashCommand.WAIT, pid.toString())
+        run_(BashCommand.WAIT, pid.value)
         val exitCode by intVar("$?")
         return exitCode
     }
@@ -480,7 +527,19 @@ class ScriptBuilder {
         return this
     }
 
-    fun ScriptBuilder.delete(path: String, recursive: Boolean = false): ScriptBuilder =
+    fun ScriptBuilder.moveDirectory(sourcePath: StringVar, targetPath: String): ScriptBuilder =
+        run_(BashCommand.MV, spaced(sourcePath.quotedValue, targetPath.quoted()))
+
+    fun ScriptBuilder.moveDirectory(sourcePath: StringVar, targetPath: StringVar): ScriptBuilder =
+        moveDirectory(sourcePath, targetPath)
+
+    fun ScriptBuilder.renameDirectory(oldPath: StringVar, newPath: String): ScriptBuilder =
+        moveDirectory(oldPath, newPath)
+
+    fun ScriptBuilder.renameDirectory(oldPath: StringVar, newPath: StringVar): ScriptBuilder =
+        moveDirectory(oldPath, newPath)
+
+    fun ScriptBuilder.deleteDirectory(path: String, recursive: Boolean = false): ScriptBuilder =
         run_(
             BashCommand.RM,
             spaced(
@@ -490,10 +549,13 @@ class ScriptBuilder {
             )
         )
 
-    fun ScriptBuilder.delete(path: StringVar, recursive: Boolean = false): ScriptBuilder =
-        delete(path.quotedValue, recursive)
+    fun ScriptBuilder.deleteDirectory(path: StringVar, recursive: Boolean = false): ScriptBuilder =
+        deleteDirectory(path.quotedValue, recursive)
 
-    fun ScriptBuilder.throw_(): ScriptBuilder =
+    fun ScriptBuilder.deleteFile(path: StringVar): ScriptBuilder =
+        deleteDirectory(path.quotedValue, false)
+
+    fun ScriptBuilder.error_(): ScriptBuilder =
         exit(ExitCode.ERROR)
 
     fun ScriptBuilder.onInterrupt(callback: Builder<ScriptBuilder>): ScriptBuilder {
@@ -513,7 +575,7 @@ class ScriptBuilder {
         return this
     }
 
-    fun ScriptBuilder.watchFileLinesInBackground(
+    fun ScriptBuilder.runFileWatcherInBackground(
         path: StringVar,
         pid: StringVar? = null,
         action: ScriptBuilder.(StringVar) -> ScriptBuilder
@@ -532,9 +594,6 @@ class ScriptBuilder {
     fun ScriptBuilder.spaces(count: Int): String =
         Constants.Char.SPACE.repeat(count)
 
-    fun ScriptBuilder.spaced(vararg segments: Any?): String =
-        segments.toList().filterNotNull().joinBySpace()
-
     fun String.semicoloned(): String =
         this + Constants.Char.SEMICOLON
 
@@ -542,15 +601,6 @@ class ScriptBuilder {
         val mapVar = MapVar(name)
         code { spaced(BashCommand.DECLARE, "-A", name) }
         return mapVar
-    }
-
-    private fun ScriptBuilder.initVarSync(name: String, strategy: VarSyncStrategy): VarSync {
-        val varSync = VarSync(name, strategy)
-        val path = initString(varSync.fifoPathVarName, varSync.fifoPath)
-        delete(path)
-        run_(BashCommand.MKFIFO, path.quotedValue)
-        run_(BashCommand.EXEC, "${varSync.descriptorVarName.curled()}<>${path.quotedValue}")
-        return varSync
     }
 
     //region Bash
@@ -583,7 +633,7 @@ class ScriptBuilder {
         setStringValue(name, value)
 
     fun Bash.setArrayValue(name: String, contents: String? = null): String =
-        setStringValue(name, contents.orEmpty().rounded(), quote = false)
+        setStringValue(name, contents.orEmpty().unquoted().rounded(), quote = false)
 
     fun Bash.run_(command: BashCommand, arguments: String? = null): String =
         spaced(command.command, arguments)
@@ -619,7 +669,7 @@ class ScriptBuilder {
         getString(index.toString()).getValue(default)
 
     fun Bash.getScriptLocation(): String =
-        bash.getAbsolutePath(bash.getDirectoryName(getArray("BASH_SOURCE").getElement(0)).command).command
+        bash.getAbsolutePath(bash.getParentDirectoryPath(getArray("BASH_SOURCE").getElement(0)).command).command
 
     private fun Bash.print(
         text: String = Constants.Char.EMPTY,
@@ -665,8 +715,14 @@ class ScriptBuilder {
     fun Bash.nowDate(format: String = "+%Y-%m-%d_%H-%M-%S"): BashLambda =
         lambda(BashCommand.DATE, format)
 
-    fun Bash.getDirectoryName(path: String): BashLambda =
+    fun Bash.getParentDirectoryPath(path: String): BashLambda =
         lambda(BashCommand.DIRNAME, path.quoted())
+
+    fun Bash.getBasename(path: String): BashLambda =
+        lambda(BashCommand.BASENAME, path.quoted())
+
+    fun Bash.getBasename(path: StringVar): BashLambda =
+        getBasename(path.value)
 
     fun Bash.getAbsolutePath(relativePath: String): BashLambda =
         lambda(BashCommand.REALPATH, relativePath.quoted())
@@ -693,15 +749,12 @@ class ScriptBuilder {
         setVisible(false)
     }
 
-    private fun BashCursor.setVisible(isVisible: Boolean) {
-        code { bash.print(getCursorVisibilityCode(isVisible), addNewLine = false) }
-        if (!isVisible) {
-            restoreOnExit()
-        }
+    fun BashCursor.show() {
+        setVisible(true)
     }
 
-    private fun BashCursor.restoreOnExit() {
-        trapOnExit(spaced(BashCommand.ECHO, "-e", getCursorVisibilityCode(true).singleQuoted()))
+    private fun BashCursor.setVisible(isVisible: Boolean) {
+        code { bash.print(getCursorVisibilityCode(isVisible), addNewLine = false) }
     }
 
     private fun BashCursor.getCursorVisibilityCode(isVisible: Boolean): String =
@@ -779,4 +832,37 @@ class ScriptBuilder {
 
         private const val BACKGROUND_FLAG: Char = Constants.Char.AMPERSAND
     }
+}
+
+fun ScriptBuilder.initVarSync(
+    int: IntVar,
+    strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
+): VarSync =
+    initVarSync(int.name, strategy)
+
+fun ScriptBuilder.initVarSync(
+    boolean: BooleanVar,
+    strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
+): VarSync =
+    initVarSync(boolean.name, strategy)
+
+fun ScriptBuilder.initVarSync(
+    string: StringVar,
+    strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
+): VarSync =
+    initVarSync(string.name, strategy)
+
+fun ScriptBuilder.initVarSync(
+    enum: EnumVar<*>,
+    strategy: VarSyncStrategy = VarSyncStrategy.SINGLETON
+): VarSync =
+    initVarSync(enum.name, strategy)
+
+private fun ScriptBuilder.initVarSync(name: String, strategy: VarSyncStrategy): VarSync {
+    val varSync = VarSync(name, strategy)
+    val path = initString(varSync.fifoPathVarName, varSync.fifoPath)
+    deleteDirectory(path)
+    run_(BashCommand.MKFIFO, path.quotedValue)
+    run_(BashCommand.EXEC, "${varSync.descriptorVarName.curled()}<>${path.quotedValue}")
+    return varSync
 }

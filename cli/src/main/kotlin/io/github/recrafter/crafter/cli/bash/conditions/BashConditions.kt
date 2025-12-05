@@ -24,6 +24,9 @@ object BashConditions {
     fun BashConditions.isFileExists(path: String): BashCondition =
         BashCondition.from("-f ${path.quoted()}")
 
+    fun BashConditions.isFileExists(path: StringVar): BashCondition =
+        isFileExists(path.value)
+
     fun BashConditions.isDirectoryExists(path: String): BashCondition =
         BashCondition.from("-d ${path.quoted()}")
 

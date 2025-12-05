@@ -8,24 +8,23 @@ import io.github.diskria.kotlin.utils.extensions.common.`path∕case`
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.bash.ExitCode
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiStyle
 import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
-import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
-import io.github.recrafter.crafter.cli.bash.ascii.Spinners
-import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isPidAlive
-import io.github.recrafter.crafter.cli.bash.properties.intVar
-import io.github.recrafter.crafter.cli.bash.properties.stringVar
-import io.github.recrafter.crafter.cli.bash.variables.*
+import io.github.recrafter.crafter.cli.bash.variables.getValue
+import io.github.recrafter.crafter.cli.bash.variables.value
+import io.github.recrafter.crafter.cli.commands.process.GradleProcessCommand
+import io.github.recrafter.crafter.cli.commands.process.InitProcess
+import io.github.recrafter.crafter.cli.commands.process.Spinner
 import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.common.withScript
 import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import org.gradle.api.tasks.SourceSet
-import java.util.concurrent.TimeUnit
 
-@CLICommand(name = "init", description = "Create and initialize new mod project")
-object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer()) {
+@CLICommand(name = InitCommand.COMMAND_NAME, description = "Create and initialize new mod project")
+object InitCommand : GradleProcessCommand<InitArguments>(InitArguments.serializer()) {
+
+    const val COMMAND_NAME: String = "init"
 
     override fun getCompletions(argumentName: String, arguments: InitArguments): String = withScript {
         when (argumentName) {
@@ -36,29 +35,33 @@ object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer(
     }
 
     override fun run(fingerprint: Fingerprint, arguments: InitArguments): String = script {
-        val modProjectPath = arguments.loader.value.appendPath(arguments.version.value)
+        val loader = arguments.loader
+        val version = arguments.version
+        val modProjectPath = loader.value.appendPath(version.value)
         val displayedVersion = buildString {
-            append(bash.getMap("LOADER_DISPLAY_NAMES").getValue(arguments.loader))
+            append(bash.getMap("LOADER_DISPLAY_NAMES").getValue(loader))
             append(Constants.Char.SPACE)
-            append(arguments.version)
+            append(version)
         }
-        findModProject(arguments.loader, arguments.version) { projectName, isRange ->
+        detectModProjectName(loader, version) { name, isRange ->
             if (isRange) {
                 print_("The mod for ", AnsiColor.RED)
                 print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
                 print_(" already included in version range ", AnsiColor.RED)
-                print_(projectName, AnsiColor.RED, AnsiStyle.BOLD)
+                print_(name, AnsiColor.RED, AnsiStyle.BOLD)
             } else {
                 print_("The mod for ", AnsiColor.RED)
                 print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
                 print_(" already initialized.", AnsiColor.RED)
             }
             println_()
-            throw_()
+            error_()
         }
         val namespacePath = fingerprint.modNamespace.setCase(`dot․case`, `path∕case`).appendPath(fingerprint.modId)
         fingerprint.modSides.forEach { side ->
-            val modMain = modProjectPath.appendPath("src").appendPath(SourceSet.MAIN_SOURCE_SET_NAME).appendPath("java")
+            val modMain = modProjectPath.appendPath("src")
+                .appendPath(SourceSet.MAIN_SOURCE_SET_NAME)
+                .appendPath("java")
             createDirectory(modMain.appendPath(namespacePath))
 
             val sideName = side.getName()
@@ -75,75 +78,26 @@ object InitCommand : AbstractCLICommand<InitArguments>(InitArguments.serializer(
                     .appendPath(sideName)
             )
         }
-        val spinner by stringVar(Spinners.DOTS)
-        val spinnerProgress by intVar()
-        val spinnerLength by intVar(spinner.length)
-        val logPath by stringVar()
-
-        val gradlePid by stringVar()
-        val logWatcherPid by stringVar()
+        val spinner = Spinner.build(this)
+        cursor.hide()
+        val process = InitProcess(this, modProjectPath, displayedVersion)
         onExit {
-            ifBlock {
-                if_(bash.conditions.isPidAlive(logWatcherPid)) {
-                    kill(logWatcherPid)
-                    wait(logWatcherPid)
-                    return@if_ this
-                }
-            }
-            ifBlock {
-                if_(bash.conditions.isPidAlive(gradlePid)) {
-                    kill(gradlePid)
-                    wait(gradlePid)
-                    return@if_ this
-                }
-            }
+            cursor.show()
+            ensureProcessKilled(process.pid)
+            ensureProcessKilled(process.logWatcher.pid)
         }
         onInterrupt {
-            ifBlock {
-                if_(bash.conditions.isPidAlive(gradlePid)) {
-                    kill(gradlePid)
-                    wait(gradlePid)
-                    return@if_ this
-                }
-            }
-            delete(modProjectPath, recursive = true)
-            clearLine()
-            print_("Initializing mod for ", AnsiColor.RED)
-            print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
-            print_(" was interrupted by user.", AnsiColor.RED)
-            println_()
+            process.interrupt(this)
         }
-        runGradleTaskInBackground("build", arguments.loader, arguments.version, arguments.version, gradlePid, logPath)
-        val watcherPid = watchFileLinesInBackground(logPath, gradlePid) { line ->
-            clearLine()
-            println_(line)
-        }
-        setStringValue(logWatcherPid, watcherPid)
-        while_(bash.conditions.isPidAlive(gradlePid)) {
-            val spinnerChar by stringVar(spinner.getCharAt(spinnerProgress.mod(spinnerLength)))
-            incrementIntValue(spinnerProgress)
-            clearLine()
-            print_(spinnerChar, AnsiColor.CYAN)
-            print_(" Initializing mod for ", AnsiColor.CYAN)
-            print_(displayedVersion, AnsiColor.CYAN, AnsiStyle.BOLD)
-            print_("...", AnsiColor.CYAN)
-            sleep(30, TimeUnit.MILLISECONDS)
-        }
-        val exitCode = wait(gradlePid)
-        clearLine()
-        ifBlock {
-            if_(exitCode.equals_(ExitCode.SUCCESS)) {
-                print_("Successfully initialized mod for ", AnsiColor.GREEN)
-                print_(displayedVersion, AnsiColor.GREEN, AnsiStyle.BOLD)
+        runTask(loader, version, version, process)
+        process.runLogWatcher(this)
+        loop {
+            onNextVar(process.logWatcher.queue) {
+                clearLine()
+                process.printLogLine(this)
                 println_()
-            }.else_ {
-                print_("Initialization mod for ", AnsiColor.RED)
-                print_(displayedVersion, AnsiColor.RED, AnsiStyle.BOLD)
-                print_(" has been failed. ", AnsiColor.RED)
-                print_("See full log at ${bash.getAbsolutePath(logPath.value)}", AnsiColor.GRAY)
-                println_()
-                throw_()
             }
+            process.printStatus(this, spinner)
         }
     }
 }

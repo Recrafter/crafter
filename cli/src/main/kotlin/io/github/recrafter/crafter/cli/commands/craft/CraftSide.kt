@@ -6,7 +6,7 @@ enum class CraftSide(override val description: String) : CLIArgumentEnum<CraftSi
 
     CLIENT("Build the mod and launch the Minecraft client"),
     SERVER("Build the mod and launch the Minecraft server"),
-    MERGED("Build the mod, launch the server, then the client");
+    LAUNCHER("Interactive mode for launching server and multiple clients");
 
     override val defaultEnum: CraftSide get() = CLIENT
 }

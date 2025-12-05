@@ -6,11 +6,11 @@ import io.github.diskria.kotlin.utils.extensions.serialization.serializeToToml
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.properties.ModProperty
-import io.github.recrafter.crafter.fabric.config.FabricModConfig
-import io.github.recrafter.crafter.forge.config.ForgeModConfig
-import io.github.recrafter.crafter.neoforge.config.NeoForgeModConfig
-import io.github.recrafter.crafter.ornithe.config.OrnitheModConfig
-import io.github.recrafter.crafter.quilt.config.QuiltModConfig
+import io.github.recrafter.crafter.loaders.fabric.config.FabricModConfig
+import io.github.recrafter.crafter.loaders.forge.config.ForgeModConfig
+import io.github.recrafter.crafter.loaders.neoforge.config.NeoForgeModConfig
+import io.github.recrafter.crafter.loaders.ornithe.config.OrnitheModConfig
+import io.github.recrafter.crafter.loaders.quilt.config.QuiltModConfig
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.Nested

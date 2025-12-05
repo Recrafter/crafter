@@ -8,6 +8,7 @@ import io.github.recrafter.crafter.cli.bash.conditions.BashCondition
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditionStrategy
 import io.github.recrafter.crafter.cli.extensions.common.Builder
 import io.github.recrafter.crafter.cli.extensions.common.script
+import io.github.recrafter.crafter.cli.extensions.common.spaced
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
 
 @Suppress("FunctionName")

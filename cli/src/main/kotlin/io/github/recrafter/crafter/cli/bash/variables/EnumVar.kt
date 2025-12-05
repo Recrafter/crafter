@@ -20,4 +20,4 @@ val EnumVar<*>.quotedValue: String
     get() = value.quoted()
 
 fun <E : Enum<E>> EnumVar<E>.equals_(other: E): BashCondition =
-    BashCondition.from("$quotedValue == ${other.name.quoted()}")
+    BashCondition.from("$quotedValue == ${other.name.lowercase().quoted()}")
