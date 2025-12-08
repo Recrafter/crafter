@@ -49,7 +49,7 @@ data class Mod(
     val maxMinecraftVersion: MinecraftVersion,
 ) {
     val packageName: String
-        get() = namespace.appendPackageName(id.setCase(snake_case, `dot․case`))
+        get() = namespace.appendPackageName(id)
 
     val packagePath: String
         get() = packageName.setCase(`dot․case`, `path∕case`)
