@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.recrafter.crafter</groupId>
+  <artifactId>io.github.recrafter.crafter.gradle.plugin</artifactId>
+  <version>0.3.6</version>
+  <packaging>pom</packaging>
+  <name>Crafter</name>
+  <description>Crafter is a Gradle plugin that automates Minecraft mod development across multiple loaders.
+It generates configs, manages mixins, and builds everything for you — all from a simple folder structure.</description>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.recrafter</groupId>
+      <artifactId>crafter</artifactId>
+      <version>0.3.6</version>
+    </dependency>
+  </dependencies>
+</project>
