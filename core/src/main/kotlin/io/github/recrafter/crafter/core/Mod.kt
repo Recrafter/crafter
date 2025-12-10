@@ -7,14 +7,16 @@ import io.github.diskria.kotlin.utils.BracketsType
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.extensions.appendPath
-import io.github.diskria.kotlin.utils.extensions.common.*
+import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
+import io.github.diskria.kotlin.utils.extensions.common.`dot․case`
+import io.github.diskria.kotlin.utils.extensions.common.fileName
+import io.github.diskria.kotlin.utils.extensions.common.`path∕case`
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.MinecraftConstants
 import io.github.recrafter.bedrock.crafter.CrafterConstants
-import io.github.recrafter.bedrock.era.Release
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
@@ -110,7 +112,8 @@ data class Mod(
 
             ModLoaderFamily.FORGE -> {
                 val fileName = when {
-                    loader == ModLoaderType.NEOFORGE && minecraftVersion >= Release.V_1_20_5 -> {
+                    loader == ModLoaderType.NEOFORGE &&
+                            minecraftVersion >= LoaderCompatibility.NeoForge.EPONYMOUS_MOD_CONFIG_NAME -> {
                         fileName(ModLoaderType.NEOFORGE.getName(), "mods", Constants.File.Extension.TOML)
                     }
 
@@ -142,8 +145,8 @@ data class Mod(
             return maxJvmTarget
         }
 
-    val isReobfNeeded: Boolean =
-        loader.family == ModLoaderFamily.FORGE && minecraftVersion < Release.V_1_20_6
+    val isReobfEnabled: Boolean =
+        loader.family == ModLoaderFamily.FORGE && minecraftVersion < LoaderCompatibility.Forge.REOBF_CANCEL
 
     val archiveVersion: String
         get() = buildString {

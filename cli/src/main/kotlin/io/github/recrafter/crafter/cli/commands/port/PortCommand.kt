@@ -2,8 +2,10 @@ package io.github.recrafter.crafter.cli.commands.port
 
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
+import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange.Companion.MOD_PROJECT_NAME_SEPARATOR
+import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.bash.ExitCode
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor.*
@@ -12,10 +14,7 @@ import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
 import io.github.recrafter.crafter.cli.bash.api.commands.AbstractCLICommand
 import io.github.recrafter.crafter.cli.bash.conditions.BashConditions.isDirectoryExists
 import io.github.recrafter.crafter.cli.bash.conditions.not_
-import io.github.recrafter.crafter.cli.bash.properties.arrayVar
-import io.github.recrafter.crafter.cli.bash.properties.booleanVar
-import io.github.recrafter.crafter.cli.bash.properties.intVar
-import io.github.recrafter.crafter.cli.bash.properties.stringVar
+import io.github.recrafter.crafter.cli.bash.properties.*
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.variables.*
 import io.github.recrafter.crafter.cli.commands.craft.CraftCommand
@@ -24,10 +23,10 @@ import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.common.spaced
 import io.github.recrafter.crafter.cli.extensions.common.withScript
 
-@CLICommand(name = PortCommand.COMMAND_NAME, description = "Port mod to older or newer versions")
+@CLICommand(name = PortCommand.COMMAND_NAME, description = "Port the mod to older or newer Minecraft versions")
 object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer()) {
 
-    const val COMMAND_NAME: String = "port"
+    private const val COMMAND_NAME: String = "port"
     private const val PORT_RANGE_BOUNDARY: String = COMMAND_NAME
 
     override fun getCompletions(argumentName: String, arguments: PortArguments): String = withScript {
@@ -38,8 +37,12 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
     }
 
     override fun run(fingerprint: Fingerprint, arguments: PortArguments): String = script {
+        val loaderCheckpoints by mapVar(fingerprint.loaders.associate {
+            it.name to it.checkpoints.joinBySpace { version -> version.asString() }
+        })
+        val checkpoints by arrayVar(loaderCheckpoints.getValue(arguments.loader))
         val loaderDisplayName by stringVar(bash.getMap("LOADER_DISPLAY_NAMES").getValue(arguments.loader))
-        val modProjectPaths by arrayVar("${arguments.loader}/*")
+        val modProjectPaths by arrayVar(arguments.loader.value.appendPath("*"))
         ifBlock {
             if_(modProjectPaths.isEmpty()) {
                 print_("No projects found for the ", RED)
@@ -89,7 +92,6 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
             }
         }
         val currentPortPath by stringVar(portProjectPaths.getElement(0))
-        val currentPortProjectName by stringVar(bash.getBasename(currentPortPath).command)
         val currentPortVersion by stringVar()
         ifBlock {
             if_(arguments.step.equals_(PortStep.START)) {
@@ -121,6 +123,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                         exit(ExitCode.SUCCESS)
                     }
                 }
+                val currentPortProjectName by stringVar(bash.getBasename(currentPortPath).command)
                 ifBlock {
                     if_(arguments.direction.equals_(PortDirection.PAST)) {
                         setStringValue(
@@ -136,23 +139,24 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                 }
                 ifBlock {
                     if_(arguments.step.equals_(PortStep.STOP)) {
-                        renameDirectory(currentPortPath, "${arguments.loader}/$currentPortVersion")
+                        renameDirectory(currentPortPath, arguments.loader.value.appendPath(currentPortVersion.value))
                         exit(ExitCode.SUCCESS)
                     }
                 }
             }
         }
-        val sortedVersions by arrayVar(bash.getMap("VERSIONS").getValue(arguments.loader))
+        val versionsTimeline by arrayVar(bash.getMap("VERSIONS").getValue(arguments.loader))
         ifBlock {
             if_(arguments.direction.equals_(PortDirection.FUTURE)) {
-                setArrayValue(sortedVersions, reverseArray(sortedVersions))
+                setArrayValue(versionsTimeline, reverseArray(versionsTimeline))
             }
         }
         ifBlock {
             if_(arguments.step.equals_(PortStep.CONTINUE)) {
                 val lastSourceDirectoryPath by stringVar()
+                val lastSourceVersion by stringVar()
                 val oppositeVersion by stringVar()
-                forEach_(sortedVersions) { version ->
+                forEach_(versionsTimeline) { version ->
                     val isFound by booleanVar()
                     forEach_(modProjectPaths) { modProjectPath ->
                         val directoryName by stringVar(bash.getBasename(modProjectPath).command)
@@ -169,9 +173,11 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                                         setBooleanValue(isFound, true)
                                         setStringValue(lastSourceDirectoryPath, modProjectPath)
                                         ifBlock {
-                                            if_(rangeMax.isNotEmpty()) {
+                                            ifAll(rangeMin.isNotEmpty(), rangeMax.isNotEmpty()) {
+                                                setStringValue(lastSourceVersion, rangeMin)
                                                 setStringValue(oppositeVersion, rangeMax)
                                             }.else_ {
+                                                setStringValue(lastSourceVersion, directoryName)
                                                 setStringValue(oppositeVersion, directoryName)
                                             }
                                         }
@@ -187,9 +193,11 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                                         setBooleanValue(isFound, true)
                                         setStringValue(lastSourceDirectoryPath, modProjectPath)
                                         ifBlock {
-                                            if_(rangeMin.isNotEmpty()) {
+                                            ifAll(rangeMin.isNotEmpty(), rangeMax.isNotEmpty()) {
+                                                setStringValue(lastSourceVersion, rangeMax)
                                                 setStringValue(oppositeVersion, rangeMin)
                                             }.else_ {
+                                                setStringValue(lastSourceVersion, directoryName)
                                                 setStringValue(oppositeVersion, directoryName)
                                             }
                                         }
@@ -205,30 +213,52 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                         }
                     }
                 }
+                val isCheckpoint by booleanVar()
                 ifBlock {
                     if_(arguments.direction.equals_(PortDirection.PAST)) {
-                        renameDirectory(
-                            currentPortPath,
-                            arguments.loader.value.appendPath(
-                                currentPortVersion.value + MOD_PROJECT_NAME_SEPARATOR + oppositeVersion.value
-                            )
-                        )
+                        ifBlock {
+                            if_(checkpoints.contains(lastSourceVersion)) {
+                                setBooleanValue(isCheckpoint, true)
+                            }
+                        }
                     }.else_ {
-                        renameDirectory(
-                            currentPortPath,
-                            arguments.loader.value.appendPath(
-                                oppositeVersion.value + MOD_PROJECT_NAME_SEPARATOR + currentPortVersion.value
-                            )
-                        )
+                        ifBlock {
+                            if_(checkpoints.contains(currentPortVersion)) {
+                                setBooleanValue(isCheckpoint, true)
+                            }
+                        }
                     }
                 }
-                deleteDirectory(lastSourceDirectoryPath, recursive = true)
-                setArrayValue(modProjectPaths, "${arguments.loader}/*")
+                ifBlock {
+                    if_(isCheckpoint.equals_(true)) {
+                        renameDirectory(currentPortPath, arguments.loader.value.appendPath(currentPortVersion.value))
+                    }.else_ {
+                        ifBlock {
+                            if_(arguments.direction.equals_(PortDirection.PAST)) {
+                                renameDirectory(
+                                    currentPortPath,
+                                    arguments.loader.value.appendPath(
+                                        currentPortVersion.value + MOD_PROJECT_NAME_SEPARATOR + oppositeVersion.value
+                                    )
+                                )
+                            }.else_ {
+                                renameDirectory(
+                                    currentPortPath,
+                                    arguments.loader.value.appendPath(
+                                        oppositeVersion.value + MOD_PROJECT_NAME_SEPARATOR + currentPortVersion.value
+                                    )
+                                )
+                            }
+                        }
+                        deleteDirectory(lastSourceDirectoryPath, recursive = true)
+                    }
+                }
+                setArrayValue(modProjectPaths, arguments.loader.value.appendPath("*"))
             }
         }
         val sourceDirectoryPath by stringVar()
         val targetVersionIndex by intVar()
-        forEachIndexed(sortedVersions) { index, version ->
+        forEachIndexed(versionsTimeline) { index, version ->
             val isFound by booleanVar()
             forEach_(modProjectPaths) { modProjectPath ->
                 val directoryName by stringVar(bash.getBasename(modProjectPath).command)
@@ -267,7 +297,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
             }
         }
         ifBlock {
-            if_(targetVersionIndex.isLessOrEqual(0)) {
+            if_(targetVersionIndex.isLessThen(0)) {
                 print_("The mod already supports the ", YELLOW)
                 ifBlock {
                     if_(arguments.direction.equals_(PortDirection.PAST)) {
@@ -278,13 +308,13 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                 }
                 print_(" Minecraft version available for ", YELLOW)
                 print_(loaderDisplayName, YELLOW, BOLD)
-                print_("loader: ", YELLOW)
-                print_(sortedVersions.getElement(0), YELLOW, BOLD)
+                print_(" loader: ", YELLOW)
+                print_(versionsTimeline.getElement(0), YELLOW, BOLD)
                 println_()
                 error_()
             }
         }
-        val targetVersion by stringVar(sortedVersions.getElement(targetVersionIndex))
+        val targetVersion by stringVar(versionsTimeline.getElement(targetVersionIndex))
         val modProjectName by stringVar()
         ifBlock {
             if_(arguments.step.equals_(PortStep.TEST)) {
@@ -318,9 +348,9 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
             }
         }
         val spinner = Spinner.build(this)
-        cursor.hide()
         ifBlock {
             if_(arguments.strategy.equals_(PortStrategy.PENDING)) {
+                cursor.hide()
                 print_("Please test whether the mod works correctly on", BLUE)
                 print_(" $loaderDisplayName $targetVersion", BLUE, BOLD)
                 print_(" using the test launcher below.", BLUE)
@@ -330,6 +360,15 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                     print_("Test completed for", BLUE)
                     print_(" $loaderDisplayName $targetVersion", BLUE, BOLD)
                     println_()
+                    println_()
+                    print_("To")
+                    print_(" test again", BLUE, BOLD)
+                    print_(", run:")
+                    println_()
+                    println_()
+                    withPadding {
+                        println_(buildStepCommand(fingerprint, arguments, PortStep.TEST), CYAN)
+                    }
                     println_()
                     print_("If the mod")
                     print_(" works correctly", GREEN, BOLD)
@@ -358,16 +397,13 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                         println_(buildStepCommand(fingerprint, arguments, PortStep.CANCEL), CYAN)
                     }
                     println_()
-                    print_("To")
-                    print_(" test again", BLUE, BOLD)
-                    print_(", run:")
-                    println_()
-                    println_()
-                    withPadding {
-                        println_(buildStepCommand(fingerprint, arguments, PortStep.TEST), CYAN)
-                    }
-                    println_()
                 }
+            }.else_ {
+                println_("The ${PortStrategy.AUTO.getName()} strategy is under development!", YELLOW)
+                println_(
+                    "In version 2.0, it will build the mod and continue or stop depending on the build result.",
+                    YELLOW
+                )
             }
         }
     }

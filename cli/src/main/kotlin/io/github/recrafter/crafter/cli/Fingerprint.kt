@@ -17,5 +17,6 @@ data class Fingerprint(
         val name: String,
         val displayName: String,
         val supportedVersions: List<MinecraftVersion>,
+        val checkpoints: List<MinecraftVersion>,
     )
 }

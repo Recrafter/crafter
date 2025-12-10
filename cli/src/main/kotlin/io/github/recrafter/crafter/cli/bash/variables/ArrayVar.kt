@@ -3,9 +3,11 @@
 package io.github.recrafter.crafter.cli.bash.variables
 
 import io.github.diskria.kotlin.utils.Constants
+import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.bash.conditions.BashCondition
 import io.github.recrafter.crafter.cli.bash.conditions.not_
 import io.github.recrafter.crafter.cli.bash.references.VariableReference
+import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.rounded
 import io.github.recrafter.crafter.cli.extensions.squared
 
@@ -35,6 +37,15 @@ fun ArrayVar.isEmpty(): BashCondition =
 
 fun ArrayVar.isNotEmpty(): BashCondition =
     isEmpty().not_()
+
+fun ArrayVar.contains(element: String): BashCondition =
+    BashCondition.from("${joinBySpace().wrapWithSpace().quoted()} =~ ${element.wrapWithSpace().quoted()}")
+
+fun ArrayVar.contains(element: StringVar): BashCondition =
+    contains(element.value)
+
+fun ArrayVar.joinBySpace(): String =
+    VariableReference.from(name + Constants.Char.ASTERISK.toString().squared())
 
 val ArrayVar.size: IntVar
     get() = IntVar("#$elements")

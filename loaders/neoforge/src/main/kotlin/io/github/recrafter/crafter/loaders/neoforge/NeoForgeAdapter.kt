@@ -16,6 +16,8 @@ import java.io.File
 
 object NeoForgeAdapter : ModLoaderAdapter() {
 
+    override fun shouldDownloadSources(): Boolean = true
+
     override fun configurePlugin(
         mod: Mod,
         project: Project,

@@ -1,8 +1,8 @@
 package io.github.recrafter.crafter.core.configs.packs.common
 
 import io.github.diskria.kotlin.utils.Constants
-import io.github.recrafter.bedrock.era.Release
 import io.github.recrafter.bedrock.versions.compareTo
+import io.github.recrafter.crafter.core.LoaderCompatibility
 import io.github.recrafter.crafter.core.Mod
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -24,7 +24,7 @@ data class PackConfig(
         fun of(mod: Mod, minFormat: String, maxFormat: String = minFormat): PackConfig {
             val description = "${mod.name} resources"
             return when {
-                mod.minecraftVersion < Release.V_1_21_9 -> PackConfig(
+                mod.minecraftVersion < LoaderCompatibility.Forge.PACK_CONFIG_RANGES -> PackConfig(
                     format = minFormat.toInt(),
                     description = description,
                 )

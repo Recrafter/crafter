@@ -36,6 +36,7 @@ import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.quoted
 import io.github.recrafter.crafter.cli.extensions.singleQuoted
 import io.github.recrafter.crafter.core.CrafterTasks
+import io.github.recrafter.crafter.core.LoaderCompatibility
 import io.github.recrafter.crafter.core.ModMetadata
 import io.github.recrafter.crafter.core.extensions.supportedVersionRange
 import io.github.recrafter.crafter.core.properties.ModMetadataProperty
@@ -275,7 +276,8 @@ abstract class InstallCrafterCLITask : DefaultTask() {
                     Fingerprint.LoaderInfo(
                         name = loader.getName(`kebab-case`),
                         displayName = loader.displayName,
-                        supportedVersions = loader.supportedVersionRange.expand()
+                        supportedVersions = loader.supportedVersionRange.expand(),
+                        checkpoints = LoaderCompatibility.getPortingCheckpoints(loader),
                     )
                 },
             )

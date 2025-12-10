@@ -5,8 +5,7 @@ import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.cli.Fingerprint
-import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor.CYAN
-import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor.RED
+import io.github.recrafter.crafter.cli.bash.ansi.AnsiColor.*
 import io.github.recrafter.crafter.cli.bash.ansi.AnsiStyle.BOLD
 import io.github.recrafter.crafter.cli.bash.api.annotations.CLICommand
 import io.github.recrafter.crafter.cli.bash.builder.ScriptBuilder
@@ -89,6 +88,9 @@ object CraftCommand : GradleProcessCommand<CraftArguments>(CraftArguments.serial
                 }
                 craftSingleSide(process, arguments, modProjectName, spinner)
             }.case_(CraftSide.LAUNCHER.getName()) {
+                println_("The launcher is still a work in progress!", YELLOW)
+                println_("In version 2.0, you’ll be able to start the server or multiple clients manually.", YELLOW)
+                println_("For now, it automatically starts the server first, then the client.", YELLOW)
                 craftLauncher(this, arguments.loader, arguments.version, modProjectName, spinner)
             }
         }

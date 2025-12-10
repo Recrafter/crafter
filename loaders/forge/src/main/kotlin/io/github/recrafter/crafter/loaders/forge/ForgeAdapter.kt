@@ -33,6 +33,8 @@ object ForgeAdapter : ModLoaderAdapter() {
 
     override fun isDataPackConfigRequired(): Boolean = true
 
+    override fun shouldDownloadSources(): Boolean = true
+
     override fun configurePlugin(
         mod: Mod,
         project: Project,
@@ -43,7 +45,7 @@ object ForgeAdapter : ModLoaderAdapter() {
         forge {
             mappings("official", mod.minecraftVersion.asString())
 
-            reobf = mod.isReobfNeeded
+            reobf = mod.isReobfEnabled
             setAccessTransformer(accessConfig)
             runs {
                 ModSide.values().forEach { side ->
@@ -89,7 +91,7 @@ object ForgeAdapter : ModLoaderAdapter() {
                         ).associate { it.name to it.value }
                     )
                 }
-                if (mod.isReobfNeeded) {
+                if (mod.isReobfEnabled) {
                     finalizedBy("reobfJar")
                 }
             }

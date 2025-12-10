@@ -47,8 +47,14 @@ fun IntVar.isEmpty(): BashCondition =
 fun IntVar.isNotEmpty(): BashCondition =
     BashCondition.from("-n $value")
 
-fun IntVar.isLessThen(other: IntVar): BashCondition =
+fun IntVar.isLessThen(other: String): BashCondition =
     BashCondition.from("$value -lt $other")
+
+fun IntVar.isLessThen(other: IntVar): BashCondition =
+    isLessThen(other.value)
+
+fun IntVar.isLessThen(other: Int): BashCondition =
+    isLessThen(other.toString())
 
 fun IntVar.isLessOrEqual(other: String): BashCondition =
     BashCondition.from("$value -le $other")

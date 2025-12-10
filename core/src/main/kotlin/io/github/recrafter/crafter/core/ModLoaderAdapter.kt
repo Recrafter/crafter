@@ -38,6 +38,7 @@ abstract class ModLoaderAdapter {
     open fun getPrepareRunTasks(loaderProject: Project, side: ModSide): List<Task> = emptyList()
     open fun getAccessConfigPreset(): String = Constants.Char.EMPTY
     open fun isDataPackConfigRequired(): Boolean = false
+    open fun shouldDownloadSources(): Boolean = false
 
     abstract fun configurePlugin(
         mod: Mod,
@@ -117,8 +118,10 @@ abstract class ModLoaderAdapter {
         }
         idea {
             module {
-                isDownloadSources = true
-                isDownloadJavadoc = true
+                if (shouldDownloadSources()) {
+                    isDownloadSources = true
+                    isDownloadJavadoc = true
+                }
             }
         }
         val sideAccessConfigs = sideProjects.mapValues { (_, sideProject) ->
@@ -197,12 +200,7 @@ abstract class ModLoaderAdapter {
                 output.setResourcesDir(mergedSourceSetsDirectory)
             }
         }
-        configurePlugin(
-            mod,
-            project,
-            runDirectory,
-            accessConfig,
-        )
+        configurePlugin(mod, project, runDirectory, accessConfig)
         groupIdeTasks()
     }
 }
