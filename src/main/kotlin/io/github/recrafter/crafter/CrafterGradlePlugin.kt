@@ -17,7 +17,6 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
-import io.github.recrafter.bedrock.versions.contains
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.core.LoaderMetadata
 import io.github.recrafter.crafter.core.ModMetadata
@@ -146,11 +145,9 @@ class CrafterGradlePlugin : Plugin<Project> {
         val minVersion = versionRange.min
         val maxVersion = versionRange.max
         val loader = loaderProject.name.toEnum<ModLoaderType>(`kebab-case`)
-        val supportedVersionRange = loader.supportedVersionRange
-        requireGradle(supportedVersionRange.contains(minVersion) && supportedVersionRange.contains(maxVersion)) {
+        requireGradle(loader.supportedVersions.contains(minVersion) && loader.supportedVersions.contains(maxVersion)) {
             "Mod project ${modProject.path} uses Minecraft versions outside the supported range " +
-                    "for loader ${loader.displayName}: required ${supportedVersionRange.asString("-")}, " +
-                    "but found ${versionRange.asString("-")}."
+                    "for loader ${loader.displayName}: ${versionRange.asString("-")}."
         }
         val loaderAdapter = loader.mapToAdapter()
         val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)

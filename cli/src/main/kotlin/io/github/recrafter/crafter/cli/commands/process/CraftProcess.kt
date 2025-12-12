@@ -141,7 +141,7 @@ class CraftProcess(
 
     private val ModSide.logRunningIndicators: List<String>
         get() = when (this) {
-            ModSide.CLIENT -> listOf("[Render thread/", "[LWJGL]", "fps,")
+            ModSide.CLIENT -> listOf("[Render thread/", "[LWJGL]", "LWJGL Version", "fps,")
             ModSide.SERVER -> listOf("Done")
         }
 

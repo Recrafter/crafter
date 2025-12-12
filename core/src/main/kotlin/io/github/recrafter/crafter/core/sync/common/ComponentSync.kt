@@ -19,8 +19,7 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.compareTo
-import io.github.recrafter.bedrock.versions.contains
-import io.github.recrafter.crafter.core.extensions.supportedVersionRange
+import io.github.recrafter.crafter.core.extensions.supportedVersions
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import java.io.File
@@ -52,7 +51,7 @@ abstract class ComponentSync {
         val components = cache?.takeIf { nowMillis() - it.lastSyncMillis < cacheDurationMillis } ?: runBlocking {
             val versions = fetchComponents()
                 .groupBy { it.minecraftVersion }
-                .filterKeys { minecraftVersion -> loader?.supportedVersionRange?.contains(minecraftVersion) ?: true }
+                .filterKeys { minecraftVersion -> loader?.supportedVersions?.contains(minecraftVersion) ?: true }
                 .mapValues {
                     val version = it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }
                     version.copy(latestVersion = mapLatestVersion(version.latestVersion))

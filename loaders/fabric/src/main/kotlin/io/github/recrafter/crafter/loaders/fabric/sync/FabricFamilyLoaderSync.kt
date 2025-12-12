@@ -7,7 +7,7 @@ import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.toSemverOrNull
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.extensions.supportedVersionRange
+import io.github.recrafter.crafter.core.extensions.supportedVersions
 import io.github.recrafter.crafter.core.sync.common.LoaderSync
 import io.github.recrafter.crafter.core.sync.maven.MavenMetadata
 import io.ktor.http.*
@@ -38,7 +38,7 @@ class FabricFamilyLoaderSync(override val loader: ModLoaderType) : LoaderSync(lo
         }
 
     override fun parseMinecraftVersion(version: String): MinecraftVersion =
-        loader.supportedVersionRange.min
+        loader.supportedVersions.first()
 
     override fun parseComponentSemver(version: String): Semver =
         when (loader) {

@@ -6,13 +6,13 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType.FORGE
 import io.github.recrafter.bedrock.loaders.ModLoaderType.NEOFORGE
 import io.github.recrafter.bedrock.versions.JavaCompatibility
 import io.github.recrafter.bedrock.versions.MinecraftVersion
-import io.github.recrafter.crafter.core.extensions.supportedVersionRange
+import io.github.recrafter.crafter.core.extensions.supportedVersions
 
 object LoaderCompatibility {
 
     fun getPortingCheckpoints(loader: ModLoaderType): List<MinecraftVersion> {
         val checkpoints = mutableListOf<MinecraftVersion>()
-        loader.supportedVersionRange.expand().windowed(2).forEach { (previous, next) ->
+        loader.supportedVersions.windowed(2).forEach { (previous, next) ->
             val previousMinJavaVersion = JavaCompatibility.getMinJavaVersion(previous)
             val nextMinJavaVersion = JavaCompatibility.getMinJavaVersion(next)
             if (nextMinJavaVersion > previousMinJavaVersion) {
