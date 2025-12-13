@@ -17,8 +17,8 @@ import io.github.recrafter.crafter.cli.extensions.angled
 import io.github.recrafter.crafter.cli.extensions.rounded
 import io.github.recrafter.crafter.cli.extensions.squared
 import io.github.recrafter.crafter.core.helpers.server.ServerCommands
-import io.github.recrafter.crafter.tasks.public.CraftClientTask
-import io.github.recrafter.crafter.tasks.public.CraftServerTask
+import io.github.recrafter.crafter.tasks.CraftClientTask
+import io.github.recrafter.crafter.tasks.CraftServerTask
 
 class CraftProcess(
     builder: ScriptBuilder,
@@ -141,7 +141,7 @@ class CraftProcess(
 
     private val ModSide.logRunningIndicators: List<String>
         get() = when (this) {
-            ModSide.CLIENT -> listOf("[Render thread/", "[LWJGL]", "LWJGL Version", "fps,")
+            ModSide.CLIENT -> listOf("[Render thread/", "LWJGL", "fps,")
             ModSide.SERVER -> listOf("Done")
         }
 

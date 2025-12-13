@@ -3,6 +3,7 @@ package io.github.recrafter.crafter.cli.bash.api.commands
 import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
+import io.github.diskria.kotlin.utils.extensions.atName
 import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
 import io.github.diskria.kotlin.utils.extensions.common.className
 import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
@@ -213,7 +214,7 @@ abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: Kotl
                         }
                     }
                     val directoryName by stringVar(modProjectPath.substringAfterLast(Constants.Char.SLASH))
-                    val rangeParts by arrayVar(directoryName.split(MinecraftVersionRange.MOD_PROJECT_NAME_SEPARATOR))
+                    val rangeParts by arrayVar(directoryName.split(MinecraftVersionRange.PROJECT_NAME_SEPARATOR))
                     val rangeMin by stringVar(rangeParts.getElement(0))
                     val rangeMax by stringVar(rangeParts.getElement(1))
                     ifBlock {

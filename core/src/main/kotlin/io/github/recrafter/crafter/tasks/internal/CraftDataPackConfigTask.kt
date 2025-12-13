@@ -29,15 +29,15 @@ abstract class CraftDataPackConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterTasks.INTERNAL_TASKS_GROUP
+        group = CrafterTasks.INTERNAL_GROUP
     }
 
     @TaskAction
-    fun generate() {
+    fun craft() {
         val mod = mod.get()
         val minFormat = minFormat.get()
         val maxFormat = maxFormat.orNull ?: minFormat
-        val outputFile = outputFile.get().asFile
+        val outputFile = outputFile.get().asFile.ensureFileExists()
 
         val config = DataPackConfig.of(mod, minFormat, maxFormat)
         mod.log(project, "Datapack config generated", config.serializeToJson())

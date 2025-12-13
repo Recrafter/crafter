@@ -30,13 +30,19 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+    }
+}
+
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "1.0.1"
+    id("io.github.recrafter.recipe") version "1.0.3"
 }
 
 projekt {
-    version = "1.0.1"
+    version = "1.1.0"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,

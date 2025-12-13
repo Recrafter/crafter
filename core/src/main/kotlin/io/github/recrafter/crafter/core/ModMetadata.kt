@@ -22,6 +22,8 @@ data class ModMetadata(
     val repoUrl: String?,
     val issuesUrl: String?,
     val environment: ModEnvironment,
+
+    val pluginVersion: String,
 ) {
     fun toMod(
         loader: ModLoaderType,
@@ -48,5 +50,6 @@ data class ModMetadata(
             loaderMetadata = loaderMetadata,
             minMinecraftVersion = minMinecraftVersion,
             maxMinecraftVersion = maxMinecraftVersion,
+            pluginVersion = pluginVersion,
         )
 }

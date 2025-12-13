@@ -1,7 +1,7 @@
 package io.github.recrafter.crafter.core.extensions
 
-import io.github.diskria.gradle.utils.extensions.add
 import io.github.diskria.gradle.utils.extensions.common.artifact
+import io.github.diskria.gradle.utils.extensions.requireDependencyNotNull
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
@@ -13,8 +13,10 @@ fun DependencyHandler.minecraft(
     artefactId: String,
     version: String,
     classifier: String? = null
-): Dependency? =
-    minecraft(artifact(groupId, artefactId, version, classifier))
+): Dependency {
+    val artifact = artifact(groupId, artefactId, version, classifier)
+    return minecraft(artifact).requireDependencyNotNull("minecraft", artifact)
+}
 
 fun DependencyHandler.mappings(dependencyNotation: Any): Dependency? =
     add("mappings", dependencyNotation)
@@ -24,8 +26,10 @@ fun DependencyHandler.mappings(
     artefactId: String,
     version: String,
     classifier: String? = null
-): Dependency? =
-    mappings(artifact(groupId, artefactId, version, classifier))
+): Dependency {
+    val artifact = artifact(groupId, artefactId, version, classifier)
+    return mappings(artifact).requireDependencyNotNull("mappings", artifact)
+}
 
 fun DependencyHandler.modImplementation(dependencyNotation: Any): Dependency? =
     add("modImplementation", dependencyNotation)
@@ -35,8 +39,10 @@ fun DependencyHandler.modImplementation(
     artefactId: String,
     version: String,
     classifier: String? = null
-): Dependency? =
-    add("modImplementation", groupId, artefactId, version, classifier)
+): Dependency {
+    val artifact = artifact(groupId, artefactId, version, classifier)
+    return modImplementation(artifact).requireDependencyNotNull("modImplementation", artifact)
+}
 
 fun DependencyHandler.clientExceptions(dependencyNotation: Any): Dependency? =
     add("clientExceptions", dependencyNotation)

@@ -5,6 +5,7 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
+import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
@@ -36,14 +37,14 @@ abstract class CraftEntryPointsTask : DefaultTask() {
     abstract val outputDirectory: DirectoryProperty
 
     init {
-        group = CrafterTasks.INTERNAL_TASKS_GROUP
+        group = CrafterTasks.INTERNAL_GROUP
     }
 
     @TaskAction
-    fun generate() {
+    fun craft() {
         val mod = mod.get()
         val sides = sides.get()
-        val outputDirectory = outputDirectory.get().asFile
+        val outputDirectory = outputDirectory.get().asFile.ensureDirectoryExists()
 
         sides.forEach { side ->
             val entryPointClass = buildSideEntryPointClass(mod, side)

@@ -2,10 +2,13 @@ package io.github.recrafter.crafter.core.versions
 
 interface VersionBound {
 
-    override fun toString(): String
-
     fun isInclusive(): Boolean =
         this is InclusiveVersion
+
+    fun isExclusive(): Boolean =
+        this is ExclusiveVersion
+
+    override fun toString(): String
 
     companion object {
 

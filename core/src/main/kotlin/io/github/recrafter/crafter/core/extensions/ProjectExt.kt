@@ -4,6 +4,7 @@ import io.github.diskria.gradle.utils.extensions.configureExtension
 import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
 import io.github.diskria.gradle.utils.extensions.getGeneratedResourcesDirectory
 import io.github.diskria.gradle.utils.extensions.getGeneratedSourcesDirectory
+import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
 import io.github.recrafter.bedrock.crafter.CrafterConstants
@@ -12,6 +13,16 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+
+fun Project.ensureKotlinPluginApplied(): Project {
+    ensurePluginApplied("org.jetbrains.kotlin.jvm")
+    return this
+}
+
+fun Project.ensureKspPluginApplied(): Project {
+    ensurePluginApplied("com.google.devtools.ksp")
+    return this
+}
 
 fun Project.isLoaderProject(): Boolean =
     name.toEnumOrNull<ModLoaderType>(`kebab-case`) != null
@@ -30,7 +41,7 @@ fun Project.groupLoaderTasks(
                         task.group != null && taskGroups.contains(task.group) ||
                         taskNames.contains(task.name)
             }.configureEach {
-                group = "Mod Loader/${loader.displayName}"
+                group = "Mod Loader".appendPath(loader.displayName)
             }
         }
     }
@@ -47,11 +58,6 @@ fun Project.groupMatchingTasks(name: String, vararg keywords: String) {
             }
         }
     }
-}
-
-fun Project.kotlinApply(block: Project.() -> Unit = {}): Project {
-    block(this)
-    return this
 }
 
 val Project.craftedSourcesDirectory

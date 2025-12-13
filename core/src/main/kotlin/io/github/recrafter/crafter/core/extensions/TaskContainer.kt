@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Task.isCrafterTask(): Boolean =
-    group == CrafterTasks.PUBLIC_TASKS_GROUP || group == CrafterTasks.INTERNAL_TASKS_GROUP
+    group == CrafterTasks.PUBLIC_GROUP || group == CrafterTasks.INTERNAL_GROUP
 
 inline fun <reified T : Task> TaskContainer.lazyDisableTyped(taskName: String) {
     matching { it.name == taskName && T::class.isInstance(it) }.configureEach { (this as T).disable() }

@@ -3,13 +3,11 @@ package io.github.recrafter.crafter.core.configs.mixins
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.serialization.annotations.EncodeDefaults
 import io.github.diskria.kotlin.utils.serialization.annotations.PrettyPrint
-import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.crafter.core.Mod
-import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.toInt
-import io.github.recrafter.crafter.core.helpers.MixinsHelper
+import io.github.recrafter.crafter.core.mixins.MixinsHelper
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -52,7 +50,7 @@ data class MixinsConfig(
                 jvmTargetVersion = "JAVA_${mod.jvmTarget.toInt()}",
                 injectorConfig = InjectorConfig.newInstance(),
                 overwriteConfig = OverwriteConfig.newInstance(),
-                refmap = if (mod.loader.family == ModLoaderFamily.FABRIC) mod.refmapFileName else null,
+                refmap = mod.refmapFileName,
                 mainMixins = when (mod.environment) {
                     ModEnvironment.DEDICATED_SERVER_ONLY -> null
                     else -> sideMixins[ModSide.SERVER]

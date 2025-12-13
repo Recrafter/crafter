@@ -30,7 +30,7 @@ object InequalityVersionRange : VersionRange() {
             min != null && max != null -> min + Constants.Char.SPACE + max
             min != null -> min
             max != null -> max
-            else -> useAnyInsteadEmptyRange()
+            else -> failWithWrongEmptyRangeUsage()
         }
     }
 }

@@ -7,6 +7,7 @@ dependencies {
     implementation(kotlin("gradle-plugin"))
 
     implementation(libs.bedrock)
+    compileOnly(libs.nametag)
 
     implementation(libs.kotlin.serialization.xml)
     implementation(libs.java.poet)

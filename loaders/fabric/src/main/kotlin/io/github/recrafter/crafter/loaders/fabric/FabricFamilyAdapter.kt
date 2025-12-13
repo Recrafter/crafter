@@ -16,7 +16,6 @@ import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.*
-import io.github.recrafter.crafter.core.helpers.AccessConfigHelper
 import io.github.recrafter.crafter.loaders.fabric.extensions.quilt
 import io.ktor.http.*
 import net.fabricmc.loom.util.Constants.TaskGroup
@@ -46,15 +45,7 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
         quilt.layered { officialMojangMappings() }
     }
 
-    override fun getAccessConfigPreset(): String = AccessConfigHelper.WIDENER_PRESET
-
-    override fun configurePlugin(
-        mod: Mod,
-        project: Project,
-        runDirectory: File,
-        accessConfig: File,
-        isRunConfigurationsDisabled: Boolean,
-    ) = with(project) {
+    override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, widenerConfig: File) = with(project) {
         quilt {
             configureExtensionPlugin(project)
             getCustomMinecraftMetadataUrl(mod.minecraftVersion)?.let {
@@ -67,11 +58,11 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
                 @Suppress("UnstableApiUsage")
                 versionsManifests.add(loader.displayName, it.toString())
             }
-            accessWidenerPath = accessConfig
+            accessWidenerPath = widenerConfig
             runs {
                 ModSide.values().forEach { side ->
                     named(side.getName()) {
-                        ideConfigGenerated(!isRunConfigurationsDisabled)
+                        ideConfigGenerated(false)
                         name = side.getName(`Title Case`)
                         runDir = runDirectory.resolve(side.getName()).relativeTo(projectDirectory).path
                         when (side) {
@@ -107,17 +98,11 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
             }
         }
         tasks {
-            if (isRunConfigurationsDisabled) {
-                lazyDisable("ideaSyncTask")
-            }
+            lazyDisable("ideaSyncTask")
         }
         restoreDependencyResolutionRepositories()
         dependencies {
-            val minecraftDependency = artifact(
-                "com.mojang",
-                "minecraft",
-                mod.minecraftVersion.asString()
-            )
+            val minecraftDependency = artifact("com.mojang", "minecraft", mod.minecraftVersion.asString())
             mod.log(project, "Minecraft: $minecraftDependency")
             minecraft(minecraftDependency)
 

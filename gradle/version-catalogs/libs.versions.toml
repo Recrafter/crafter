@@ -2,6 +2,7 @@
 projektor = "4.+"
 
 kotlin = "2.0.21"
+ksp = "2.0.21-1.0.25"
 kotlin-serialization-json = "1.7.3"
 kotlin-serialization-xml = "0.90.1"
 ktor = "3.0.0"
@@ -9,10 +10,12 @@ ktor = "3.0.0"
 java-poet = "0.7.0"
 jsoup = "1.21.2"
 
-kotlin-utils = "0.9.0"
-gradle-utils = "0.9.0"
+kotlin-utils = "0.9.2"
+kotlin-regex-dsl = "0.9.1"
+gradle-utils = "0.9.3"
 
-bedrock = "1.0.1"
+bedrock = "1.0.2"
+nametag = "0.2.1"
 
 quilt-plugin = "1.11.1"
 legacy-fabric-plugin = "1.12.1"
@@ -35,9 +38,14 @@ java-poet = { group = "com.palantir.javapoet", name = "javapoet", version.ref = 
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 
 kotlin-utils = { group = "io.github.diskria", name = "kotlin-utils", version.ref = "kotlin-utils" }
+kotlin-regex-dsl = { group = "io.github.diskria", name = "kotlin-regex-dsl", version.ref = "kotlin-regex-dsl" }
 gradle-utils = { group = "io.github.diskria", name = "gradle-utils", version.ref = "gradle-utils" }
 
 bedrock = { group = "io.github.recrafter", name = "bedrock", version.ref = "bedrock" }
+nametag = { group = "io.github.recrafter", name = "nametag", version.ref = "nametag" }
+
+kotlin-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
@@ -49,7 +57,12 @@ neoforge-plugin = { group = "net.neoforged.moddev", name = "net.neoforged.moddev
 [bundles]
 diskria-utils = [
     "kotlin-utils",
+    "kotlin-regex-dsl",
     "gradle-utils",
+]
+kotlin-plugins = [
+    "kotlin-plugin",
+    "ksp-plugin",
 ]
 loader-plugins = [
     "quilt-plugin",

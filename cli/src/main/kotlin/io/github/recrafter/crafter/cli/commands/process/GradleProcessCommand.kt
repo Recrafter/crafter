@@ -14,7 +14,7 @@ import io.github.recrafter.crafter.cli.bash.properties.stringVar
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.variables.StringVar
 import io.github.recrafter.crafter.cli.bash.variables.value
-import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
+import io.github.recrafter.crafter.tasks.InstallCrafterCLITask
 
 abstract class GradleProcessCommand<T : CLIArguments>(
     serializer: KotlinSerializer<T>

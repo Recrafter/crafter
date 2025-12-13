@@ -18,22 +18,14 @@ object NeoForgeAdapter : ModLoaderAdapter() {
 
     override fun shouldDownloadSources(): Boolean = true
 
-    override fun configurePlugin(
-        mod: Mod,
-        project: Project,
-        runDirectory: File,
-        accessConfig: File,
-        isRunConfigurationsDisabled: Boolean,
-    ) = with(project) {
+    override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, widenerConfig: File) = with(project) {
         neoforge {
             version = mod.loaderMetadata.loaderVersion
-            setAccessTransformers(accessConfig)
+            setAccessTransformers(widenerConfig)
             runs {
                 ModSide.values().forEach { side ->
                     create(side.getName()) {
-                        if (isRunConfigurationsDisabled) {
-                            ideName.set(Constants.Char.EMPTY)
-                        }
+                        ideName.set(Constants.Char.EMPTY)
                         gameDirectory.set(runDirectory.resolve(side.getName()))
                         val memoryRange = when (side) {
                             ModSide.CLIENT -> 2..4

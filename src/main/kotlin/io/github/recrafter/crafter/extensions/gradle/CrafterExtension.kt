@@ -4,6 +4,7 @@ import io.github.diskria.gradle.utils.extensions.common.requireGradle
 import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.gradle.utils.extensions.gradle.GradleExtension
 import io.github.recrafter.bedrock.recipes.ModRecipe
+import io.github.recrafter.crafter.CrafterGradlePlugin
 import io.github.recrafter.crafter.core.ModMetadata
 import org.gradle.api.model.ObjectFactory
 import javax.inject.Inject
@@ -33,6 +34,10 @@ abstract class CrafterExtension @Inject constructor(protected val objects: Objec
             repoUrl = configuration.developer.repoUrl.orNull,
             issuesUrl = configuration.developer.issuesUrl.orNull,
             environment = recipe.environment,
+
+            pluginVersion = requireGradleNotNull(CrafterGradlePlugin::class.java.`package`?.implementationVersion) {
+                "Failed to get plugin version."
+            }
         )
     }
 

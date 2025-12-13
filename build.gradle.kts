@@ -1,5 +1,6 @@
 import io.github.diskria.gradle.utils.extensions.children
 import io.github.diskria.gradle.utils.extensions.getCatalogVersion
+import io.github.diskria.gradle.utils.extensions.implementation
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -17,6 +18,7 @@ val includedProjects = buildList {
 
 dependencies {
     implementation(kotlin("gradle-plugin"))
+    implementation(libs.bundles.kotlin.plugins)
 
     implementation(libs.bundles.loader.plugins)
     implementation(libs.bedrock)

@@ -5,14 +5,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NeoForgeModAccessConfigEntry(
+data class NeoForgeModAccessTransformerEntry(
     @SerialName("file")
-    val accessConfigPath: String,
+    val widenerConfigPath: String,
 ) {
     companion object {
-        fun of(mod: Mod): NeoForgeModAccessConfigEntry =
-            NeoForgeModAccessConfigEntry(
-                accessConfigPath = mod.accessConfigPath
+        fun of(mod: Mod): NeoForgeModAccessTransformerEntry =
+            NeoForgeModAccessTransformerEntry(
+                widenerConfigPath = mod.widenerConfigPath
             )
     }
 }

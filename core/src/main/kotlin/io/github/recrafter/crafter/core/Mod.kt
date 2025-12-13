@@ -1,6 +1,5 @@
 package io.github.recrafter.crafter.core
 
-import io.github.diskria.gradle.utils.extensions.common.requireGradle
 import io.github.diskria.gradle.utils.extensions.log
 import io.github.diskria.gradle.utils.helpers.JarConstants
 import io.github.diskria.kotlin.utils.BracketsType
@@ -49,6 +48,7 @@ data class Mod(
     val loaderMetadata: LoaderMetadata,
     val minMinecraftVersion: MinecraftVersion,
     val maxMinecraftVersion: MinecraftVersion,
+    val pluginVersion: String,
 ) {
     val packageName: String
         get() = namespace.appendPackageName(id)
@@ -68,17 +68,17 @@ data class Mod(
     val iconPath: String
         get() = iconFileName
 
-    val accessConfigName: String
-        get() = when (loader.family) {
-            ModLoaderFamily.FABRIC -> fileName("cfg", "accesswidener")
-            ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
-        }
-
     val configsDirectoryPath: String
         get() = JarConstants.Directory.META_INF
 
-    val accessConfigPath: String
-        get() = configsDirectoryPath.appendPath(accessConfigName)
+    val widenerConfigName: String
+        get() = when (loader.family) {
+            ModLoaderFamily.FABRIC -> fileName(id, "accesswidener")
+            ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
+        }
+
+    val widenerConfigPath: String
+        get() = configsDirectoryPath.appendPath(widenerConfigName)
 
     val mixinsConfigName: String
         get() = fileName(id, "mixins", Constants.File.Extension.JSON)
@@ -89,12 +89,10 @@ data class Mod(
     val resourcePackConfigName: String
         get() = fileName("pack", "mcmeta")
 
-    val refmapFileName: String
-        get() {
-            requireGradle(loader.family == ModLoaderFamily.FABRIC) {
-                "Invalid configuration: refmap generation attempted for Forge, but it is only supported on Fabric."
-            }
-            return fileName(id + "_refmap", Constants.File.Extension.JSON)
+    val refmapFileName: String?
+        get() = when (loader.family) {
+            ModLoaderFamily.FABRIC -> fileName(id + "_refmap", Constants.File.Extension.JSON)
+            ModLoaderFamily.FORGE -> null
         }
 
     val loaderConfigPath: String
@@ -136,14 +134,7 @@ data class Mod(
         get() = UUID.nameUUIDFromBytes("OfflinePlayer:$player".toByteArray(Charsets.UTF_8))
 
     val jvmTarget: JvmTarget
-        get() {
-            val minJvmTarget = minMinecraftVersion.minJavaVersion.toJvmTarget()
-            val maxJvmTarget = maxMinecraftVersion.minJavaVersion.toJvmTarget()
-            requireGradle(minJvmTarget == maxJvmTarget) {
-                "Minecraft version range crosses Java compatibility: $minJvmTarget -> $maxJvmTarget."
-            }
-            return maxJvmTarget
-        }
+        get() = minMinecraftVersion.minJavaVersion.toJvmTarget()
 
     val isReobfEnabled: Boolean =
         loader.family == ModLoaderFamily.FORGE && minecraftVersion < LoaderCompatibility.Forge.REOBF_CANCEL

@@ -33,7 +33,7 @@ class HelpCommand(val commandsProvider: () -> List<AbstractCLICommand<*>>) : NoA
             )
         }
         println_()
-        withCentering(cursorLine - 2) {
+        withCentering(linesCount - 2) {
             val versionInfo = "CLI v${fingerprint.pluginVersion}"
             println_(versionInfo, AnsiColor.MAGENTA, AnsiStyle.BOLD)
             println_(BoxDraw.HORIZONTAL.repeat(versionInfo.length), AnsiColor.MAGENTA, AnsiStyle.BOLD)

@@ -7,6 +7,7 @@ import io.github.diskria.kotlin.utils.extensions.common.buildString
 import io.github.diskria.kotlin.utils.extensions.common.className
 import io.github.diskria.kotlin.utils.extensions.indexOfOrNull
 import io.github.diskria.kotlin.utils.extensions.lastIndexOfOrNull
+import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.primitives.repeat
 import io.github.diskria.kotlin.utils.extensions.wrapWithSpace
 import io.github.recrafter.crafter.cli.bash.BashCommand
@@ -28,6 +29,7 @@ import io.github.recrafter.crafter.cli.bash.properties.intVar
 import io.github.recrafter.crafter.cli.bash.properties.stringVar
 import io.github.recrafter.crafter.cli.bash.references.FunctionReference
 import io.github.recrafter.crafter.cli.bash.utils.ColumnLine
+import io.github.recrafter.crafter.cli.bash.utils.ShellType
 import io.github.recrafter.crafter.cli.bash.variables.*
 import io.github.recrafter.crafter.cli.bash.zsh.ZshCommand
 import io.github.recrafter.crafter.cli.bash.zsh.completion.ZshCompletion
@@ -45,8 +47,8 @@ class ScriptBuilder {
     val zsh: Zsh = Zsh
     val cursor: BashCursor = BashCursor
 
-    val cursorLine: Int
-        get() = script.lines().lastIndex + 1
+    val linesCount: Int
+        get() = script.lines().size
 
     private var script: String = Constants.Char.EMPTY
     private var codeIndent: Int = 0
@@ -102,8 +104,8 @@ class ScriptBuilder {
         return this
     }
 
-    fun ScriptBuilder.bashShebang(): ScriptBuilder =
-        code { "#!/usr/bin/env ${::bash.name}" }
+    fun ScriptBuilder.shebang(shellType: ShellType = ShellType.BASH): ScriptBuilder =
+        code { "#!/usr/bin/env ${shellType.getName()}" }
 
     @Suppress("SpellCheckingInspection")
     fun ScriptBuilder.enableNullGlobbing(): ScriptBuilder =
@@ -442,7 +444,7 @@ class ScriptBuilder {
 
     fun ScriptBuilder.copyDirectory(sourcePath: String, targetPath: String): ScriptBuilder {
         createDirectory(bash.getParentDirectoryPath(targetPath).command)
-        run_(BashCommand.CP, spaced("-r", sourcePath.quoted(), targetPath.quoted(),))
+        run_(BashCommand.CP, spaced("-r", sourcePath.quoted(), targetPath.quoted()))
         return this
     }
 
@@ -670,6 +672,9 @@ class ScriptBuilder {
 
     fun Bash.getScriptLocation(): String =
         bash.getAbsolutePath(bash.getParentDirectoryPath(getArray("BASH_SOURCE").getElement(0)).command).command
+
+    fun Bash.isZsh(): BashCondition =
+        bash.getString("ZSH_VERSION").isNotEmpty()
 
     private fun Bash.print(
         text: String = Constants.Char.EMPTY,

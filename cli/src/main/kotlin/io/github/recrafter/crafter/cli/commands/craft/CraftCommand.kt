@@ -78,7 +78,7 @@ object CraftCommand : GradleProcessCommand<CraftArguments>(CraftArguments.serial
                     ensureProcessKilled(process.pid)
                     ensureProcessKilled(process.logWatcher.pid)
                 }
-                craftSingleSide(process, arguments, modProjectName, spinner)
+                craftSingletonSide(process, arguments, modProjectName, spinner)
             }.case_(CraftSide.SERVER.getName()) {
                 val process = CraftProcess.build(this, ModSide.SERVER, false)
                 onExit {
@@ -86,7 +86,7 @@ object CraftCommand : GradleProcessCommand<CraftArguments>(CraftArguments.serial
                     ensureProcessKilled(process.pid)
                     ensureProcessKilled(process.logWatcher.pid)
                 }
-                craftSingleSide(process, arguments, modProjectName, spinner)
+                craftSingletonSide(process, arguments, modProjectName, spinner)
             }.case_(CraftSide.LAUNCHER.getName()) {
                 println_("The launcher is still a work in progress!", YELLOW)
                 println_("In version 2.0, you’ll be able to start the server or multiple clients manually.", YELLOW)
@@ -96,7 +96,7 @@ object CraftCommand : GradleProcessCommand<CraftArguments>(CraftArguments.serial
         }
     }
 
-    private fun ScriptBuilder.craftSingleSide(
+    private fun ScriptBuilder.craftSingletonSide(
         process: CraftProcess,
         arguments: CraftArguments,
         modProjectName: StringVar,

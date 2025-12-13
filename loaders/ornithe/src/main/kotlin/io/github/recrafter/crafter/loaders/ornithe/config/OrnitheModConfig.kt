@@ -31,7 +31,7 @@ data class OrnitheModConfig(
     val mixinsConfigPath: List<String>,
 
     @SerialName("accessWidener")
-    val accessConfigPath: String,
+    val widenerConfigPath: String,
 
     @SerialName("contact")
     val links: OrnitheModLinksConfig,
@@ -54,7 +54,7 @@ data class OrnitheModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                accessConfigPath = mod.accessConfigPath,
+                widenerConfigPath = mod.widenerConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = OrnitheModLinksConfig.of(mod),
                 entryPoints = OrnitheModEntryPointsConfig.of(mod),

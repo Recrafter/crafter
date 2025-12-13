@@ -18,7 +18,8 @@ import io.github.recrafter.crafter.cli.commands.process.InitProcess
 import io.github.recrafter.crafter.cli.commands.process.Spinner
 import io.github.recrafter.crafter.cli.extensions.common.script
 import io.github.recrafter.crafter.cli.extensions.common.withScript
-import io.github.recrafter.crafter.core.helpers.MixinsHelper
+import io.github.recrafter.crafter.core.mixins.MixinsHelper
+import io.github.recrafter.crafter.core.mixins.accessors.AccessorsHelper
 import org.gradle.api.tasks.SourceSet
 
 @CLICommand(name = InitCommand.COMMAND_NAME, description = "Create and initialize new mod project")
@@ -76,6 +77,15 @@ object InitCommand : GradleProcessCommand<InitArguments>(InitArguments.serialize
                     .appendPath(namespacePath)
                     .appendPath(MixinsHelper.MIXINS_NAME)
                     .appendPath(sideName)
+            )
+
+            val sideAccessors = sideSources.appendPath(AccessorsHelper.ACCESSORS_NAME)
+            createDirectory(
+                sideAccessors.appendPath("java")
+                    .appendPath(namespacePath)
+                    .appendPath(MixinsHelper.MIXINS_NAME)
+                    .appendPath(sideName)
+                    .appendPath(AccessorsHelper.ACCESSORS_NAME)
             )
         }
         val spinner = Spinner.build(this)

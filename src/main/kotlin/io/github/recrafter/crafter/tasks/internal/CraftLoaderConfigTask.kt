@@ -26,7 +26,7 @@ abstract class CraftLoaderConfigTask : DefaultTask() {
     abstract val outputFile: RegularFileProperty
 
     init {
-        group = CrafterTasks.INTERNAL_TASKS_GROUP
+        group = CrafterTasks.INTERNAL_GROUP
     }
 
     @TaskAction
@@ -34,48 +34,16 @@ abstract class CraftLoaderConfigTask : DefaultTask() {
         val mod = mod.get()
         val outputFile = outputFile.get().asFile.ensureFileExists()
 
-        when (mod.loader) {
-            ModLoaderType.FABRIC -> {
-                val config = FabricModConfig.of(mod).serializeToJson()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.QUILT -> {
-                val config = QuiltModConfig.of(mod).serializeToJson()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.LEGACY_FABRIC -> {
-                val config = FabricModConfig.of(mod).serializeToJson()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.BABRIC -> {
-                val config = FabricModConfig.of(mod).serializeToJson()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.ORNITHE -> {
-                val config = OrnitheModConfig.of(mod).serializeToJson()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.FORGE -> {
-                val config = ForgeModConfig.of(mod).serializeToToml()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
-
-            ModLoaderType.NEOFORGE -> {
-                val config = NeoForgeModConfig.of(mod).serializeToToml()
-                mod.log(project, "Loader config generated", config)
-                outputFile.writeText(config)
-            }
+        val config = when (mod.loader) {
+            ModLoaderType.FABRIC -> FabricModConfig.of(mod).serializeToJson()
+            ModLoaderType.QUILT -> QuiltModConfig.of(mod).serializeToJson()
+            ModLoaderType.LEGACY_FABRIC -> FabricModConfig.of(mod).serializeToJson()
+            ModLoaderType.BABRIC -> FabricModConfig.of(mod).serializeToJson()
+            ModLoaderType.ORNITHE -> OrnitheModConfig.of(mod).serializeToJson()
+            ModLoaderType.FORGE -> ForgeModConfig.of(mod).serializeToToml()
+            ModLoaderType.NEOFORGE -> NeoForgeModConfig.of(mod).serializeToToml()
         }
+        mod.log(project, "Loader config generated", config)
+        outputFile.writeText(config)
     }
 }

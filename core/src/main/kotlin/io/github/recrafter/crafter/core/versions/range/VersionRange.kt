@@ -20,11 +20,11 @@ sealed class VersionRange {
 
     fun range(minVersion: VersionBound? = null, maxVersion: VersionBound? = null): String {
         if (minVersion == null && maxVersion == null) {
-            useAnyInsteadEmptyRange()
+            failWithWrongEmptyRangeUsage()
         }
         return rangeInternal(minVersion, maxVersion)
     }
 
-    protected fun useAnyInsteadEmptyRange(): Nothing =
+    protected fun failWithWrongEmptyRangeUsage(): Nothing =
         failWithWrongUsage(useInsteadThis = ::any.name)
 }

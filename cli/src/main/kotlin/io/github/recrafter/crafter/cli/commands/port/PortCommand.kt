@@ -4,7 +4,7 @@ import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
-import io.github.recrafter.bedrock.versions.MinecraftVersionRange.Companion.MOD_PROJECT_NAME_SEPARATOR
+import io.github.recrafter.bedrock.versions.MinecraftVersionRange.Companion.PROJECT_NAME_SEPARATOR
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.Fingerprint
 import io.github.recrafter.crafter.cli.bash.ExitCode
@@ -63,13 +63,13 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
             ifBlock {
                 if_(arguments.direction.equals_(PortDirection.PAST)) {
                     ifBlock {
-                        if_(directoryName.startsWith(PORT_RANGE_BOUNDARY + MOD_PROJECT_NAME_SEPARATOR)) {
+                        if_(directoryName.startsWith(PORT_RANGE_BOUNDARY + PROJECT_NAME_SEPARATOR)) {
                             addToArray(portProjectPaths, modProjectPath)
                         }
                     }
                 }.else_ {
                     ifBlock {
-                        if_(directoryName.endsWith(MOD_PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)) {
+                        if_(directoryName.endsWith(PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)) {
                             addToArray(portProjectPaths, modProjectPath)
                         }
                     }
@@ -128,12 +128,12 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                     if_(arguments.direction.equals_(PortDirection.PAST)) {
                         setStringValue(
                             currentPortVersion,
-                            currentPortProjectName.removePrefix(PORT_RANGE_BOUNDARY + MOD_PROJECT_NAME_SEPARATOR)
+                            currentPortProjectName.removePrefix(PORT_RANGE_BOUNDARY + PROJECT_NAME_SEPARATOR)
                         )
                     }.else_ {
                         setStringValue(
                             currentPortVersion,
-                            currentPortProjectName.removeSuffix(MOD_PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)
+                            currentPortProjectName.removeSuffix(PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)
                         )
                     }
                 }
@@ -160,7 +160,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                     val isFound by booleanVar()
                     forEach_(modProjectPaths) { modProjectPath ->
                         val directoryName by stringVar(bash.getBasename(modProjectPath).command)
-                        val rangeParts by arrayVar(directoryName.split(MOD_PROJECT_NAME_SEPARATOR))
+                        val rangeParts by arrayVar(directoryName.split(PROJECT_NAME_SEPARATOR))
                         val rangeMin by stringVar(rangeParts.getElement(0))
                         val rangeMax by stringVar(rangeParts.getElement(1))
                         ifBlock {
@@ -168,7 +168,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                                 ifBlock {
                                     ifAny(
                                         directoryName.equals_(version),
-                                        directoryName.startsWith(version.value + MOD_PROJECT_NAME_SEPARATOR)
+                                        directoryName.startsWith(version.value + PROJECT_NAME_SEPARATOR)
                                     ) {
                                         setBooleanValue(isFound, true)
                                         setStringValue(lastSourceDirectoryPath, modProjectPath)
@@ -188,7 +188,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                                 ifBlock {
                                     ifAny(
                                         directoryName.equals_(version),
-                                        directoryName.endsWith(MOD_PROJECT_NAME_SEPARATOR + version.value)
+                                        directoryName.endsWith(PROJECT_NAME_SEPARATOR + version.value)
                                     ) {
                                         setBooleanValue(isFound, true)
                                         setStringValue(lastSourceDirectoryPath, modProjectPath)
@@ -238,14 +238,14 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                                 renameDirectory(
                                     currentPortPath,
                                     arguments.loader.value.appendPath(
-                                        currentPortVersion.value + MOD_PROJECT_NAME_SEPARATOR + oppositeVersion.value
+                                        currentPortVersion.value + PROJECT_NAME_SEPARATOR + oppositeVersion.value
                                     )
                                 )
                             }.else_ {
                                 renameDirectory(
                                     currentPortPath,
                                     arguments.loader.value.appendPath(
-                                        oppositeVersion.value + MOD_PROJECT_NAME_SEPARATOR + currentPortVersion.value
+                                        oppositeVersion.value + PROJECT_NAME_SEPARATOR + currentPortVersion.value
                                     )
                                 )
                             }
@@ -267,7 +267,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                         ifBlock {
                             ifAny(
                                 directoryName.equals_(version),
-                                directoryName.startsWith(version.value + MOD_PROJECT_NAME_SEPARATOR)
+                                directoryName.startsWith(version.value + PROJECT_NAME_SEPARATOR)
                             ) {
                                 setBooleanValue(isFound, true)
                                 setStringValue(sourceDirectoryPath, modProjectPath)
@@ -279,7 +279,7 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
                         ifBlock {
                             ifAny(
                                 directoryName.equals_(version),
-                                directoryName.endsWith(MOD_PROJECT_NAME_SEPARATOR + version.value)
+                                directoryName.endsWith(PROJECT_NAME_SEPARATOR + version.value)
                             ) {
                                 setBooleanValue(isFound, true)
                                 setStringValue(sourceDirectoryPath, modProjectPath)
@@ -320,9 +320,9 @@ object PortCommand : AbstractCLICommand<PortArguments>(PortArguments.serializer(
             if_(arguments.step.equals_(PortStep.TEST)) {
                 setStringValue(modProjectName, bash.getBasename(currentPortPath).command)
             }.if_(arguments.direction.equals_(PortDirection.PAST)) {
-                setStringValue(modProjectName, PORT_RANGE_BOUNDARY + MOD_PROJECT_NAME_SEPARATOR + targetVersion.value)
+                setStringValue(modProjectName, PORT_RANGE_BOUNDARY + PROJECT_NAME_SEPARATOR + targetVersion.value)
             }.else_ {
-                setStringValue(modProjectName, targetVersion.value + MOD_PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)
+                setStringValue(modProjectName, targetVersion.value + PROJECT_NAME_SEPARATOR + PORT_RANGE_BOUNDARY)
             }
         }
         ifBlock {

@@ -31,7 +31,7 @@ data class FabricModConfig(
     val mixinsConfigPath: List<String>,
 
     @SerialName("accessWidener")
-    val accessConfigPath: String,
+    val widenerConfigPath: String,
 
     @SerialName("contact")
     val links: FabricModLinksConfig,
@@ -54,7 +54,7 @@ data class FabricModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                accessConfigPath = mod.accessConfigPath,
+                widenerConfigPath = mod.widenerConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = FabricModLinksConfig.of(mod),
                 entryPoints = FabricModEntryPointsConfig.of(mod),

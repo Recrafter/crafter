@@ -2,6 +2,7 @@ package io.github.recrafter.crafter
 
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.gradle.utils.extensions.common.requireGradle
+import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
@@ -9,6 +10,7 @@ import io.github.diskria.kotlin.utils.extensions.ensureFileExists
 import io.github.diskria.kotlin.utils.extensions.generics.addIfNotNull
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnum
+import io.github.diskria.kotlin.utils.extensions.wrapWithSingleQuote
 import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.crafter.CrafterFlow
 import io.github.recrafter.bedrock.extensions.getModRecipe
@@ -17,14 +19,17 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
+import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
+import io.github.recrafter.crafter.core.LoaderCompatibility
 import io.github.recrafter.crafter.core.LoaderMetadata
 import io.github.recrafter.crafter.core.ModMetadata
 import io.github.recrafter.crafter.core.extensions.*
-import io.github.recrafter.crafter.core.helpers.MixinsHelper
 import io.github.recrafter.crafter.core.helpers.server.EulaHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerPropertiesHelper
+import io.github.recrafter.crafter.core.mixins.MixinsHelper
+import io.github.recrafter.crafter.core.mixins.accessors.AccessorsHelper
 import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
 import io.github.recrafter.crafter.extensions.mappers.mapToAdapter
 import io.github.recrafter.crafter.loaders.babric.sync.BarnMappingsSync
@@ -33,10 +38,10 @@ import io.github.recrafter.crafter.loaders.forge.sync.ForgeLoaderSync
 import io.github.recrafter.crafter.loaders.legacy_fabric.sync.LegacyYarnMappingsSync
 import io.github.recrafter.crafter.loaders.neoforge.sync.NeoForgeLoaderSync
 import io.github.recrafter.crafter.loaders.ornithe.sync.FeatherMappingsSync
+import io.github.recrafter.crafter.tasks.CraftClientTask
+import io.github.recrafter.crafter.tasks.CraftServerTask
+import io.github.recrafter.crafter.tasks.InstallCrafterCLITask
 import io.github.recrafter.crafter.tasks.internal.CraftLoaderConfigTask
-import io.github.recrafter.crafter.tasks.public.CraftClientTask
-import io.github.recrafter.crafter.tasks.public.CraftServerTask
-import io.github.recrafter.crafter.tasks.public.InstallCrafterCLITask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.wrapper.Wrapper
@@ -51,7 +56,7 @@ class CrafterGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
         requireGradle(project.isRootProject()) {
-            "The ${CrafterConstants.PLUGIN_NAME} must be applied only to the root project."
+            "The ${CrafterConstants.PLUGIN_NAME} Gradle Plugin must be applied only to the root project."
         }
         extra["fabric.loom.disableMinecraftVerification"] = "true"
         tasks {
@@ -73,20 +78,21 @@ class CrafterGradlePlugin : Plugin<Project> {
 
             when (val flow = CrafterFlow.detect()) {
                 is CrafterFlow.Normal -> {
-                    children
-                        .filter { it.isLoaderProject() }
-                        .forEach { loaderProject ->
-                            loaderProject.children
-                                .associateWith {
-                                    MinecraftVersionRange.parse(
-                                        it.name,
-                                        MinecraftVersionRange.MOD_PROJECT_NAME_SEPARATOR
-                                    )
-                                }
-                                .forEach { (modProject, versionRange) ->
-                                    configureModProject(loaderProject, modProject, modMetadata, versionRange)
-                                }
+                    children.filter { it.isLoaderProject() }.forEach { loaderProject ->
+                        val modProjects = loaderProject.children.associateWith {
+                            MinecraftVersionRange.parse(it.name, MinecraftVersionRange.PROJECT_NAME_SEPARATOR)
                         }
+                        modProjects.forEach { (modProject, versionRange) ->
+                            configureModProject(loaderProject, modProject, modMetadata, versionRange)
+                        }
+                        loaderProject.registerTask<CraftClientTask> {
+                            dependsSequentiallyOn(
+                                modProjects.entries
+                                    .sortedWith(compareByDescending(MinecraftVersion.COMPARATOR) { it.value.min })
+                                    .map { it.key.getTask<CraftClientTask>() }
+                            )
+                        }
+                    }
                 }
 
                 is CrafterFlow.Single -> {
@@ -146,21 +152,53 @@ class CrafterGradlePlugin : Plugin<Project> {
         val maxVersion = versionRange.max
         val loader = loaderProject.name.toEnum<ModLoaderType>(`kebab-case`)
         requireGradle(loader.supportedVersions.contains(minVersion) && loader.supportedVersions.contains(maxVersion)) {
-            "Mod project ${modProject.path} uses Minecraft versions outside the supported range " +
-                    "for loader ${loader.displayName}: ${versionRange.asString("-")}."
+            buildString {
+                appendLine(
+                    "Mod project ${modProject.path.wrapWithSingleQuote()} targets Minecraft versions " +
+                            "${versionRange.asString()}, which are outside the supported range for " +
+                            "loader ${loader.displayName}."
+                )
+                appendLine("Supported versions: ${loader.supportedVersions.joinToString { it.asString() }}.")
+            }
+        }
+        if (!versionRange.isSingleVersion()) {
+            val candidates = versionRange.expand().toMutableList().apply { removeFirst() }
+            val checkpoints = LoaderCompatibility.getCheckpoints(loader)
+            requireGradle(candidates.intersect(checkpoints.toSet()).isEmpty()) {
+                "Mod project ${modProject.path.wrapWithSingleQuote()} targets Minecraft versions " +
+                        "${versionRange.asString()}, intersect compatibility checkpoints."
+            }
         }
         val loaderAdapter = loader.mapToAdapter()
         val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)
         val mod = modMetadata.toMod(loader, minVersion, maxVersion, loaderMetadata)
+        modProject.ensureKotlinPluginApplied()
+        val modMainSourceSet = modProject.sourceSets.main
+        val sideProjects = mod.environment.sides.associateWith { side ->
+            modProject.children.single { it.name == side.getName() }.ensureKotlinPluginApplied()
+        }
+        sideProjects.values.forEach { sideProject ->
+            sideProject.sourceSets.main.addToClasspath(modMainSourceSet, withOutput = true)
+            val mixins = sideProject.sourceSets.create(MixinsHelper.MIXINS_NAME).apply {
+                addToClasspath(modMainSourceSet, withOutput = true)
+            }
+            val accessors = sideProject.sourceSets.create(AccessorsHelper.ACCESSORS_NAME).apply {
+                addToClasspath(modMainSourceSet, withOutput = true)
+                java.srcDir(modProject.getBuildDirectory("generated/ksp/main/java"))
+                kotlin.srcDir(modProject.getBuildDirectory("generated/ksp/main/kotlin"))
+            }
+            with(sideProject) {
+                tasks {
+                    jar {
+                        from(mixins.output, accessors.output)
+                    }
+                }
+            }
+        }
         with(modProject) {
-            ensurePluginApplied("org.jetbrains.kotlin.jvm")
+            ensureKspPluginApplied()
             group = mod.namespace
             version = mod.archiveVersion
-        }
-        val sideProjects = mod.environment.sides.associateWith { side ->
-            modProject.children.first { it.name == side.getName() }.kotlinApply {
-                ensurePluginApplied("org.jetbrains.kotlin.jvm")
-            }
         }
         val runDirectory = modProject.projectDirectory.resolve(mod.runDirectoryName)
         runDirectory.resolve(ModSide.SERVER.getName()).ensureDirectoryExists {
@@ -174,25 +212,18 @@ class CrafterGradlePlugin : Plugin<Project> {
                 writeText(ServerOperatorsHelper.buildPreset(mod))
             }
         }
-        val modMainSourceSet = modProject.sourceSets.main
-        sideProjects.values.forEach { sideProject ->
-            sideProject.sourceSets.main.addToClasspath(modMainSourceSet, withOutput = true)
-            val mixins = sideProject.sourceSets.create(MixinsHelper.MIXINS_NAME).apply {
-                addToClasspath(modMainSourceSet, withOutput = true)
-            }
-            with(sideProject) {
-                tasks {
-                    jar {
-                        from(mixins.output)
-                    }
-                }
-            }
-        }
         val craftLoaderConfigTask = modProject.registerTask<CraftLoaderConfigTask> {
             this.mod.set(mod)
             outputFile = getTempFile(mod.loaderConfigPath)
         }
-        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects, craftLoaderConfigTask)
+        with(modProject) {
+            tasks {
+                processResources {
+                    copyTaskOutput(craftLoaderConfigTask, mod.loaderConfigPath)
+                }
+            }
+        }
+        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects)
         ModSide.values().forEach { side ->
             when (side) {
                 ModSide.CLIENT -> modProject.registerTask<CraftClientTask>()
@@ -216,7 +247,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 buildString {
                     appendLine(
                         "Detected Gradle version $currentVersion may not be fully compatible " +
-                                "with ${CrafterConstants.PLUGIN_NAME}."
+                                "with ${CrafterConstants.PLUGIN_NAME} Gradle Plugin."
                     )
                     appendLine("Recommended Gradle version: $RECOMMENDED_GRADLE_VERSION")
                     append("To update, run: ${Cmd.gradleTask("wrapper")}")
