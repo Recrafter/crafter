@@ -38,11 +38,11 @@ dependencyResolutionManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "1.0.3"
+    id("io.github.recrafter.recipe") version "1.0.4"
 }
 
 projekt {
-    version = "1.1.0"
+    version = "1.1.1"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,
