@@ -2,7 +2,6 @@ package io.github.recrafter.crafter
 
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.gradle.utils.extensions.common.requireGradle
-import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.common.failWithInvalidValue
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.ensureDirectoryExists
@@ -28,11 +27,9 @@ import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.core.helpers.server.EulaHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerOperatorsHelper
 import io.github.recrafter.crafter.core.helpers.server.ServerPropertiesHelper
-import io.github.recrafter.crafter.core.mixins.MixinsHelper
-import io.github.recrafter.crafter.core.mixins.accessors.AccessorsHelper
 import io.github.recrafter.crafter.extensions.gradle.CrafterExtension
 import io.github.recrafter.crafter.extensions.mappers.mapToAdapter
-import io.github.recrafter.crafter.loaders.babric.sync.BarnMappingsSync
+import io.github.recrafter.crafter.loaders.babric.sync.BinyMappingsSync
 import io.github.recrafter.crafter.loaders.fabric.sync.FabricFamilyLoaderSync
 import io.github.recrafter.crafter.loaders.forge.sync.ForgeLoaderSync
 import io.github.recrafter.crafter.loaders.legacy_fabric.sync.LegacyYarnMappingsSync
@@ -110,7 +107,7 @@ class CrafterGradlePlugin : Plugin<Project> {
     private fun resolveLoaderMetadata(
         loader: ModLoaderType,
         project: Project,
-        version: MinecraftVersion
+        version: MinecraftVersion,
     ): LoaderMetadata =
         when (loader.family) {
             ModLoaderFamily.FABRIC -> {
@@ -118,7 +115,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                     loaderVersion = FabricFamilyLoaderSync(loader).getLatestVersion(project, version),
                     mappingsVersion = when (loader) {
                         ModLoaderType.LEGACY_FABRIC -> LegacyYarnMappingsSync.getLatestVersion(project, version)
-                        ModLoaderType.BABRIC -> BarnMappingsSync.getLatestVersion(project, version)
+                        ModLoaderType.BABRIC -> BinyMappingsSync.getLatestVersion(project, version)
                         ModLoaderType.ORNITHE -> FeatherMappingsSync.getLatestVersion(project, version)
                         else -> null
                     },
@@ -155,8 +152,8 @@ class CrafterGradlePlugin : Plugin<Project> {
             buildString {
                 appendLine(
                     "Mod project ${modProject.path.wrapWithSingleQuote()} targets Minecraft versions " +
-                            "${versionRange.asString()}, which are outside the supported range for " +
-                            "loader ${loader.displayName}."
+                        "${versionRange.asString()}, which are outside the supported range for " +
+                        "loader ${loader.displayName}."
                 )
                 appendLine("Supported versions: ${loader.supportedVersions.joinToString { it.asString() }}.")
             }
@@ -166,35 +163,17 @@ class CrafterGradlePlugin : Plugin<Project> {
             val checkpoints = LoaderCompatibility.getCheckpoints(loader)
             requireGradle(candidates.intersect(checkpoints.toSet()).isEmpty()) {
                 "Mod project ${modProject.path.wrapWithSingleQuote()} targets Minecraft versions " +
-                        "${versionRange.asString()}, intersect compatibility checkpoints."
+                    "${versionRange.asString()}, intersect compatibility checkpoints."
             }
         }
         val loaderAdapter = loader.mapToAdapter()
         val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)
         val mod = modMetadata.toMod(loader, minVersion, maxVersion, loaderMetadata)
         modProject.ensureKotlinPluginApplied()
-        val modMainSourceSet = modProject.sourceSets.main
         val sideProjects = mod.environment.sides.associateWith { side ->
             modProject.children.single { it.name == side.getName() }.ensureKotlinPluginApplied()
         }
-        sideProjects.values.forEach { sideProject ->
-            sideProject.sourceSets.main.addToClasspath(modMainSourceSet, withOutput = true)
-            val mixins = sideProject.sourceSets.create(MixinsHelper.MIXINS_NAME).apply {
-                addToClasspath(modMainSourceSet, withOutput = true)
-            }
-            val accessors = sideProject.sourceSets.create(AccessorsHelper.ACCESSORS_NAME).apply {
-                addToClasspath(modMainSourceSet, withOutput = true)
-                java.srcDir(modProject.getBuildDirectory("generated/ksp/main/java"))
-                kotlin.srcDir(modProject.getBuildDirectory("generated/ksp/main/kotlin"))
-            }
-            with(sideProject) {
-                tasks {
-                    jar {
-                        from(mixins.output, accessors.output)
-                    }
-                }
-            }
-        }
+        sideProjects.values.forEach { it.sourceSets.main.addToClasspath(modProject.sourceSets.main, withOutput = true) }
         with(modProject) {
             ensureKspPluginApplied()
             group = mod.namespace
@@ -224,7 +203,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             }
         }
         loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects)
-        ModSide.values().forEach { side ->
+        ModSide.entries.forEach { side ->
             when (side) {
                 ModSide.CLIENT -> modProject.registerTask<CraftClientTask>()
                 ModSide.SERVER -> modProject.registerTask<CraftServerTask>()
@@ -232,7 +211,6 @@ class CrafterGradlePlugin : Plugin<Project> {
                 dependsSequentiallyOn(
                     buildList {
                         add(modProject.tasks.build.get())
-                        addAll(loaderAdapter.getPrepareRunTasks(modProject, side))
                         addIfNotNull(modProject.getTaskOrNull(side.getRunTaskName()))
                     }
                 )
@@ -247,7 +225,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 buildString {
                     appendLine(
                         "Detected Gradle version $currentVersion may not be fully compatible " +
-                                "with ${CrafterConstants.PLUGIN_NAME} Gradle Plugin."
+                            "with ${CrafterConstants.PLUGIN_NAME} Gradle Plugin."
                     )
                     appendLine("Recommended Gradle version: $RECOMMENDED_GRADLE_VERSION")
                     append("To update, run: ${Cmd.gradleTask("wrapper")}")
@@ -257,6 +235,6 @@ class CrafterGradlePlugin : Plugin<Project> {
     }
 
     companion object {
-        private const val RECOMMENDED_GRADLE_VERSION: String = "8.14.3"
+        private const val RECOMMENDED_GRADLE_VERSION: String = "9.3.1"
     }
 }

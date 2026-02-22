@@ -33,7 +33,7 @@ Define your mod metadata:
 
 ```kotlin
 plugins {
-  id("io.github.recrafter.crafter") version "0.3.0"
+  id("io.github.recrafter.crafter") version "$version"
 }
 
 crafter {

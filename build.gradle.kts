@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     `kotlin-dsl`
-    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.projektor)
 }
@@ -20,7 +19,7 @@ dependencies {
     implementation(kotlin("gradle-plugin"))
     implementation(libs.bundles.kotlin.plugins)
 
-    implementation(libs.bundles.loader.plugins)
+    implementation(libs.bundles.gradle.plugins)
     implementation(libs.bedrock)
 
     implementation(libs.kotlin.serialization.json)
@@ -28,6 +27,8 @@ dependencies {
     implementation(libs.jsoup)
 
     implementation(libs.bundles.diskria.utils)
+
+    implementation(libs.bundles.lapis)
 
     includedProjects.forEach {
         compileOnly(it)
@@ -44,7 +45,7 @@ tasks {
     jar {
         includedProjects.forEach {
             dependsOn(it.tasks.jar)
-            from(it.sourceSets.map { it.output })
+            from(it.sourceSets.map { sourceSet -> sourceSet.output })
         }
     }
 }

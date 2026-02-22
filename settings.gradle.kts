@@ -12,7 +12,7 @@ pluginManagement {
                 .resolve(repoName).resolve("build/maven").listFiles().orEmpty()
             if (localMavens.isNotEmpty()) {
                 maven(uri(localMavens.first())) {
-                    name = "$mavenName Local"
+                    name = "$mavenName-Local"
                 }
             } else {
                 maven("https://recrafter.github.io/$repoName") {
@@ -31,18 +31,20 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
     repositories {
         mavenLocal()
+        maven("https://jitpack.io")
     }
 }
 
 plugins {
-    id("io.github.diskria.projektor.settings") version "4.+"
-    id("io.github.recrafter.recipe") version "1.0.4"
+    id("io.github.diskria.projektor.settings") version "5.+"
+    id("io.github.recrafter.recipe") version "1.2.0"
 }
 
 projekt {
-    version = "1.1.1"
+    version = "1.2.0"
     license = MIT
     publish = setOf(
         GITHUB_PAGES,
@@ -57,9 +59,7 @@ recipe {
     }
 }
 
-include(":core")
-include(":cli")
-val loadersDirectoryName = "loaders"
-rootDirectory.resolve(loadersDirectoryName).listDirectories().forEach {
-    include(gradleProjectPath(loadersDirectoryName, it.name))
+include(":core", ":cli")
+rootDirectory.resolve("loaders").listDirectories().forEach {
+    include(gradleProjectPath(it.parentFile.name, it.name))
 }

@@ -23,6 +23,7 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.toJvmTarget
+import io.github.recrafter.crafter.core.mixins.MixinsHelper
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -53,6 +54,9 @@ data class Mod(
     val packageName: String
         get() = namespace.appendPackageName(id)
 
+    val mixinPackage: String
+        get() = packageName.appendPackageName(MixinsHelper.MIXINS_NAME)
+
     val packagePath: String
         get() = packageName.setCase(`dot․case`, `path∕case`)
 
@@ -71,14 +75,14 @@ data class Mod(
     val configsDirectoryPath: String
         get() = JarConstants.Directory.META_INF
 
-    val widenerConfigName: String
+    val accessorConfigName: String
         get() = when (loader.family) {
             ModLoaderFamily.FABRIC -> fileName(id, "accesswidener")
             ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
         }
 
-    val widenerConfigPath: String
-        get() = configsDirectoryPath.appendPath(widenerConfigName)
+    val accessorConfigPath: String
+        get() = configsDirectoryPath.appendPath(accessorConfigName)
 
     val mixinsConfigName: String
         get() = fileName(id, "mixins", Constants.File.Extension.JSON)
@@ -89,11 +93,8 @@ data class Mod(
     val resourcePackConfigName: String
         get() = fileName("pack", "mcmeta")
 
-    val refmapFileName: String?
-        get() = when (loader.family) {
-            ModLoaderFamily.FABRIC -> fileName(id + "_refmap", Constants.File.Extension.JSON)
-            ModLoaderFamily.FORGE -> null
-        }
+    val refmapFileName: String
+        get() = fileName(id + "_refmap", Constants.File.Extension.JSON)
 
     val loaderConfigPath: String
         get() = when (loader.family) {
@@ -111,7 +112,7 @@ data class Mod(
             ModLoaderFamily.FORGE -> {
                 val fileName = when {
                     loader == ModLoaderType.NEOFORGE &&
-                            minecraftVersion >= LoaderCompatibility.NeoForge.EPONYMOUS_MOD_CONFIG_NAME -> {
+                        minecraftVersion >= LoaderCompatibility.NeoForge.EPONYMOUS_MOD_CONFIG_NAME -> {
                         fileName(ModLoaderType.NEOFORGE.getName(), "mods", Constants.File.Extension.TOML)
                     }
 

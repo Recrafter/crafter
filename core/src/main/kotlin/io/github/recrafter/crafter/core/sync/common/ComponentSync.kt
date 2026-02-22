@@ -20,6 +20,7 @@ import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.crafter.core.extensions.supportedVersions
+import io.github.recrafter.crafter.core.sync.maven.MavenComponentSync
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import java.io.File
@@ -28,6 +29,8 @@ import java.util.concurrent.TimeUnit
 abstract class ComponentSync {
 
     protected open val loader: ModLoaderType? = null
+
+    protected open val useLatestRelease: Boolean = false
 
     protected abstract val componentName: String
 
@@ -53,7 +56,11 @@ abstract class ComponentSync {
                 .groupBy { it.minecraftVersion }
                 .filterKeys { minecraftVersion -> loader?.supportedVersions?.contains(minecraftVersion) ?: true }
                 .mapValues {
-                    val version = it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }
+                    val version = if (useLatestRelease) {
+                        it.value.single { version -> version.isLatestRelease }
+                    } else {
+                        it.value.maxBy { version -> parseComponentSemver(version.latestVersion) }
+                    }
                     version.copy(latestVersion = mapLatestVersion(version.latestVersion))
                 }
                 .values
@@ -65,7 +72,7 @@ abstract class ComponentSync {
             .maxWithOrNull(compareBy(MinecraftVersion.COMPARATOR) { it.minecraftVersion })
         return requireGradleNotNull(latestComponent) {
             "Latest component for Minecraft ${minecraftVersion.asString()} " +
-                    "not found in cache file: ${cacheFile.relativeTo(project.rootDirectory)}"
+                "not found in cache file: ${cacheFile.relativeTo(project.rootDirectory)}"
         }
     }
 

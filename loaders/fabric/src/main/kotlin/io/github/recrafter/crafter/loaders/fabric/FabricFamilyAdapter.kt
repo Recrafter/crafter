@@ -1,6 +1,8 @@
 package io.github.recrafter.crafter.loaders.fabric
 
 import io.github.diskria.gradle.utils.extensions.common.artifact
+import io.github.diskria.gradle.utils.extensions.compileOnly
+import io.github.diskria.gradle.utils.extensions.ksp
 import io.github.diskria.gradle.utils.extensions.projectDirectory
 import io.github.diskria.gradle.utils.extensions.restoreDependencyResolutionRepositories
 import io.github.diskria.gradle.utils.helpers.jvm.JvmArguments
@@ -13,16 +15,21 @@ import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.asString
+import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.loaders.fabric.extensions.quilt
+import io.github.recrafter.crafter.mixins.Lapis
 import io.ktor.http.*
+import net.fabricmc.loom.task.ValidateAccessWidenerTask
 import net.fabricmc.loom.util.Constants.TaskGroup
 import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.repositories
 import java.io.File
 
 abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter() {
@@ -38,86 +45,104 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
     open fun getCustomMinecraftMetadataUrl(minecraftVersion: MinecraftVersion): Url? = null
 
-    open fun getCustomIntermediaryUrl(placeholder: String = "%1\$s"): String? = null
+    open fun getCustomIntermediaryUrl(placeholder: String = $$"%1$s"): String? = null
 
     open fun getMappingsDependency(project: Project, mod: Mod): Any = with(project) {
         @Suppress("UnstableApiUsage")
         quilt.layered { officialMojangMappings() }
     }
 
-    override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, widenerConfig: File) = with(project) {
-        quilt {
-            configureExtensionPlugin(project)
-            getCustomMinecraftMetadataUrl(mod.minecraftVersion)?.let {
-                customMinecraftMetadata = it.toString()
-            }
-            getCustomIntermediaryUrl()?.let {
-                intermediaryUrl = it
-            }
-            customVersionManifest?.let {
-                @Suppress("UnstableApiUsage")
-                versionsManifests.add(loader.displayName, it.toString())
-            }
-            accessWidenerPath = widenerConfig
-            runs {
-                ModSide.values().forEach { side ->
-                    named(side.getName()) {
-                        ideConfigGenerated(false)
-                        name = side.getName(`Title Case`)
-                        runDir = runDirectory.resolve(side.getName()).relativeTo(projectDirectory).path
-                        when (side) {
-                            ModSide.CLIENT -> client()
-                            ModSide.SERVER -> server()
-                        }
-                        val memoryRange = when (side) {
-                            ModSide.CLIENT -> 2..4
-                            ModSide.SERVER -> 4..8
-                        }
-                        vmArgs(
-                            *JvmArguments.memory(memoryRange, Size.GIGABYTES),
-                            JvmArguments.property("mixin.debug.export", true),
-                        )
-                        if (mod.minecraftVersion.era < MinecraftEra.ALPHA) {
+    override fun getGameJars(project: Project): FileCollection =
+        project.quilt.namedMinecraftJars
+
+    override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File?) =
+        with(project) {
+            quilt {
+                configureExtensionPlugin(project)
+                getCustomMinecraftMetadataUrl(mod.minecraftVersion)?.let {
+                    customMinecraftMetadata = it.toString()
+                }
+                getCustomIntermediaryUrl()?.let {
+                    intermediaryUrl = it
+                }
+                customVersionManifest?.let {
+                    @Suppress("UnstableApiUsage")
+                    versionsManifests.add(loader.displayName, it.toString())
+                }
+                accessorConfig?.let { accessWidenerPath = it }
+                runs {
+                    ModSide.entries.forEach { side ->
+                        named(side.getName()) {
+                            ideConfigGenerated(false)
+                            name = side.getName(`Title Case`)
+                            runDir = runDirectory.resolve(side.getName()).relativeTo(projectDirectory).path
+                            when (side) {
+                                ModSide.CLIENT -> client()
+                                ModSide.SERVER -> server()
+                            }
+                            val memoryRange = when (side) {
+                                ModSide.CLIENT -> 2..4
+                                ModSide.SERVER -> 4..8
+                            }
                             vmArgs(
-                                JvmArguments.property("fabric.gameVersion", mod.minecraftVersion.asString()),
+                                *JvmArguments.memory(memoryRange, Size.GIGABYTES),
+                                JvmArguments.property("mixin.debug.export", true),
                             )
-                        }
-                        if (side == ModSide.CLIENT) {
-                            programArgs(
-                                *JvmArguments.program("username", mod.player),
-                                *JvmArguments.program("userProperties", Constants.Json.EMPTY_OBJECT),
-                            )
+                            if (mod.minecraftVersion.era < MinecraftEra.ALPHA) {
+                                vmArgs(
+                                    JvmArguments.property("fabric.gameVersion", mod.minecraftVersion.asString()),
+                                )
+                            }
+                            if (side == ModSide.CLIENT) {
+                                programArgs(
+                                    *JvmArguments.program("username", mod.player),
+                                    *JvmArguments.program("userProperties", Constants.Json.EMPTY_OBJECT),
+                                )
+                            }
                         }
                     }
                 }
+                @Suppress("UnstableApiUsage")
+                mixin {
+                    useLegacyMixinAp = true
+                    defaultRefmapName = mod.refmapFileName
+                }
             }
-            @Suppress("UnstableApiUsage")
-            mixin {
-                useLegacyMixinAp = true
-                defaultRefmapName = mod.refmapFileName
+            tasks {
+                lazyDisable("ideaSyncTask")
+                lazyConfigure<ValidateAccessWidenerTask>("validateAccessWidener") {
+                    dependsOn("kspKotlin")
+                }
             }
-        }
-        tasks {
-            lazyDisable("ideaSyncTask")
-        }
-        restoreDependencyResolutionRepositories()
-        dependencies {
-            val minecraftDependency = artifact("com.mojang", "minecraft", mod.minecraftVersion.asString())
-            mod.log(project, "Minecraft: $minecraftDependency")
-            minecraft(minecraftDependency)
+            project.tasks.register("lapis") {
+                group = CrafterTasks.PUBLIC_GROUP
+                dependsOn("kspKotlin")
+            }
+            restoreDependencyResolutionRepositories()
+            dependencies {
+                val minecraftDependency = artifact("com.mojang", "minecraft", mod.minecraftVersion.asString())
+                mod.log(project, "Minecraft: $minecraftDependency")
+                minecraft(minecraftDependency)
 
-            val loaderDependency = getLoaderDependency(mod)
-            mod.log(project, "Loader: $loaderDependency")
-            modImplementation(loaderDependency)
+                val loaderDependency = getLoaderDependency(mod)
+                mod.log(project, "Loader: $loaderDependency")
+                modImplementation(loaderDependency)
 
-            val mappingsDependency = getMappingsDependency(project, mod)
-            mod.log(project, "Mappings: $mappingsDependency")
-            mappings(mappingsDependency)
+                val mappingsDependency = getMappingsDependency(project, mod)
+                mod.log(project, "Mappings: $mappingsDependency")
+                mappings(mappingsDependency)
+
+                repositories {
+                    mavenLocal()
+                }
+
+                compileOnly(Lapis.GROUP_ID, Lapis.ANNOTATIONS_ARTIFACT_ID, Lapis.VERSION)
+                ksp(Lapis.GROUP_ID, Lapis.KSP_ARTIFACT_ID, Lapis.VERSION)
+            }
+            groupLoaderTasks(
+                loaderPackageNamePrefixes = listOfNotNull("net.fabricmc.loom", extensionPluginPackageName),
+                taskGroups = listOf(TaskGroup.FABRIC, TaskGroup.IDE),
+                loader = loader,
+            )
         }
-        groupLoaderTasks(
-            loaderPackageNamePrefixes = listOfNotNull("net.fabricmc.loom", extensionPluginPackageName),
-            taskGroups = listOf(TaskGroup.FABRIC, TaskGroup.IDE),
-            loader = loader,
-        )
-    }
 }

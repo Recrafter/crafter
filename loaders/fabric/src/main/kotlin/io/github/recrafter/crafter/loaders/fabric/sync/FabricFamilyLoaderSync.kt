@@ -16,7 +16,7 @@ class FabricFamilyLoaderSync(override val loader: ModLoaderType) : LoaderSync(lo
 
     override val mavenUrl: Url
         get() = when (loader) {
-            ModLoaderType.FABRIC, ModLoaderType.LEGACY_FABRIC, ModLoaderType.ORNITHE -> {
+            ModLoaderType.FABRIC, ModLoaderType.LEGACY_FABRIC, ModLoaderType.BABRIC, ModLoaderType.ORNITHE -> {
                 buildUrl("maven.fabricmc.net") {
                     path("net", "fabricmc", "fabric-loader", MavenMetadata.FILE_NAME)
                 }
@@ -25,12 +25,6 @@ class FabricFamilyLoaderSync(override val loader: ModLoaderType) : LoaderSync(lo
             ModLoaderType.QUILT -> {
                 buildUrl("maven.quiltmc.org") {
                     path("repository", "release", "org", "quiltmc", "quilt-loader", MavenMetadata.FILE_NAME)
-                }
-            }
-
-            ModLoaderType.BABRIC -> {
-                buildUrl("maven.glass-launcher.net") {
-                    path("babric", "babric", "fabric-loader", MavenMetadata.FILE_NAME)
                 }
             }
 

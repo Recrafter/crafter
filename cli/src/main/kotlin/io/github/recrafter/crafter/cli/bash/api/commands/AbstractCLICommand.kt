@@ -4,7 +4,6 @@ import io.github.diskria.gradle.utils.extensions.common.requireGradleNotNull
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.atName
-import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
 import io.github.diskria.kotlin.utils.extensions.common.className
 import io.github.diskria.kotlin.utils.extensions.common.failWithUnsupportedType
 import io.github.diskria.kotlin.utils.extensions.generics.joinBySpace
@@ -35,12 +34,13 @@ import io.github.recrafter.crafter.cli.bash.variables.*
 import io.github.recrafter.crafter.cli.commands.help.HelpCommand
 import io.github.recrafter.crafter.cli.extensions.*
 import io.github.recrafter.crafter.cli.extensions.common.script
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlin.reflect.full.findAnnotation
 
-abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: KotlinSerializer<T>) {
+abstract class AbstractCLICommand<T : CLIArguments>(private val serializer: KSerializer<T>) {
 
     val name: String get() = commandAnnotation.name
     val description: String get() = commandAnnotation.description

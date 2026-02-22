@@ -90,7 +90,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                         if (mod.loader == ModLoaderType.QUILT) {
                             addAnnotation(
                                 AnnotationSpec.builder(SuppressWarnings::class.java)
-                                    .addMember("value", "\$S", "deprecation")
+                                    .addMember("value", $$"$S", "deprecation")
                                     .build()
                             )
                         }
@@ -105,7 +105,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                     else -> failWithInvalidValue(mod.loader)
                 }
                 val modAnnotation = AnnotationSpec.builder(ClassName.get(modAnnotationPackageName, "Mod")).run {
-                    addMember("value", "\$S", mod.id)
+                    addMember("value", $$"$S", mod.id)
 
                     if (mod.loader == ModLoaderType.NEOFORGE) {
                         val distEnumName = when (environmentSide) {
@@ -115,7 +115,7 @@ abstract class CraftEntryPointsTask : DefaultTask() {
                         }
                         if (distEnumName != null) {
                             val distEnumClass = ClassName.get("net.neoforged.api.distmarker", "Dist")
-                            addMember("dist", "\$T.$distEnumName", distEnumClass)
+                            addMember("dist", $$"$T.$$distEnumName", distEnumClass)
                         }
                     }
                     build()

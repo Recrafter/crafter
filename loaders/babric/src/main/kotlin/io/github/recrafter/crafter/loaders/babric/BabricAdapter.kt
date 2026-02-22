@@ -22,11 +22,8 @@ object BabricAdapter : FabricFamilyAdapter(ModLoaderType.BABRIC) {
         babric {}
     }
 
-    override fun getLoaderDependency(mod: Mod): String =
-        artifact("babric", "fabric-loader", mod.loaderMetadata.loaderVersion)
-
     override fun getMappingsDependency(project: Project, mod: Mod): String =
-        artifact("babric", "barn", mod.loaderMetadata.mappingsVersion.orEmpty(), "v2")
+        artifact("net.glasslauncher", "biny", mod.loaderMetadata.mappingsVersion.orEmpty(), "v2")
 
     override fun getCustomMinecraftMetadataUrl(minecraftVersion: MinecraftVersion): Url =
         buildUrl("babric.github.io") {

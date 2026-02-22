@@ -1,6 +1,6 @@
 package io.github.recrafter.crafter.core
 
-import io.github.recrafter.bedrock.era.Release
+import io.github.recrafter.bedrock.era.FullRelease
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.loaders.ModLoaderType.FORGE
 import io.github.recrafter.bedrock.loaders.ModLoaderType.NEOFORGE
@@ -28,11 +28,11 @@ object LoaderCompatibility {
     }
 
     object Forge {
-        val REOBF_CANCEL: MinecraftVersion = Release.V_1_20_6
-        val PACK_CONFIG_RANGES: MinecraftVersion = Release.V_1_21_9
+        val REOBF_CANCEL: MinecraftVersion = FullRelease.V_1_20_6
+        val PACK_CONFIG_RANGES: MinecraftVersion = FullRelease.V_1_21_9
     }
 
     object NeoForge {
-        val EPONYMOUS_MOD_CONFIG_NAME: MinecraftVersion = Release.V_1_20_5
+        val EPONYMOUS_MOD_CONFIG_NAME: MinecraftVersion = FullRelease.V_1_20_5
     }
 }

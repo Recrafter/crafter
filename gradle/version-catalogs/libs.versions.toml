@@ -1,32 +1,33 @@
 [versions]
-projektor = "4.+"
+projektor = "5.+"
 
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.25"
+kotlin = "2.2.21"
+ksp = "2.2.21-2.0.5"
 kotlin-serialization-json = "1.7.3"
 kotlin-serialization-xml = "0.90.1"
-ktor = "3.0.0"
+ktor = "3.4.0"
 
-java-poet = "0.7.0"
+java-poet = "0.11.0"
 jsoup = "1.21.2"
 
-kotlin-utils = "0.9.2"
-kotlin-regex-dsl = "0.9.1"
-gradle-utils = "0.9.3"
+kotlin-utils = "0.10.1"
+kotlin-regex-dsl = "0.10.1"
+gradle-utils = "0.10.1"
 
-bedrock = "1.0.2"
-nametag = "0.2.1"
+bedrock = "1.0.3"
 
-quilt-plugin = "1.11.1"
-legacy-fabric-plugin = "1.12.1"
-ornithe-plugin = "1.11.6"
-babric-plugin = "1.13.2"
-forge-plugin = "6.0.46"
-neoforge-plugin = "2.0.116"
+lapis = "0.7.4"
+
+quilt-plugin = "1.15.1"
+legacy-fabric-plugin = "1.15.3"
+ornithe-plugin = "1.14.10"
+babric-plugin = "1.15.3"
+forge-plugin = "7.0.15"
+forge-jarjar-plugin = "0.2.3"
+neoforge-plugin = "2.0.140"
 
 [plugins]
 projektor = { id = "io.github.diskria.projektor", version.ref = "projektor" }
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [libraries]
@@ -42,7 +43,9 @@ kotlin-regex-dsl = { group = "io.github.diskria", name = "kotlin-regex-dsl", ver
 gradle-utils = { group = "io.github.diskria", name = "gradle-utils", version.ref = "gradle-utils" }
 
 bedrock = { group = "io.github.recrafter", name = "bedrock", version.ref = "bedrock" }
-nametag = { group = "io.github.recrafter", name = "nametag", version.ref = "nametag" }
+
+lapis-annotations = { group = "io.github.recrafter", name = "lapis-annotations", version.ref = "lapis" }
+lapis-ksp = { group = "io.github.recrafter", name = "lapis", version.ref = "lapis" }
 
 kotlin-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
@@ -52,6 +55,7 @@ legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
 babric-plugin = { group = "babric-loom-extension", name = "babric-loom-extension.gradle.plugin", version.ref = "babric-plugin" }
 forge-plugin = { group = "net.minecraftforge.gradle", name = "net.minecraftforge.gradle.gradle.plugin", version.ref = "forge-plugin" }
+forge-jarjar-plugin = { group = "net.minecraftforge.jarjar", name = "net.minecraftforge.jarjar.gradle.plugin", version.ref = "forge-jarjar-plugin" }
 neoforge-plugin = { group = "net.neoforged.moddev", name = "net.neoforged.moddev.gradle.plugin", version.ref = "neoforge-plugin" }
 
 [bundles]
@@ -64,11 +68,16 @@ kotlin-plugins = [
     "kotlin-plugin",
     "ksp-plugin",
 ]
-loader-plugins = [
+gradle-plugins = [
     "quilt-plugin",
     "legacy-fabric-plugin",
     "ornithe-plugin",
     "babric-plugin",
     "forge-plugin",
+    "forge-jarjar-plugin",
     "neoforge-plugin",
+]
+lapis = [
+    "lapis-annotations",
+    "lapis-ksp",
 ]

@@ -3,7 +3,6 @@ package io.github.recrafter.crafter.cli.commands.process
 import io.github.diskria.gradle.utils.extensions.common.gradleProjectPath
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPath
-import io.github.diskria.kotlin.utils.extensions.common.KotlinSerializer
 import io.github.diskria.kotlin.utils.extensions.common.fileName
 import io.github.diskria.kotlin.utils.extensions.generics.joinToString
 import io.github.recrafter.bedrock.crafter.CrafterFlow
@@ -15,9 +14,10 @@ import io.github.recrafter.crafter.cli.bash.utils.Cmd
 import io.github.recrafter.crafter.cli.bash.variables.StringVar
 import io.github.recrafter.crafter.cli.bash.variables.value
 import io.github.recrafter.crafter.tasks.InstallCrafterCLITask
+import kotlinx.serialization.KSerializer
 
 abstract class GradleProcessCommand<T : CLIArguments>(
-    serializer: KotlinSerializer<T>
+    serializer: KSerializer<T>
 ) : AbstractCLICommand<T>(serializer) {
 
     protected fun ScriptBuilder.runTask(

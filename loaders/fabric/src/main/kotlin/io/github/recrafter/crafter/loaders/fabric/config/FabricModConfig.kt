@@ -54,7 +54,7 @@ data class FabricModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                widenerConfigPath = mod.widenerConfigPath,
+                widenerConfigPath = mod.accessorConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = FabricModLinksConfig.of(mod),
                 entryPoints = FabricModEntryPointsConfig.of(mod),

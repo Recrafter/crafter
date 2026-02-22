@@ -19,10 +19,11 @@ abstract class MavenComponentSync : ComponentSync() {
     final override suspend fun fetchComponents(): List<MinecraftComponent> =
         HttpClient(CIO).use { client ->
             val mavenMetadata = client.get(mavenUrl).bodyAsText().deserializeFromXml<MavenMetadata>()
-            val versions = mavenMetadata.versioning.versions.version
-            versions.mapNotNull { version ->
+            mavenMetadata.versioning.versions.version.mapNotNull { version ->
                 val minecraftVersion = parseMinecraftVersion(version) ?: return@mapNotNull null
-                MinecraftComponent(minecraftVersion, version)
+                MinecraftComponent(minecraftVersion, version).apply {
+                    isLatestRelease = version == mavenMetadata.versioning.release
+                }
             }
         }
 }

@@ -6,6 +6,7 @@
       <w>adoptium</w>
       <w>babric</w>
       <w>bashcompinit</w>
+      <w>biny</w>
       <w>configureondemand</w>
       <w>darlingram</w>
       <w>datagen</w>
@@ -14,18 +15,24 @@
       <w>dists</w>
       <w>entrypoints</w>
       <w>fabricloader</w>
+      <w>fabricmc</w>
       <w>foojay</w>
       <w>forgegradle</w>
       <w>githubusercontent</w>
+      <w>glasslauncher</w>
       <w>gmazzo</w>
       <w>indev</w>
       <w>infdev</w>
       <w>javafml</w>
+      <w>jopt</w>
       <w>jvmargs</w>
+      <w>ksp</w>
+      <w>lapis</w>
       <w>ldtteam</w>
       <w>legacyfabric</w>
       <w>legacylooming</w>
       <w>llamalad</w>
+      <w>minecraft</w>
       <w>minecraftforge</w>
       <w>mixinextras</w>
       <w>moddevgradle</w>

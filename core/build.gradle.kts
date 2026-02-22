@@ -1,3 +1,5 @@
+import io.github.diskria.gradle.utils.extensions.implementation
+
 plugins {
     `kotlin-dsl`
     alias(libs.plugins.kotlin.serialization)
@@ -7,7 +9,10 @@ dependencies {
     implementation(kotlin("gradle-plugin"))
 
     implementation(libs.bedrock)
-    compileOnly(libs.nametag)
+
+    compileOnly(libs.bundles.lapis)
+
+    compileOnly(libs.ksp.plugin)
 
     implementation(libs.kotlin.serialization.xml)
     implementation(libs.java.poet)

@@ -7,4 +7,6 @@ import kotlinx.serialization.Serializable
 data class MinecraftComponent(
     val minecraftVersion: MinecraftVersion,
     val latestVersion: String,
-)
+) {
+    var isLatestRelease: Boolean = false
+}

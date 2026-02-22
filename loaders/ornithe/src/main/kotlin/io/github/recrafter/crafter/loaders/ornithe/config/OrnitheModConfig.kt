@@ -54,7 +54,7 @@ data class OrnitheModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                widenerConfigPath = mod.widenerConfigPath,
+                widenerConfigPath = mod.accessorConfigPath,
                 mixinsConfigPath = listOf(mod.mixinsConfigPath),
                 links = OrnitheModLinksConfig.of(mod),
                 entryPoints = OrnitheModEntryPointsConfig.of(mod),

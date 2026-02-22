@@ -1,5 +1,7 @@
 package io.github.recrafter.crafter.core.extensions
 
+import com.google.devtools.ksp.gradle.KspExtension
+import com.google.devtools.ksp.gradle.KspTask
 import io.github.diskria.gradle.utils.extensions.configureExtension
 import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
 import io.github.diskria.gradle.utils.extensions.getGeneratedResourcesDirectory
@@ -68,6 +70,10 @@ val Project.craftedResourcesDirectory
 
 fun Project.kotlin(configure: KotlinProjectExtension.() -> Unit = {}) {
     configureExtension<KotlinProjectExtension>(configure)
+}
+
+fun Project.ksp(configure: KspExtension.() -> Unit = {}) {
+    configureExtension<KspExtension>(configure)
 }
 
 fun Project.idea(configure: IdeaModel.() -> Unit = {}) {

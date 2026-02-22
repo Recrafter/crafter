@@ -12,7 +12,7 @@ data class NeoForgeModAccessTransformerEntry(
     companion object {
         fun of(mod: Mod): NeoForgeModAccessTransformerEntry =
             NeoForgeModAccessTransformerEntry(
-                widenerConfigPath = mod.widenerConfigPath
+                widenerConfigPath = mod.accessorConfigPath
             )
     }
 }

@@ -6,6 +6,7 @@ plugins {
 dependencies {
     compileOnly(project(":core"))
     compileOnly(libs.forge.plugin)
+    compileOnly(libs.forge.jarjar.plugin)
 
     implementation(libs.bedrock)
 

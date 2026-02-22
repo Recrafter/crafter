@@ -1,9 +1,9 @@
 package io.github.recrafter.crafter.cli.bash.api.annotations
 
-import io.github.diskria.kotlin.utils.extensions.common.KotlinClass
 import io.github.recrafter.crafter.cli.bash.api.commands.arguments.enums.CLIArgumentEnum
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
+import kotlin.reflect.KClass
 
 @OptIn(ExperimentalSerializationApi::class)
 @SerialInfo
@@ -11,5 +11,5 @@ import kotlinx.serialization.SerialInfo
 @Retention(AnnotationRetention.RUNTIME)
 annotation class CLICommandEnumArgument(
     val description: String,
-    val enumClass: KotlinClass<out CLIArgumentEnum<*>>
+    val enumClass: KClass<out CLIArgumentEnum<*>>
 )
