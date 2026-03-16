@@ -23,20 +23,17 @@ data class PackConfig(
     companion object {
         fun of(mod: Mod, minFormat: String, maxFormat: String = minFormat): PackConfig {
             val description = "${mod.name} resources"
-            return when {
-                mod.minecraftVersion < LoaderCompatibility.Forge.PACK_CONFIG_RANGES -> PackConfig(
+            if (mod.minecraftVersion < LoaderCompatibility.Forge.PACK_CONFIG_RANGES) {
+                return PackConfig(
                     format = minFormat.toInt(),
                     description = description,
                 )
-
-                else -> {
-                    PackConfig(
-                        description = description,
-                        minFormat = splitToMajorMinor(minFormat),
-                        maxFormat = splitToMajorMinor(maxFormat),
-                    )
-                }
             }
+            return PackConfig(
+                description = description,
+                minFormat = splitToMajorMinor(minFormat),
+                maxFormat = splitToMajorMinor(maxFormat),
+            )
         }
 
         private fun splitToMajorMinor(format: String): List<Int> =

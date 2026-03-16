@@ -1,2 +1,1 @@
-Crafter is a Gradle plugin that automates Minecraft mod development across multiple loaders.
-It generates configs, manages mixins, and builds everything for you — all from a simple folder structure.
+A streamlined Kotlin-exclusive Gradle plugin for API-independent Minecraft modding. Powered by pure Mixins, it automates loader configurations and directory structures, letting you build for multiple platforms with a single command.

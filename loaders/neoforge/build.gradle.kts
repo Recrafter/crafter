@@ -6,6 +6,7 @@ plugins {
 dependencies {
     compileOnly(project(":core"))
     compileOnly(libs.neoforge.plugin)
+    compileOnly(libs.shadow.plugin)
 
     implementation(libs.bedrock)
 

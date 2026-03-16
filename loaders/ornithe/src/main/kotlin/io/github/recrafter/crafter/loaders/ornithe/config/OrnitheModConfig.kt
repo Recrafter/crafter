@@ -28,10 +28,10 @@ data class OrnitheModConfig(
     val environment: String,
 
     @SerialName("mixins")
-    val mixinsConfigPath: List<String>,
+    val mixinConfigPath: List<String>,
 
     @SerialName("accessWidener")
-    val widenerConfigPath: String,
+    val widenerConfigPath: String?,
 
     @SerialName("contact")
     val links: OrnitheModLinksConfig,
@@ -43,7 +43,7 @@ data class OrnitheModConfig(
     val dependencies: OrnitheModDependenciesConfig,
 ) {
     companion object {
-        fun of(mod: Mod): OrnitheModConfig =
+        fun of(mod: Mod, hasAccessor: Boolean): OrnitheModConfig =
             OrnitheModConfig(
                 schemaVersion = 1,
                 id = mod.id,
@@ -54,8 +54,8 @@ data class OrnitheModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                widenerConfigPath = mod.accessorConfigPath,
-                mixinsConfigPath = listOf(mod.mixinsConfigPath),
+                widenerConfigPath = mod.accessorConfigPath.takeIf { hasAccessor },
+                mixinConfigPath = listOf(mod.mixinConfigPath),
                 links = OrnitheModLinksConfig.of(mod),
                 entryPoints = OrnitheModEntryPointsConfig.of(mod),
                 dependencies = OrnitheModDependenciesConfig.of(mod),

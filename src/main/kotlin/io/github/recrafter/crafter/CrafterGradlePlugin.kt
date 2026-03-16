@@ -20,6 +20,7 @@ import io.github.recrafter.bedrock.versions.MinecraftVersion
 import io.github.recrafter.bedrock.versions.MinecraftVersionRange
 import io.github.recrafter.bedrock.versions.asString
 import io.github.recrafter.crafter.cli.bash.utils.Cmd
+import io.github.recrafter.crafter.core.CrafterTasks
 import io.github.recrafter.crafter.core.LoaderCompatibility
 import io.github.recrafter.crafter.core.LoaderMetadata
 import io.github.recrafter.crafter.core.ModMetadata
@@ -41,14 +42,11 @@ import io.github.recrafter.crafter.tasks.InstallCrafterCLITask
 import io.github.recrafter.crafter.tasks.internal.CraftLoaderConfigTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.wrapper.Wrapper
-import org.gradle.kotlin.dsl.assign
-import org.gradle.kotlin.dsl.extra
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.*
 import org.gradle.util.GradleVersion
 
-@Suppress("unused")
 class CrafterGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
@@ -96,6 +94,39 @@ class CrafterGradlePlugin : Plugin<Project> {
                     val loaderProject = children.single { it.name == flow.loader.getName(`kebab-case`) }
                     val modProject = loaderProject.children.single { it.name == flow.modProjectName }
                     configureModProject(loaderProject, modProject, modMetadata, MinecraftVersionRange.of(flow.version))
+                }
+            }
+        }
+        tasks.register<Copy>("release") {
+            group = CrafterTasks.PUBLIC_GROUP
+
+            val releaseDir = layout.buildDirectory.dir("release")
+            destinationDir = releaseDir.get().asFile
+
+            val allBuildTasks = allprojects.map { project ->
+                if (ModSide.entries.any { it.name.equals(project.name, ignoreCase = true) }) {
+                    files()
+                } else {
+                    project.tasks.matching {
+                        it.name == "shadowJar" || it.name == "remapJar" || it.name == "jar"
+                    }
+                }
+            }
+
+            dependsOn(allBuildTasks)
+
+            from(allBuildTasks) {
+                include("*.jar")
+                exclude("**/*-sources.jar", "**/*-dev.jar")
+
+                eachFile {
+                    path = name
+                }
+            }
+
+            doFirst {
+                if (destinationDir.exists()) {
+                    destinationDir.deleteRecursively()
                 }
             }
         }
@@ -166,19 +197,19 @@ class CrafterGradlePlugin : Plugin<Project> {
                     "${versionRange.asString()}, intersect compatibility checkpoints."
             }
         }
-        val loaderAdapter = loader.mapToAdapter()
         val loaderMetadata = resolveLoaderMetadata(loader, loaderProject, minVersion)
         val mod = modMetadata.toMod(loader, minVersion, maxVersion, loaderMetadata)
-        modProject.ensureKotlinPluginApplied()
-        val sideProjects = mod.environment.sides.associateWith { side ->
-            modProject.children.single { it.name == side.getName() }.ensureKotlinPluginApplied()
-        }
-        sideProjects.values.forEach { it.sourceSets.main.addToClasspath(modProject.sourceSets.main, withOutput = true) }
         with(modProject) {
+            ensureKotlinPluginApplied()
+            ensureKotlinSerializationPluginApplied()
             ensureKspPluginApplied()
             group = mod.namespace
             version = mod.archiveVersion
         }
+        val sideProjects = mod.environment.sides.associateWith { side ->
+            modProject.children.single { it.name == side.getName() }.ensureKotlinPluginApplied()
+        }
+        sideProjects.values.forEach { it.sourceSets.main.addToClasspath(modProject.sourceSets.main, withOutput = true) }
         val runDirectory = modProject.projectDirectory.resolve(mod.runDirectoryName)
         runDirectory.resolve(ModSide.SERVER.getName()).ensureDirectoryExists {
             resolve(EulaHelper.FILE_NAME).ensureFileExists {
@@ -191,8 +222,10 @@ class CrafterGradlePlugin : Plugin<Project> {
                 writeText(ServerOperatorsHelper.buildPreset(mod))
             }
         }
+        val accessorConfig = modProject.getGeneratedDirectory().resolve("ksp/main/resources/" + mod.accessorConfigName)
         val craftLoaderConfigTask = modProject.registerTask<CraftLoaderConfigTask> {
             this.mod.set(mod)
+            this.accessorConfig = accessorConfig
             outputFile = getTempFile(mod.loaderConfigPath)
         }
         with(modProject) {
@@ -202,7 +235,7 @@ class CrafterGradlePlugin : Plugin<Project> {
                 }
             }
         }
-        loaderAdapter.configureInternal(mod, modProject, runDirectory, sideProjects)
+        loader.mapToAdapter().configureInternal(mod, modProject, runDirectory, accessorConfig, sideProjects)
         ModSide.entries.forEach { side ->
             when (side) {
                 ModSide.CLIENT -> modProject.registerTask<CraftClientTask>()

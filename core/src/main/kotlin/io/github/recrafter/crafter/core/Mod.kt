@@ -7,15 +7,13 @@ import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.extensions.appendPackageName
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.SCREAMING_SNAKE_CASE
-import io.github.diskria.kotlin.utils.extensions.common.`dot․case`
 import io.github.diskria.kotlin.utils.extensions.common.fileName
-import io.github.diskria.kotlin.utils.extensions.common.`path∕case`
 import io.github.diskria.kotlin.utils.extensions.mappers.getName
-import io.github.diskria.kotlin.utils.extensions.setCase
 import io.github.diskria.kotlin.utils.extensions.wrapWithBrackets
 import io.github.diskria.kotlin.utils.words.PascalCase
 import io.github.recrafter.bedrock.MinecraftConstants
 import io.github.recrafter.bedrock.crafter.CrafterConstants
+import io.github.recrafter.bedrock.era.FullRelease
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModEnvironment
@@ -23,7 +21,6 @@ import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.core.extensions.family
 import io.github.recrafter.crafter.core.extensions.toJvmTarget
-import io.github.recrafter.crafter.core.mixins.MixinsHelper
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -54,12 +51,6 @@ data class Mod(
     val packageName: String
         get() = namespace.appendPackageName(id)
 
-    val mixinPackage: String
-        get() = packageName.appendPackageName(MixinsHelper.MIXINS_NAME)
-
-    val packagePath: String
-        get() = packageName.setCase(`dot․case`, `path∕case`)
-
     val minecraftVersion: MinecraftVersion
         get() = minMinecraftVersion
 
@@ -77,24 +68,25 @@ data class Mod(
 
     val accessorConfigName: String
         get() = when (loader.family) {
-            ModLoaderFamily.FABRIC -> fileName(id, "accesswidener")
+            ModLoaderFamily.FABRIC -> fileName(
+                id,
+                if (minecraftVersion >= FullRelease.V_26_1) "classtweaker" else "accesswidener"
+            )
+
             ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
         }
 
     val accessorConfigPath: String
         get() = configsDirectoryPath.appendPath(accessorConfigName)
 
-    val mixinsConfigName: String
+    val mixinConfigName: String
         get() = fileName(id, "mixins", Constants.File.Extension.JSON)
 
-    val mixinsConfigPath: String
-        get() = configsDirectoryPath.appendPath(mixinsConfigName)
+    val mixinConfigPath: String
+        get() = configsDirectoryPath.appendPath(mixinConfigName)
 
     val resourcePackConfigName: String
         get() = fileName("pack", "mcmeta")
-
-    val refmapFileName: String
-        get() = fileName(id + "_refmap", Constants.File.Extension.JSON)
 
     val loaderConfigPath: String
         get() = when (loader.family) {
@@ -136,9 +128,6 @@ data class Mod(
 
     val jvmTarget: JvmTarget
         get() = minMinecraftVersion.minJavaVersion.toJvmTarget()
-
-    val isReobfEnabled: Boolean =
-        loader.family == ModLoaderFamily.FORGE && minecraftVersion < LoaderCompatibility.Forge.REOBF_CANCEL
 
     val archiveVersion: String
         get() = buildString {

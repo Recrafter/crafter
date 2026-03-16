@@ -7,12 +7,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class NeoForgeModMixinConfigEntry(
     @SerialName("config")
-    val mixinsConfigPath: String,
+    val mixinConfigPath: String,
 ) {
     companion object {
         fun of(mod: Mod): NeoForgeModMixinConfigEntry =
             NeoForgeModMixinConfigEntry(
-                mixinsConfigPath = mod.mixinsConfigPath,
+                mixinConfigPath = mod.mixinConfigPath,
             )
     }
 }

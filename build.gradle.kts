@@ -1,5 +1,4 @@
 import io.github.diskria.gradle.utils.extensions.children
-import io.github.diskria.gradle.utils.extensions.getCatalogVersion
 import io.github.diskria.gradle.utils.extensions.implementation
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -38,6 +37,7 @@ dependencies {
 projekt {
     gradlePlugin {
         jvmTarget = JvmTarget.JVM_21
+        supportsConfigurationCache = false
     }
 }
 
@@ -46,17 +46,6 @@ tasks {
         includedProjects.forEach {
             dependsOn(it.tasks.jar)
             from(it.sourceSets.map { sourceSet -> sourceSet.output })
-        }
-    }
-}
-
-val kotlinVersion = getCatalogVersion("kotlin")
-configurations.all {
-    resolutionStrategy {
-        eachDependency {
-            when (requested.group) {
-                "org.jetbrains.kotlin" -> useVersion(kotlinVersion)
-            }
         }
     }
 }

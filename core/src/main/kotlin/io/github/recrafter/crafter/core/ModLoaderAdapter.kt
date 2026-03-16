@@ -3,14 +3,15 @@ package io.github.recrafter.crafter.core
 import io.github.diskria.gradle.utils.extensions.*
 import io.github.diskria.kotlin.utils.Constants
 import io.github.diskria.kotlin.utils.DateFormat
-import io.github.diskria.kotlin.utils.extensions.asFileOrNull
 import io.github.diskria.kotlin.utils.extensions.common.`Train-Case`
 import io.github.diskria.kotlin.utils.extensions.common.nowDate
 import io.github.diskria.kotlin.utils.extensions.format
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
+import io.github.recrafter.bedrock.era.FullRelease
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
+import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.tasks.internal.CraftDataPackConfigTask
@@ -29,14 +30,14 @@ import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.File
 
 abstract class ModLoaderAdapter {
 
     open fun isDataPackConfigRequired(): Boolean = false
-    open fun shouldDownloadSources(): Boolean = false
 
-    abstract fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File?)
+    abstract fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File)
 
     open fun getGameJars(project: Project): FileCollection = project.files()
 
@@ -44,6 +45,7 @@ abstract class ModLoaderAdapter {
         mod: Mod,
         modProject: Project,
         runDirectory: File,
+        accessorConfig: File,
         sideProjects: Map<ModSide, Project>,
     ) = with(modProject) {
         group = mod.namespace
@@ -61,36 +63,17 @@ abstract class ModLoaderAdapter {
         kotlin {
             jvmToolchain(mod.javaVersion)
         }
-        idea {
-            module {
-                if (shouldDownloadSources()) {
-                    isDownloadSources = true
-                    isDownloadJavadoc = true
-                }
-            }
-        }
-        val accessorConfigFile = modProject
-            .getGeneratedResourcesDirectory()
-            .resolve(mod.accessorConfigName)
-        val accessorConfig = accessorConfigFile.takeIf { it.isFile }
         tasks {
             configureJvmTarget(mod.jvmTarget)
-            withType<JavaCompile>().configureEach {
-                with(options) {
-                    encoding = Charsets.UTF_8.toString()
-                    compilerArgs.add("-Xlint:-options")
-                }
-            }
-            if (accessorConfig != null) {
+            if (accessorConfig.isFile) {
                 lazyConfigure<Jar>("sourcesJar") {
                     exclude(mod.accessorConfigPath)
                 }
             }
-            jar {
+            withType<Jar> {
                 from(rootProject.file("LICENSE")) {
                     rename { it + Constants.Char.UNDERSCORE + mod.id }
                 }
-                excludeFilesWithExtension("kotlin_module")
                 manifest {
                     val specificationVersion by 1.toString().autoNamedProperty(`Train-Case`)
                     val specificationTitle by mod.id.autoNamedProperty(`Train-Case`)
@@ -120,6 +103,7 @@ abstract class ModLoaderAdapter {
                     )
                 }
                 archiveVersion = mod.archiveVersion
+                excludeFilesWithExtension("kotlin_module")
             }
             withType<AbstractCopyTask> {
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -152,11 +136,23 @@ abstract class ModLoaderAdapter {
                 }
             }
             processResources {
-                moveFile(mod.mixinsConfigName, mod.mixinsConfigPath)
-                accessorConfig?.let { copyFile(it, mod.accessorConfigPath) }
-                modProject.rootProject.projectDirectory.resolve(mod.iconFileName).asFileOrNull()?.let { iconFile ->
-                    copyFile(iconFile, mod.iconPath)
+                moveFile(mod.mixinConfigName, mod.mixinConfigPath)
+                copyFile(accessorConfig, mod.accessorConfigPath)
+                modProject.rootProject.projectDirectory.resolve(mod.iconFileName).let { copyFile(it, mod.iconPath) }
+            }
+            register("lapis") {
+                group = CrafterTasks.PUBLIC_GROUP
+                dependsOn("kspKotlin")
+            }
+            withType<JavaCompile>().configureEach {
+                with(options) {
+                    encoding = Charsets.UTF_8.toString()
+                    compilerArgs.add("-Xlint:-options")
                 }
+                mustRunAfter(processResources)
+            }
+            withType<KotlinCompile>().configureEach {
+                mustRunAfter(processResources)
             }
         }
         val craftEntryPointsTask = registerTask<CraftEntryPointsTask> {
@@ -166,8 +162,11 @@ abstract class ModLoaderAdapter {
         }
         sourceSets {
             with(main) {
-                val mergedDirectory = layout.buildDirectory.dir("sources+resources")
+                val mergedDirectory = getBuildDirectory("sources+resources")
                 val sideSourceSets = sideProjects.map { it.value.sourceSets.main }
+                kotlin.srcDir(getGeneratedDirectory().resolve("ksp/main/kotlin"))
+                sideSourceSets.forEach { kotlin.srcDirs(it.kotlin.srcDirs) }
+                kotlin.destinationDirectory.set(mergedDirectory)
                 java {
                     srcDir(craftEntryPointsTask.map { it.outputDirectory })
                     sideSourceSets.forEach { srcDirs(it.allJava.srcDirs) }
@@ -186,13 +185,13 @@ abstract class ModLoaderAdapter {
         ksp {
             arg("lapis.modId", mod.id)
             arg("lapis.packageName", mod.packageName)
-            arg("lapis.refmapFileName", mod.refmapFileName)
+            arg("lapis.isUnobfuscated", (mod.minecraftVersion >= FullRelease.V_26_1).toString())
             arg(
                 when (mod.loader.family) {
-                    ModLoaderFamily.FABRIC -> "lapis.accessWidener"
-                    ModLoaderFamily.FORGE -> "lapis.accessTransformer"
+                    ModLoaderFamily.FABRIC -> "lapis.accessWidenerConfigName"
+                    ModLoaderFamily.FORGE -> "lapis.accessTransformerConfigName"
                 },
-                accessorConfigFile.absolutePath
+                accessorConfig.name
             )
         }
         groupIdeTasks()

@@ -15,14 +15,18 @@ data class QuiltModConfig(
     val loader: QuiltModLoaderConfig,
 
     @SerialName("mixin")
-    val mixinsConfigPath: String,
+    val mixinConfigPath: String,
+
+    @SerialName("access_widener")
+    val widenerConfigPath: String?,
 ) {
     companion object {
-        fun of(mod: Mod): QuiltModConfig =
+        fun of(mod: Mod, hasAccessor: Boolean): QuiltModConfig =
             QuiltModConfig(
                 schemaVersion = 1,
                 loader = QuiltModLoaderConfig.of(mod),
-                mixinsConfigPath = mod.mixinsConfigPath,
+                mixinConfigPath = mod.mixinConfigPath,
+                widenerConfigPath = mod.accessorConfigPath.takeIf { hasAccessor },
             )
     }
 }

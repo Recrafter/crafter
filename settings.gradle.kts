@@ -2,30 +2,13 @@ import io.github.diskria.gradle.utils.extensions.common.gradleProjectPath
 import io.github.diskria.gradle.utils.extensions.rootDirectory
 import io.github.diskria.kotlin.utils.extensions.listDirectories
 import io.github.diskria.projektor.common.licenses.LicenseType.MIT
-import io.github.diskria.projektor.common.publishing.PublishingTargetType.GITHUB_PAGES
+import io.github.diskria.projektor.common.publishing.PublishingTargetType.GRADLE_PLUGIN_PORTAL
 
 pluginManagement {
     repositories {
-        fun resolvePluginMaven(repoName: String) {
-            val mavenName = repoName.replaceFirstChar { it.uppercaseChar() }
-            val localMavens = rootDir.parentFile
-                .resolve(repoName).resolve("build/maven").listFiles().orEmpty()
-            if (localMavens.isNotEmpty()) {
-                maven(uri(localMavens.first())) {
-                    name = "$mavenName-Local"
-                }
-            } else {
-                maven("https://recrafter.github.io/$repoName") {
-                    name = mavenName
-                }
-            }
-        }
-
         maven("https://diskria.github.io/projektor") {
             name = "Projektor"
         }
-        resolvePluginMaven("recipe")
-
         gradlePluginPortal()
     }
 }
@@ -40,22 +23,20 @@ dependencyResolutionManagement {
 
 plugins {
     id("io.github.diskria.projektor.settings") version "5.+"
-    id("io.github.recrafter.recipe") version "1.2.0"
+    id("io.github.recrafter.recipe") version "1.2.2"
 }
 
 projekt {
-    version = "1.2.0"
+    version = "1.2.2"
     license = MIT
-    publish = setOf(
-        GITHUB_PAGES,
-    )
+    publish = setOf(GRADLE_PLUGIN_PORTAL)
 
     gradlePlugin()
 }
 
 recipe {
     crafter {
-        craftingCrafters()
+        mavensOnly()
     }
 }
 

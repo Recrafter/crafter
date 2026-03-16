@@ -12,6 +12,7 @@ dependencies {
 
     compileOnly(libs.bundles.lapis)
 
+    compileOnly(libs.shadow.plugin)
     compileOnly(libs.ksp.plugin)
 
     implementation(libs.kotlin.serialization.xml)

@@ -5,6 +5,7 @@ import io.github.recrafter.crafter.core.versions.VersionBound
 import io.github.recrafter.crafter.core.versions.range.IntervalVersionRange
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.io.File
 
 @Serializable
 data class NeoForgeModConfig(
@@ -20,11 +21,11 @@ data class NeoForgeModConfig(
 
     val mods: List<NeoForgeModConfigEntry>,
     val mixins: List<NeoForgeModMixinConfigEntry>,
-    val accessTransformers: List<NeoForgeModAccessTransformerEntry>,
+    val accessTransformers: List<NeoForgeModAccessTransformerEntry>?,
     val dependencies: Map<String, List<NeoForgeModDependencyConfigEntry>>,
 ) {
     companion object {
-        fun of(mod: Mod): NeoForgeModConfig =
+        fun of(mod: Mod, hasAccessor: Boolean): NeoForgeModConfig =
             NeoForgeModConfig(
                 modLoader = "javafml",
                 loaderVersion = IntervalVersionRange.min(VersionBound.inclusive(1)),
@@ -36,9 +37,7 @@ data class NeoForgeModConfig(
                 mixins = listOf(
                     NeoForgeModMixinConfigEntry.of(mod),
                 ),
-                accessTransformers = listOf(
-                    NeoForgeModAccessTransformerEntry.of(mod),
-                ),
+                accessTransformers = if (hasAccessor) listOf(NeoForgeModAccessTransformerEntry.of(mod)) else null,
                 dependencies = mapOf(
                     mod.id to listOf(
                         NeoForgeModDependencyConfigEntry.createMinecraftDependency(mod),

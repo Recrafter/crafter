@@ -35,6 +35,7 @@ data class QuiltModLoaderConfig(
                     QuiltModDependencyConfig.createJavaDependency(mod),
                     QuiltModDependencyConfig.createMinecraftDependency(mod),
                     QuiltModDependencyConfig.createLoaderDependency(mod),
+                    QuiltModDependencyConfig.createKotlinDependency(),
                 ),
             )
     }

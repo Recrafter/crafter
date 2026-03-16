@@ -2,6 +2,7 @@
 projektor = "5.+"
 
 kotlin = "2.2.21"
+
 ksp = "2.2.21-2.0.5"
 kotlin-serialization-json = "1.7.3"
 kotlin-serialization-xml = "0.90.1"
@@ -14,10 +15,11 @@ kotlin-utils = "0.10.1"
 kotlin-regex-dsl = "0.10.1"
 gradle-utils = "0.10.1"
 
-bedrock = "1.0.3"
+bedrock = "1.0.6"
 
-lapis = "0.7.4"
+lapis = "0.8.4"
 
+shadow-plugin = "9.4.0"
 quilt-plugin = "1.15.1"
 legacy-fabric-plugin = "1.15.3"
 ornithe-plugin = "1.14.10"
@@ -47,9 +49,11 @@ bedrock = { group = "io.github.recrafter", name = "bedrock", version.ref = "bedr
 lapis-annotations = { group = "io.github.recrafter", name = "lapis-annotations", version.ref = "lapis" }
 lapis-ksp = { group = "io.github.recrafter", name = "lapis", version.ref = "lapis" }
 
-kotlin-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+kotlin-serialization-plugin = { group = "org.jetbrains.kotlin.plugin.serialization", name = "org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
+shadow-plugin = { group = "com.gradleup.shadow", name = "com.gradleup.shadow.gradle.plugin", version.ref = "shadow-plugin" }
 quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
@@ -65,10 +69,12 @@ diskria-utils = [
     "gradle-utils",
 ]
 kotlin-plugins = [
-    "kotlin-plugin",
+    "kotlin-jvm-plugin",
+    "kotlin-serialization-plugin",
     "ksp-plugin",
 ]
 gradle-plugins = [
+    "shadow-plugin",
     "quilt-plugin",
     "legacy-fabric-plugin",
     "ornithe-plugin",

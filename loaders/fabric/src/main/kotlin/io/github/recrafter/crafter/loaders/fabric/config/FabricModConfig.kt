@@ -28,10 +28,10 @@ data class FabricModConfig(
     val environment: String,
 
     @SerialName("mixins")
-    val mixinsConfigPath: List<String>,
+    val mixinConfigPath: List<String>,
 
     @SerialName("accessWidener")
-    val widenerConfigPath: String,
+    val widenerConfigPath: String?,
 
     @SerialName("contact")
     val links: FabricModLinksConfig,
@@ -43,7 +43,7 @@ data class FabricModConfig(
     val dependencies: FabricModDependenciesConfig,
 ) {
     companion object {
-        fun of(mod: Mod): FabricModConfig =
+        fun of(mod: Mod, hasAccessor: Boolean): FabricModConfig =
             FabricModConfig(
                 schemaVersion = 1,
                 id = mod.id,
@@ -54,8 +54,8 @@ data class FabricModConfig(
                 licenseId = mod.licenseId,
                 iconPath = mod.iconPath,
                 environment = mod.configEnvironment,
-                widenerConfigPath = mod.accessorConfigPath,
-                mixinsConfigPath = listOf(mod.mixinsConfigPath),
+                widenerConfigPath = mod.accessorConfigPath.takeIf { hasAccessor },
+                mixinConfigPath = listOf(mod.mixinConfigPath),
                 links = FabricModLinksConfig.of(mod),
                 entryPoints = FabricModEntryPointsConfig.of(mod),
                 dependencies = FabricModDependenciesConfig.of(mod),
