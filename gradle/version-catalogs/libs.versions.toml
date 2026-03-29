@@ -20,6 +20,7 @@ bedrock = "1.2.5"
 lapis = "0.8.4"
 
 shadow-plugin = "9.4.0"
+quilt-remap-plugin = "1.15.1"
 quilt-plugin = "1.15.1"
 legacy-fabric-plugin = "1.15.3"
 ornithe-plugin = "1.14.10"
@@ -56,7 +57,8 @@ kotlin-serialization-plugin = { group = "org.jetbrains.kotlin.plugin.serializati
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 shadow-plugin = { group = "com.gradleup.shadow", name = "com.gradleup.shadow.gradle.plugin", version.ref = "shadow-plugin" }
-quilt-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-plugin" }
+quilt-remap-plugin = { group = "org.quiltmc.loom", name = "org.quiltmc.loom.gradle.plugin", version.ref = "quilt-remap-plugin" }
+quilt-plugin = { group = "org.quiltmc.loom.no_remap", name = "org.quiltmc.loom.no_remap.gradle.plugin", version.ref = "quilt-plugin" }
 legacy-fabric-plugin = { group = "legacy-looming", name = "legacy-looming.gradle.plugin", version.ref = "legacy-fabric-plugin" }
 ornithe-plugin = { group = "ploceus", name = "ploceus.gradle.plugin", version.ref = "ornithe-plugin" }
 babric-plugin = { group = "babric-loom-extension", name = "babric-loom-extension.gradle.plugin", version.ref = "babric-plugin" }
@@ -77,6 +79,7 @@ kotlin-plugins = [
 ]
 gradle-plugins = [
     "shadow-plugin",
+    "quilt-remap-plugin",
     "quilt-plugin",
     "legacy-fabric-plugin",
     "ornithe-plugin",

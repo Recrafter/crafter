@@ -20,7 +20,6 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.compile.JavaCompile
@@ -38,8 +37,6 @@ abstract class ModLoaderAdapter {
     open fun isDataPackConfigRequired(): Boolean = false
 
     abstract fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File)
-
-    open fun getGameJars(project: Project): FileCollection = project.files()
 
     fun configureInternal(
         mod: Mod,
@@ -185,7 +182,7 @@ abstract class ModLoaderAdapter {
         ksp {
             arg("lapis.modId", mod.id)
             arg("lapis.packageName", mod.packageName)
-            arg("lapis.isUnobfuscated", (mod.minecraftVersion >= FullRelease.V_26_1).toString())
+            arg("lapis.isUnobfuscated", mod.minecraftVersion.isUnobfuscated.toString())
             arg(
                 when (mod.loader.family) {
                     ModLoaderFamily.FABRIC -> "lapis.accessWidenerConfigName"

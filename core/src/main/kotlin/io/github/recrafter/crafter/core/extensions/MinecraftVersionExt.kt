@@ -1,6 +1,8 @@
 package io.github.recrafter.crafter.core.extensions
 
+import io.github.recrafter.bedrock.era.FullRelease
 import io.github.recrafter.bedrock.versions.MinecraftVersion
+import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.crafter.core.sync.packs.DataPackFormatSync
 import io.github.recrafter.crafter.core.sync.packs.ResourcePackFormatSync
 import org.gradle.api.Project
@@ -10,3 +12,6 @@ fun MinecraftVersion.getDataPackFormat(project: Project): String =
 
 fun MinecraftVersion.getResourcePackFormat(project: Project): String =
     ResourcePackFormatSync.getLatestVersion(project, this)
+
+val MinecraftVersion.isUnobfuscated: Boolean
+    get() = this >= FullRelease.V_26_1

@@ -96,7 +96,7 @@ fun Project.shadowKotlin(
     val shadowImplementation = configurations.maybeCreate("shadowImplementation")
     configurations.getByName("implementation").extendsFrom(shadowImplementation)
     dependencies {
-        add(shadowImplementation.name, "org.jetbrains.kotlin:kotlin-stdlib:2.2.21")
+        add(shadowImplementation.name, "org.jetbrains.kotlin:kotlin-stdlib:2.3.0")
         if (needSerialization) {
             add(shadowImplementation.name, "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
         }

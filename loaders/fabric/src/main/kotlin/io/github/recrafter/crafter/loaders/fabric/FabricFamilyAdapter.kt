@@ -23,7 +23,6 @@ import net.fabricmc.loom.task.RemapJarTask
 import net.fabricmc.loom.task.ValidateAccessWidenerTask
 import net.fabricmc.loom.util.Constants.TaskGroup
 import org.gradle.api.Project
-import org.gradle.api.file.FileCollection
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
@@ -45,15 +44,17 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
     open fun getCustomIntermediaryUrl(placeholder: String = $$"%1$s"): String? = null
 
-    open fun getMappingsDependency(project: Project, mod: Mod): Any = with(project) {
-        @Suppress("UnstableApiUsage")
-        quilt.layered { officialMojangMappings() }
+    open fun getMappingsDependency(project: Project, mod: Mod): Any? = with(project) {
+        if (mod.minecraftVersion.isUnobfuscated) null
+        else quilt.layered { officialMojangMappings() }
     }
 
-    override fun getGameJars(project: Project): FileCollection =
-        project.quilt.namedMinecraftJars
-
     override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File) = with(project) {
+        if (mod.minecraftVersion.isUnobfuscated) {
+            plugins.apply("org.quiltmc.loom.no_remap")
+        } else {
+            plugins.apply("org.quiltmc.loom")
+        }
         quilt {
             configureExtensionPlugin(project)
             getCustomMinecraftMetadataUrl(mod.minecraftVersion)?.let {
@@ -117,17 +118,19 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
             val loaderDependency = getLoaderDependency(mod)
             mod.log(project, "Loader: $loaderDependency")
-            modImplementation(loaderDependency)
+            implementation(loaderDependency)
 
             if (hasKotlinMod) {
-                val kotlinDependency = artifact("net.fabricmc", "fabric-language-kotlin", "1.13.7+kotlin.2.2.21")
-                mod.log(project, "Kotlin: $loaderDependency")
-                modImplementation(kotlinDependency)
+                val kotlinDependency = artifact("net.fabricmc", "fabric-language-kotlin", "1.13.8+kotlin.2.3.0")
+                mod.log(project, "Kotlin: $kotlinDependency")
+                implementation(kotlinDependency)
             }
 
             val mappingsDependency = getMappingsDependency(project, mod)
-            mod.log(project, "Mappings: $mappingsDependency")
-            mappings(mappingsDependency)
+            if (mappingsDependency != null) {
+                mod.log(project, "Mappings: $mappingsDependency")
+                mappings(mappingsDependency)
+            }
 
             repositories {
                 mavenLocal()

@@ -44,7 +44,7 @@ data class QuiltModDependencyConfig(
         fun createKotlinDependency(): QuiltModDependencyConfig =
             of(
                 id = "fabric-language-kotlin",
-                version = InequalityVersionRange.min(VersionBound.inclusive("1.13.7+kotlin.2.2.21")),
+                version = InequalityVersionRange.min(VersionBound.inclusive("1.13.8+kotlin.2.3.0")),
             )
     }
 }

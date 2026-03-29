@@ -2,7 +2,7 @@
 
 A streamlined Kotlin-exclusive Gradle plugin for API-independent Minecraft modding. Powered by pure Mixins, it automates loader configurations and directory structures, letting you build for multiple platforms with a single command.
 
-[![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/io.github.recrafter.crafter.svg?label=Gradle+Plugin+Portal&style=for-the-badge)](https://plugins.gradle.org/plugin/io.github.recrafter.crafter) [![License: MIT](https://img.shields.io/static/v1?label=License&style=for-the-badge&message=MIT&color=yellow)](https://spdx.org/licenses/MIT)
+[![Github Pages](https://img.shields.io/github/v/tag/Recrafter/crafter.svg?label=Github+Pages&style=for-the-badge&sort=semver)](https://recrafter.github.io/crafter) [![License: MIT](https://img.shields.io/static/v1?label=License&style=for-the-badge&message=MIT&color=yellow)](https://spdx.org/licenses/MIT)
 
 ---
 

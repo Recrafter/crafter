@@ -31,7 +31,7 @@ data class FabricModDependenciesConfig(
                 ),
                 loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
                 kotlinVersion = if (mod.loader == ModLoaderType.FABRIC) {
-                    InequalityVersionRange.min(VersionBound.inclusive("1.13.7+kotlin.2.2.21"))
+                    InequalityVersionRange.min(VersionBound.inclusive("1.13.8+kotlin.2.3.0"))
                 } else null,
             )
     }

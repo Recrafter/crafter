@@ -30,7 +30,7 @@ open class ModConfiguration(protected val objects: ObjectFactory) {
         .convention("run")
 
     val javaVersion: Property<Int> = objects.property<Int>()
-        .convention(21)
+        .convention(25)
 
     internal val developer: DeveloperConfiguration
         get() = requireGradleNotNull(developerConfiguration) {

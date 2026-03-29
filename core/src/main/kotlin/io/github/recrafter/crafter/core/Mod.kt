@@ -20,6 +20,7 @@ import io.github.recrafter.bedrock.sides.ModEnvironment
 import io.github.recrafter.bedrock.sides.ModSide
 import io.github.recrafter.bedrock.versions.*
 import io.github.recrafter.crafter.core.extensions.family
+import io.github.recrafter.crafter.core.extensions.isUnobfuscated
 import io.github.recrafter.crafter.core.extensions.toJvmTarget
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
@@ -70,7 +71,7 @@ data class Mod(
         get() = when (loader.family) {
             ModLoaderFamily.FABRIC -> fileName(
                 id,
-                if (minecraftVersion >= FullRelease.V_26_1) "classtweaker" else "accesswidener"
+                if (minecraftVersion.isUnobfuscated) "classtweaker" else "accesswidener"
             )
 
             ModLoaderFamily.FORGE -> fileName("accesstransformer", "cfg")
