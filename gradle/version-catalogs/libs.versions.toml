@@ -1,21 +1,21 @@
 [versions]
-projektor = "5.+"
+projektor = "6.+"
 
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 
-ksp = "2.2.21-2.0.5"
-kotlin-serialization-json = "1.7.3"
-kotlin-serialization-xml = "0.90.1"
-ktor = "3.4.0"
+ksp = "2.3.6"
+kotlin-serialization-json = "1.10.0"
+kotlin-serialization-xml = "0.91.3"
+ktor = "3.4.2"
 
-java-poet = "0.11.0"
-jsoup = "1.21.2"
+java-poet = "0.12.0"
+jsoup = "1.22.1"
 
-kotlin-utils = "0.10.1"
-kotlin-regex-dsl = "0.10.1"
-gradle-utils = "0.10.1"
+kotlin-utils = "0.11.1"
+kotlin-regex-dsl = "0.11.1"
+gradle-utils = "0.11.2"
 
-bedrock = "1.0.6"
+bedrock = "1.2.5"
 
 lapis = "0.8.4"
 
@@ -33,6 +33,8 @@ projektor = { id = "io.github.diskria.projektor", version.ref = "projektor" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [libraries]
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
 kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json-jvm", version.ref = "kotlin-serialization-json" }
 kotlin-serialization-xml = { group = "io.github.pdvrieze.xmlutil", name = "serialization", version.ref = "kotlin-serialization-xml" }
 ktor = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }

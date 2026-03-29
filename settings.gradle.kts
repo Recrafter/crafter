@@ -13,21 +13,13 @@ pluginManagement {
     }
 }
 
-dependencyResolutionManagement {
-    @Suppress("UnstableApiUsage")
-    repositories {
-        mavenLocal()
-        maven("https://jitpack.io")
-    }
-}
-
 plugins {
-    id("io.github.diskria.projektor.settings") version "5.+"
-    id("io.github.recrafter.recipe") version "1.2.2"
+    id("io.github.diskria.projektor.settings") version "6.+"
+    id("io.github.recrafter.recipe") version "1.2.5"
 }
 
 projekt {
-    version = "1.2.2"
+    version = "1.2.3"
     license = MIT
     publish = setOf(GRADLE_PLUGIN_PORTAL)
 

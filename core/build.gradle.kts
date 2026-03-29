@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    implementation(kotlin("gradle-plugin"))
+    implementation(libs.kotlin.gradle.plugin)
 
     implementation(libs.bedrock)
 

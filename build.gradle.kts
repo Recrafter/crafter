@@ -15,7 +15,7 @@ val includedProjects = buildList {
 }
 
 dependencies {
-    implementation(kotlin("gradle-plugin"))
+    implementation(libs.kotlin.gradle.plugin)
     implementation(libs.bundles.kotlin.plugins)
 
     implementation(libs.bundles.gradle.plugins)
@@ -36,7 +36,7 @@ dependencies {
 
 projekt {
     gradlePlugin {
-        jvmTarget = JvmTarget.JVM_21
+        jvmTarget = JvmTarget.JVM_25
         supportsConfigurationCache = false
     }
 }

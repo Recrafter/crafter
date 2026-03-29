@@ -46,9 +46,11 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
 @Suppress("UnusedVariable", "unused")
+@DisableCachingByDefault(because = "Installs scripts into user's home directory and modifies shell RC files, which cannot be tracked by the build cache")
 abstract class InstallCrafterCLITask : DefaultTask() {
 
     @get:Nested

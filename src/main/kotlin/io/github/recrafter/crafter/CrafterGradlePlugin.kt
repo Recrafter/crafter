@@ -268,6 +268,6 @@ class CrafterGradlePlugin : Plugin<Project> {
     }
 
     companion object {
-        private const val RECOMMENDED_GRADLE_VERSION: String = "9.3.1"
+        private const val RECOMMENDED_GRADLE_VERSION: String = "9.4.1"
     }
 }
