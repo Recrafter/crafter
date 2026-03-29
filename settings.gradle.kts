@@ -22,7 +22,7 @@ plugins {
 projekt {
     version = "1.2.4"
     license = MIT
-    publish = setOf(PublishingTargetType.GITHUB_PAGES)
+    publish = setOf(GRADLE_PLUGIN_PORTAL)
 
     gradlePlugin()
 }
