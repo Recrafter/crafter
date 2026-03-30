@@ -17,17 +17,17 @@ gradle-utils = "0.11.2"
 
 bedrock = "1.2.5"
 
-lapis = "0.8.4"
+lapis = "0.8.5"
 
 shadow-plugin = "9.4.0"
 quilt-remap-plugin = "1.15.1"
 quilt-plugin = "1.15.1"
 legacy-fabric-plugin = "1.15.3"
-ornithe-plugin = "1.14.10"
+ornithe-plugin = "1.15.7"
 babric-plugin = "1.15.3"
-forge-plugin = "7.0.15"
+forge-plugin = "7.0.17"
 forge-jarjar-plugin = "0.2.3"
-neoforge-plugin = "2.0.140"
+neoforge-plugin = "2.0.141"
 
 [plugins]
 projektor = { id = "io.github.diskria.projektor", version.ref = "projektor" }

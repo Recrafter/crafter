@@ -6,5 +6,5 @@ object Lapis {
     const val ANNOTATIONS_ARTIFACT_ID: String = "lapis-annotations"
     const val KSP_ARTIFACT_ID: String = "lapis"
 
-    const val VERSION: String = "0.8.4"
+    const val VERSION: String = "0.8.5"
 }

@@ -55,7 +55,6 @@ abstract class CraftEntryPointsTask : DefaultTask() {
         }
     }
 
-    @Suppress("SpellCheckingInspection")
     private fun buildSideEntryPointClass(mod: Mod, side: ModSide): TypeSpec {
         val environment = mod.environment
         val environmentSide = when {

@@ -7,27 +7,26 @@ import io.github.diskria.kotlin.utils.extensions.common.`Train-Case`
 import io.github.diskria.kotlin.utils.extensions.common.nowDate
 import io.github.diskria.kotlin.utils.extensions.format
 import io.github.diskria.kotlin.utils.properties.autoNamedProperty
-import io.github.recrafter.bedrock.era.FullRelease
 import io.github.recrafter.bedrock.loaders.ModLoaderFamily
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import io.github.recrafter.bedrock.sides.ModSide
-import io.github.recrafter.bedrock.versions.compareTo
 import io.github.recrafter.bedrock.versions.minJavaVersion
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.tasks.internal.CraftDataPackConfigTask
 import io.github.recrafter.crafter.tasks.internal.CraftEntryPointsTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.JavaExec
+import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.File
@@ -59,6 +58,28 @@ abstract class ModLoaderAdapter {
         }
         kotlin {
             jvmToolchain(mod.javaVersion)
+        }
+        val craftEntryPointsTask = registerTask<CraftEntryPointsTask> {
+            this.mod.set(mod)
+            sides = sideProjects.keys
+            outputDirectory = crafterSourcesDirectory
+        }
+        sourceSets {
+            with(main) {
+                val sideSourceSets = sideProjects.values.map { it.sourceSets.main }
+                sideSourceSets.forEach { sideProject ->
+                    java.srcDirs(sideProject.allJava.srcDirs)
+                    kotlin.srcDirs(sideProject.kotlin.srcDirs)
+                    resources.srcDirs(sideProject.resources.srcDirs)
+                }
+
+                java.srcDir(lapisDirectory.map { it.dir("main/java") })
+                kotlin.srcDir(lapisDirectory.map { it.dir("main/kotlin") })
+                resources.srcDir(lapisDirectory.map { it.dir("main/resources") })
+
+                java.srcDir(craftEntryPointsTask.flatMap { it.outputDirectory })
+                resources.srcDir(crafterResourcesDirectory)
+            }
         }
         tasks {
             configureJvmTarget(mod.jvmTarget)
@@ -133,8 +154,12 @@ abstract class ModLoaderAdapter {
                 }
             }
             processResources {
+                sideProjects.forEach { (_, side) ->
+                    from(side.sourceSets.main.resources)
+                }
+                from(crafterResourcesDirectory)
                 moveFile(mod.mixinConfigName, mod.mixinConfigPath)
-                copyFile(accessorConfig, mod.accessorConfigPath)
+                moveFile(mod.accessorConfigName, mod.accessorConfigPath)
                 modProject.rootProject.projectDirectory.resolve(mod.iconFileName).let { copyFile(it, mod.iconPath) }
             }
             register("lapis") {
@@ -150,32 +175,6 @@ abstract class ModLoaderAdapter {
             }
             withType<KotlinCompile>().configureEach {
                 mustRunAfter(processResources)
-            }
-        }
-        val craftEntryPointsTask = registerTask<CraftEntryPointsTask> {
-            this.mod.set(mod)
-            sides = sideProjects.keys
-            outputDirectory = craftedSourcesDirectory
-        }
-        sourceSets {
-            with(main) {
-                val mergedDirectory = getBuildDirectory("sources+resources")
-                val sideSourceSets = sideProjects.map { it.value.sourceSets.main }
-                kotlin.srcDir(getGeneratedDirectory().resolve("ksp/main/kotlin"))
-                sideSourceSets.forEach { kotlin.srcDirs(it.kotlin.srcDirs) }
-                kotlin.destinationDirectory.set(mergedDirectory)
-                java {
-                    srcDir(craftEntryPointsTask.map { it.outputDirectory })
-                    sideSourceSets.forEach { srcDirs(it.allJava.srcDirs) }
-                    destinationDirectory.set(mergedDirectory)
-                }
-                resources {
-                    srcDir(craftedResourcesDirectory)
-                    sideSourceSets.forEach { srcDirs(it.resources.srcDirs) }
-                    destinationDirectory.set(mergedDirectory)
-                }
-                output.setResourcesDir(mergedDirectory)
-                (output.classesDirs as ConfigurableFileCollection).setFrom(mergedDirectory)
             }
         }
         configurePlugin(mod, modProject, runDirectory, accessorConfig)

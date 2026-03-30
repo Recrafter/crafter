@@ -10,6 +10,7 @@ dependencies {
     compileOnly(libs.quilt.remap.plugin)
     compileOnly(libs.quilt.plugin)
     compileOnly(libs.shadow.plugin)
+    compileOnly(libs.bundles.lapis)
 
     implementation(libs.bedrock)
 

@@ -20,7 +20,7 @@ plugins {
 }
 
 projekt {
-    version = "1.2.4"
+    version = "1.2.5"
     license = MIT
     publish = setOf(GRADLE_PLUGIN_PORTAL)
 
@@ -36,4 +36,10 @@ recipe {
 include(":core", ":cli")
 rootDirectory.resolve("loaders").listDirectories().forEach {
     include(gradleProjectPath(it.parentFile.name, it.name))
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+    }
 }

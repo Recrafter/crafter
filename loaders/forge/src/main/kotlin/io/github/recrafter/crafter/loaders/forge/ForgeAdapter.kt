@@ -61,6 +61,11 @@ object ForgeAdapter : ModLoaderAdapter() {
                                 *JvmArguments.program("nogui"),
                             )
                         }
+                        mods {
+                            create(mod.id) {
+                                sources(sourceSets.main)
+                            }
+                        }
                     }
                 }
             }
@@ -76,9 +81,10 @@ object ForgeAdapter : ModLoaderAdapter() {
             }
         }
         dependencies {
-            implementation("net.sf.jopt-simple", "jopt-simple", "5.0.4").apply {
+            val joptVersion = "5.0.4"
+            compileOnly("net.sf.jopt-simple", "jopt-simple", joptVersion).apply {
                 (this as? ExternalModuleDependency)?.version {
-                    strictly("5.0.4")
+                    strictly(joptVersion)
                 }
             }
             val forgeVersion = "${mod.minecraftVersion.asString()}-${mod.loaderMetadata.loaderVersion}"

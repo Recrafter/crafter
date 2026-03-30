@@ -4,14 +4,14 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shad
 import com.google.devtools.ksp.gradle.KspExtension
 import io.github.diskria.gradle.utils.extensions.configureExtension
 import io.github.diskria.gradle.utils.extensions.ensurePluginApplied
-import io.github.diskria.gradle.utils.extensions.getGeneratedResourcesDirectory
-import io.github.diskria.gradle.utils.extensions.getGeneratedSourcesDirectory
 import io.github.diskria.kotlin.utils.extensions.appendPath
 import io.github.diskria.kotlin.utils.extensions.common.`kebab-case`
 import io.github.diskria.kotlin.utils.extensions.mappers.toEnumOrNull
 import io.github.recrafter.bedrock.crafter.CrafterConstants
 import io.github.recrafter.bedrock.loaders.ModLoaderType
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
+import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.invoke
@@ -69,11 +69,14 @@ fun Project.groupMatchingTasks(name: String, vararg keywords: String) {
     }
 }
 
-val Project.craftedSourcesDirectory
-    get() = getGeneratedSourcesDirectory().resolve(CrafterConstants.PLUGIN_LOWER_NAME)
+val Project.crafterSourcesDirectory: Provider<Directory>
+    get() = layout.buildDirectory.dir("generated/sources/${CrafterConstants.PLUGIN_LOWER_NAME}")
 
-val Project.craftedResourcesDirectory
-    get() = getGeneratedResourcesDirectory().resolve(CrafterConstants.PLUGIN_LOWER_NAME)
+val Project.crafterResourcesDirectory: Provider<Directory>
+    get() = layout.buildDirectory.dir("generated/resources/${CrafterConstants.PLUGIN_LOWER_NAME}")
+
+val Project.lapisDirectory: Provider<Directory>
+    get() = layout.buildDirectory.dir("generated/ksp")
 
 fun Project.kotlin(configure: KotlinProjectExtension.() -> Unit = {}) {
     configureExtension<KotlinProjectExtension>(configure)

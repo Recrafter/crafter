@@ -1,5 +1,6 @@
 package io.github.recrafter.crafter.loaders.neoforge
 
+import io.github.diskria.gradle.utils.extensions.common.artifact
 import io.github.diskria.gradle.utils.extensions.compileOnly
 import io.github.diskria.gradle.utils.extensions.ksp
 import io.github.diskria.gradle.utils.extensions.restoreDependencyResolutionRepositories
@@ -68,12 +69,17 @@ object NeoForgeAdapter : ModLoaderAdapter() {
                 mavenLocal()
             }
             compileOnly(Lapis.GROUP_ID, Lapis.ANNOTATIONS_ARTIFACT_ID, Lapis.VERSION)
-            ksp(Lapis.GROUP_ID, Lapis.KSP_ARTIFACT_ID, Lapis.VERSION)
+            val lapisDependency = artifact(Lapis.GROUP_ID, Lapis.KSP_ARTIFACT_ID, Lapis.VERSION)
+            mod.log(project, "Lapis KSP: $lapisDependency")
+            ksp(lapisDependency)
         }
         shadowKotlin(mod.packageName)
         groupLoaderTasks(
             loaderPackageNamePrefixes = listOf("net.neoforged.moddevgradle"),
-            taskGroups = listOf(Branding.MDG.publicTaskGroup, Branding.MDG.internalTaskGroup),
+            taskGroups = listOf(
+                Branding.MDG.publicTaskGroup,
+                Branding.MDG.internalTaskGroup,
+            ),
             loader = ModLoaderType.NEOFORGE,
         )
     }

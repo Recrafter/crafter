@@ -18,10 +18,31 @@ object NeoForgeLoaderSync : LoaderSync(ModLoaderType.NEOFORGE) {
         }
 
     override fun parseMinecraftVersion(version: String): MinecraftVersion? {
-        val (major, minor, _) = version.substringBefore(Constants.Char.HYPHEN).toSemverOrNull() ?: return null
-        return MinecraftVersion.parseOrNull(Semver(1, major, minor).toVersion())
+        val numericPart = version.substringBefore(Constants.Char.HYPHEN)
+        val segments = numericPart.split(Constants.Char.DOT)
+        return MinecraftVersion.parseOrNull(
+            if (segments.size >= 4) {
+                val major = segments[0]
+                val minor = segments[1]
+                val patch = segments[2]
+                if (patch == "0") "$major.$minor" else "$major.$minor.$patch"
+            } else {
+                val oldFormatSemver = numericPart.toSemverOrNull() ?: return null
+                "1.${oldFormatSemver.major}.${oldFormatSemver.minor}"
+            }
+        )
     }
 
-    override fun parseComponentSemver(version: String): Semver =
-        version.substringBefore(Constants.Char.HYPHEN).toSemverOrNull() ?: Semver.from(0, 0, 0)
+    override fun parseComponentSemver(version: String): Semver {
+        val numericPart = version.substringBefore(Constants.Char.HYPHEN)
+        val segments = numericPart.split(Constants.Char.DOT)
+        return if (segments.size >= 4) {
+            val major = "${segments[0]}${segments[1]}".toIntOrNull() ?: 0
+            val minor = segments[2].toIntOrNull() ?: 0
+            val patch = segments[3].toIntOrNull() ?: 0
+            Semver(major, minor, patch)
+        } else {
+            numericPart.toSemverOrNull() ?: Semver.from(0, 0, 0)
+        }
+    }
 }

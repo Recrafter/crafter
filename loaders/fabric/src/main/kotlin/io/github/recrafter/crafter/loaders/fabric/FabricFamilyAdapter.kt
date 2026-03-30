@@ -17,6 +17,7 @@ import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.ModLoaderAdapter
 import io.github.recrafter.crafter.core.extensions.*
 import io.github.recrafter.crafter.loaders.fabric.extensions.quilt
+import io.github.recrafter.crafter.mixins.FabricLanguageKotlin
 import io.github.recrafter.crafter.mixins.Lapis
 import io.ktor.http.*
 import net.fabricmc.loom.task.RemapJarTask
@@ -44,9 +45,8 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
     open fun getCustomIntermediaryUrl(placeholder: String = $$"%1$s"): String? = null
 
-    open fun getMappingsDependency(project: Project, mod: Mod): Any? = with(project) {
-        if (mod.minecraftVersion.isUnobfuscated) null
-        else quilt.layered { officialMojangMappings() }
+    open fun getMappingsDependency(project: Project, mod: Mod): Any = with(project) {
+        quilt.layered { officialMojangMappings() }
     }
 
     override fun configurePlugin(mod: Mod, project: Project, runDirectory: File, accessorConfig: File) = with(project) {
@@ -70,6 +70,7 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
             if (accessorConfig.isFile) {
                 accessWidenerPath = accessorConfig
             }
+            addMinecraftJarProcessor(SyntheticStripperProcessor::class.java)
             runs {
                 ModSide.entries.forEach { side ->
                     named(side.getName()) {
@@ -88,6 +89,11 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
                             *JvmArguments.memory(memoryRange, Size.GIGABYTES),
                             JvmArguments.property("mixin.debug.export", true),
                         )
+                        if (mod.minecraftVersion.isUnobfuscated && loader == ModLoaderType.QUILT) {
+                            vmArgs(
+                                JvmArguments.property("loader.experimental.minecraft.targetNamespace", "official"),
+                            )
+                        }
                         if (mod.minecraftVersion.era < MinecraftEra.ALPHA) {
                             vmArgs(
                                 JvmArguments.property("fabric.gameVersion", mod.minecraftVersion.asString()),
@@ -102,6 +108,13 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
                     }
                 }
             }
+            if (loader == ModLoaderType.QUILT) {
+                mods {
+                    create(mod.id) {
+                        sourceSet(sourceSets.main)
+                    }
+                }
+            }
         }
         tasks {
             lazyDisable("ideaSyncTask")
@@ -110,7 +123,7 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
             }
         }
         restoreDependencyResolutionRepositories()
-        val hasKotlinMod = loader == ModLoaderType.FABRIC || loader == ModLoaderType.QUILT
+        val hasKotlinModDependency = loader == ModLoaderType.FABRIC || loader == ModLoaderType.QUILT
         dependencies {
             val minecraftDependency = artifact("com.mojang", "minecraft", mod.minecraftVersion.asString())
             mod.log(project, "Minecraft: $minecraftDependency")
@@ -118,16 +131,28 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
             val loaderDependency = getLoaderDependency(mod)
             mod.log(project, "Loader: $loaderDependency")
-            implementation(loaderDependency)
-
-            if (hasKotlinMod) {
-                val kotlinDependency = artifact("net.fabricmc", "fabric-language-kotlin", "1.13.8+kotlin.2.3.0")
-                mod.log(project, "Kotlin: $kotlinDependency")
-                implementation(kotlinDependency)
+            if (mod.minecraftVersion.isUnobfuscated) {
+                implementation(loaderDependency)
+            } else {
+                modImplementation(loaderDependency)
             }
 
-            val mappingsDependency = getMappingsDependency(project, mod)
-            if (mappingsDependency != null) {
+            if (hasKotlinModDependency) {
+                val fabricLanguageKotlinDependency = artifact(
+                    FabricLanguageKotlin.GROUP_ID,
+                    FabricLanguageKotlin.MOD_ID,
+                    FabricLanguageKotlin.VERSION
+                )
+                mod.log(project, "Fabric Language Kotlin: $fabricLanguageKotlinDependency")
+                if (mod.minecraftVersion.isUnobfuscated) {
+                    implementation(fabricLanguageKotlinDependency)
+                } else {
+                    modImplementation(fabricLanguageKotlinDependency)
+                }
+            }
+
+            if (!mod.minecraftVersion.isUnobfuscated) {
+                val mappingsDependency = getMappingsDependency(project, mod)
                 mod.log(project, "Mappings: $mappingsDependency")
                 mappings(mappingsDependency)
             }
@@ -138,19 +163,21 @@ abstract class FabricFamilyAdapter(val loader: ModLoaderType) : ModLoaderAdapter
 
             compileOnly(Lapis.GROUP_ID, Lapis.ANNOTATIONS_ARTIFACT_ID, Lapis.VERSION)
             val lapisDependency = artifact(Lapis.GROUP_ID, Lapis.KSP_ARTIFACT_ID, Lapis.VERSION)
-            mod.log(project, "Lapis: $lapisDependency")
+            mod.log(project, "Lapis KSP: $lapisDependency")
             ksp(lapisDependency)
         }
-        if (!hasKotlinMod) {
+        if (!hasKotlinModDependency) {
             shadowKotlin(mod.packageName)
-            tasks {
-                shadowJar {
-                    destinationDirectory = getBuildDirectory("devlibs")
-                    archiveClassifier = "shadow-dev"
-                }
-                lazyConfigure<RemapJarTask>("remapJar") {
-                    inputFile = shadowJar.flatMap { it.archiveFile }
-                    dependsOn(shadowJar)
+            if (!mod.minecraftVersion.isUnobfuscated) {
+                tasks {
+                    shadowJar {
+                        destinationDirectory = getBuildDirectory("devlibs")
+                        archiveClassifier = "shadow-dev"
+                    }
+                    lazyConfigure<RemapJarTask>("remapJar") {
+                        inputFile = shadowJar.flatMap { it.archiveFile }
+                        dependsOn(shadowJar)
+                    }
                 }
             }
         }

@@ -21,7 +21,9 @@ object OrnitheAdapter : FabricFamilyAdapter(ModLoaderType.ORNITHE) {
         }
 
     override fun configureExtensionPlugin(project: Project) = with(project) {
-        ornithe {}
+        ornithe {
+            setIntermediaryGeneration(2)
+        }
     }
 
     override fun getMappingsDependency(project: Project, mod: Mod): Dependency = with(project) {

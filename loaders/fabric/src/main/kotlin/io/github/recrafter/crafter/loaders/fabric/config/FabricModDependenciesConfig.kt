@@ -5,6 +5,7 @@ import io.github.recrafter.crafter.core.Mod
 import io.github.recrafter.crafter.core.extensions.toInt
 import io.github.recrafter.crafter.core.versions.VersionBound
 import io.github.recrafter.crafter.core.versions.range.InequalityVersionRange
+import io.github.recrafter.crafter.mixins.FabricLanguageKotlin
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -19,7 +20,7 @@ data class FabricModDependenciesConfig(
     @SerialName("fabricloader")
     val loaderVersion: String,
 
-    @SerialName("fabric-language-kotlin")
+    @SerialName(FabricLanguageKotlin.MOD_ID)
     val kotlinVersion: String?,
 ) {
     companion object {
@@ -31,7 +32,7 @@ data class FabricModDependenciesConfig(
                 ),
                 loaderVersion = InequalityVersionRange.min(VersionBound.inclusive(mod.loaderMetadata.loaderVersion)),
                 kotlinVersion = if (mod.loader == ModLoaderType.FABRIC) {
-                    InequalityVersionRange.min(VersionBound.inclusive("1.13.8+kotlin.2.3.0"))
+                    InequalityVersionRange.min(VersionBound.inclusive(FabricLanguageKotlin.VERSION))
                 } else null,
             )
     }

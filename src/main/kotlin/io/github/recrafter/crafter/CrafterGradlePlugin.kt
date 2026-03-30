@@ -54,6 +54,7 @@ class CrafterGradlePlugin : Plugin<Project> {
             "The ${CrafterConstants.PLUGIN_NAME} Gradle Plugin must be applied only to the root project."
         }
         extra["fabric.loom.disableMinecraftVerification"] = "true"
+        System.setProperty("net.minecraftforge.gradle.merge-source-sets", "true")
         tasks {
             named<Wrapper>("wrapper") {
                 gradleVersion = RECOMMENDED_GRADLE_VERSION
